@@ -3,7 +3,6 @@ import React from "react";
 import { Button } from "./ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -21,7 +20,7 @@ const MainCardComponent = ({
   description,
 }: MainCardComponentProps) => {
   return (
-    <main className="flex items-center mx-6 my-10 sm:mx-12 lg:mx-20">
+    <main className="flex my-4 sm:mx-12 lg:mx-20">
       <Card className="w-full sm:w-[35%] shadow-2xl">
         <CardHeader>
           <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
-import { House, Landmark, Moon, Sun } from "lucide-react";
+import { House, Landmark, LogOut, Moon, Sun, User, Wallet } from "lucide-react";
 
 import finfiklogo from "@/logo/finfiklogo.svg";
 import finfikwhitelogo from "@/logo/finfikwhitelogo.svg";
@@ -16,6 +16,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -25,11 +27,11 @@ const Navbar = () => {
 
   return (
     <header className="w-full border-b shadow-md">
-      <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 py-1 flex items-center justify-between">
         {/* Left: Logo */}
         <Link href="/">
           <Image
-            src={theme === "light" ? finfiklogo : finfikwhitelogo}
+            src={theme === "dark" ? finfikwhitelogo : finfiklogo}
             alt="Finfik Logo"
             width={100}
             height={50}
@@ -87,10 +89,32 @@ const Navbar = () => {
           </DropdownMenu>
 
           {/* Avatar */}
-          <Avatar className="hidden sm:block">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <Avatar className="hidden sm:block">
+                <AvatarImage src="https://github.com/shadcn.png" />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <Link href="/profile">
+                <DropdownMenuLabel className="flex items-start gap-1">
+                  <User className="size-4" />
+                  Profile
+                </DropdownMenuLabel>
+              </Link>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-start gap-1">
+                <Wallet className="size-4" />
+                Billing
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-start gap-1 text-red-700">
+                <LogOut className="size-4 text-red-700" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
