@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
 import React from "react";
 import { Button } from "./ui/button";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 interface MainCardComponentProps {
   title: string;
-  thumbnail: string;
+  thumbnail: StaticImageData;
   description: string;
 }
 
@@ -28,7 +28,7 @@ const MainCardComponent = ({
         <div className="flex justify-center">
           <Image
             src={thumbnail}
-            alt={thumbnail}
+            alt="thumbnailimage"
             width={250}
             height={250}
             className="max-w-full h-auto"
