@@ -18,7 +18,7 @@ const SectionCardComponent = ({
   thumbnail,
 }: SectionCardComponentProp) => {
   return (
-    <div className="w-full sm:w-1/2 lg:w-1/3 p-4">
+    <div className="w-[446px] h-[377px] sm:w-1/2 lg:w-1/3 p-4">
       <Card className="shadow-2xl h-full flex max-sm:flex-col justify-between">
         <CardHeader>
           <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>
@@ -28,8 +28,8 @@ const SectionCardComponent = ({
           <Image
             src={thumbnail}
             alt={`Thumbnail for ${title}`}
-            width={250}
-            height={250}
+            width={200}
+            height={200}
             className="max-w-full h-auto"
           />
         </div>

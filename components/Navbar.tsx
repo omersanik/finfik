@@ -20,11 +20,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const { setTheme, theme } = useTheme();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
   return (
     <header className="w-full border-b shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-1 flex items-center justify-between">

@@ -8,16 +8,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Link from "next/link";
 interface MainCardComponentProps {
   title: string;
   thumbnail: StaticImageData;
   description: string;
+  slug: string;
 }
 
 const MainCardComponent = ({
   title,
   thumbnail,
   description,
+  slug,
 }: MainCardComponentProps) => {
   return (
     <main className="flex my-4 sm:mx-12 lg:mx-20">
@@ -39,8 +42,11 @@ const MainCardComponent = ({
             <p>{description}</p>
           </CardDescription>
         </CardContent>
-
-        <Button className="mx-4">Start</Button>
+        <Link href={`/courses/${slug}`} legacyBehavior>
+          <Button className="mx-4" asChild>
+            <a>Start</a>
+          </Button>
+        </Link>
       </Card>
     </main>
   );
