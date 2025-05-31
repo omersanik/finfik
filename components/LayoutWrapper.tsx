@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
+import { SignedIn } from "@clerk/nextjs";
 
 export default function LayoutWrapper({
   children,
@@ -13,7 +14,11 @@ export default function LayoutWrapper({
 
   return (
     <>
-      {!hideNavbar && <Navbar />}
+      {!hideNavbar && (
+        <SignedIn>
+          <Navbar />
+        </SignedIn>
+      )}
       {children}
     </>
   );

@@ -4,8 +4,15 @@ import finance1 from "@/thumbnails/finance1.webp";
 import finance2 from "@/thumbnails/finance2.webp";
 import finance3 from "@/thumbnails/finance3.webp";
 import stockthumbanil from "@/thumbnails/understanding-stocks.png";
+import { auth } from "@clerk/nextjs/server";
 
-const page = () => {
+const Page = async () => {
+  const { userId } = await auth(); // await and destructure
+
+  if (!userId) {
+    return <h1 className="text-3xl m-10">Landing Page</h1>;
+  }
+
   return (
     <main>
       <h1 className="text-3xl font-semibold my-10 mx-10 font-serif">
@@ -23,12 +30,10 @@ const page = () => {
           title="Financial Budgeting"
           thumbnail={finance1}
         />
-
         <SectionCardComponent
           title="Financial Budgeting"
           thumbnail={finance2}
         />
-
         <SectionCardComponent
           title="Financial Budgeting"
           thumbnail={finance3}
@@ -38,4 +43,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

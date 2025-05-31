@@ -21,8 +21,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
+import { useClerk } from "@clerk/nextjs";
 
 const Navbar = () => {
+  const { signOut } = useClerk();
+
   const { setTheme, theme } = useTheme();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
@@ -116,7 +119,10 @@ const Navbar = () => {
                 <Wallet className="size-4" />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-start gap-1 text-red-700">
+              <DropdownMenuItem
+                className="flex items-start gap-1 text-red-700"
+                onClick={() => signOut()}
+              >
                 <LogOut className="size-4 text-red-700" />
                 Sign out
               </DropdownMenuItem>
