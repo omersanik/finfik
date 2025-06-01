@@ -117,44 +117,230 @@ const LearningPath: React.FC = () => {
         "Economic impact",
       ],
     },
+    {
+      id: 6,
+      title: "What is a stock",
+      completed: false,
+      unlocked: false,
+      description:
+        "Learn the fundamental concept of stocks, how they represent ownership in companies, and why people buy and sell them.",
+      lessons: [
+        "Stock basics",
+        "Company ownership",
+        "Share types",
+        "Market participation",
+      ],
+    },
+    {
+      id: 7,
+      title: "First exchange ever",
+      completed: false,
+      unlocked: false,
+      description:
+        "Discover the fascinating history of the first stock exchange and how trading evolved from coffee houses to digital platforms.",
+      lessons: [
+        "Amsterdam Stock Exchange",
+        "Trading evolution",
+        "Historical context",
+        "Modern markets",
+      ],
+    },
+    {
+      id: 8,
+      title: "How to know what to invest",
+      completed: false,
+      unlocked: false,
+      description:
+        "Master the art of investment research, fundamental analysis, and how to evaluate companies before investing your money.",
+      lessons: [
+        "Research methods",
+        "Financial statements",
+        "Company analysis",
+        "Risk assessment",
+      ],
+    },
+    {
+      id: 9,
+      title: "What is a bond",
+      completed: false,
+      unlocked: false,
+      description:
+        "Understand bonds as debt instruments, how they work differently from stocks, and their role in a balanced portfolio.",
+      lessons: [
+        "Bond fundamentals",
+        "Interest rates",
+        "Government vs corporate",
+        "Portfolio balance",
+      ],
+    },
+    {
+      id: 10,
+      title: "What does Wall Street do",
+      completed: false,
+      unlocked: false,
+      description:
+        "Explore the role of Wall Street, major financial institutions, and how they influence global markets and economy.",
+      lessons: [
+        "Financial district",
+        "Investment banks",
+        "Market makers",
+        "Economic impact",
+      ],
+    },
+    {
+      id: 11,
+      title: "What is a stock",
+      completed: true,
+      unlocked: true,
+      description:
+        "Learn the fundamental concept of stocks, how they represent ownership in companies, and why people buy and sell them.",
+      lessons: [
+        "Stock basics",
+        "Company ownership",
+        "Share types",
+        "Market participation",
+      ],
+    },
+    {
+      id: 12,
+      title: "First exchange ever",
+      completed: true,
+      unlocked: true,
+      description:
+        "Discover the fascinating history of the first stock exchange and how trading evolved from coffee houses to digital platforms.",
+      lessons: [
+        "Amsterdam Stock Exchange",
+        "Trading evolution",
+        "Historical context",
+        "Modern markets",
+      ],
+    },
+    {
+      id: 13,
+      title: "How to know what to invest",
+      completed: false,
+      unlocked: true,
+      description:
+        "Master the art of investment research, fundamental analysis, and how to evaluate companies before investing your money.",
+      lessons: [
+        "Research methods",
+        "Financial statements",
+        "Company analysis",
+        "Risk assessment",
+      ],
+    },
+    {
+      id: 14,
+      title: "What is a bond",
+      completed: false,
+      unlocked: false,
+      description:
+        "Understand bonds as debt instruments, how they work differently from stocks, and their role in a balanced portfolio.",
+      lessons: [
+        "Bond fundamentals",
+        "Interest rates",
+        "Government vs corporate",
+        "Portfolio balance",
+      ],
+    },
+    {
+      id: 15,
+      title: "What does Wall Street do",
+      completed: false,
+      unlocked: false,
+      description:
+        "Explore the role of Wall Street, major financial institutions, and how they influence global markets and economy.",
+      lessons: [
+        "Financial district",
+        "Investment banks",
+        "Market makers",
+        "Economic impact",
+      ],
+    },
+    {
+      id: 16,
+      title: "What is a stock",
+      completed: false,
+      unlocked: false,
+      description:
+        "Learn the fundamental concept of stocks, how they represent ownership in companies, and why people buy and sell them.",
+      lessons: [
+        "Stock basics",
+        "Company ownership",
+        "Share types",
+        "Market participation",
+      ],
+    },
+    {
+      id: 17,
+      title: "First exchange ever",
+      completed: false,
+      unlocked: false,
+      description:
+        "Discover the fascinating history of the first stock exchange and how trading evolved from coffee houses to digital platforms.",
+      lessons: [
+        "Amsterdam Stock Exchange",
+        "Trading evolution",
+        "Historical context",
+        "Modern markets",
+      ],
+    },
+    {
+      id: 18,
+      title: "How to know what to invest",
+      completed: false,
+      unlocked: false,
+      description:
+        "Master the art of investment research, fundamental analysis, and how to evaluate companies before investing your money.",
+      lessons: [
+        "Research methods",
+        "Financial statements",
+        "Company analysis",
+        "Risk assessment",
+      ],
+    },
+    {
+      id: 19,
+      title: "What is a bond",
+      completed: false,
+      unlocked: false,
+      description:
+        "Understand bonds as debt instruments, how they work differently from stocks, and their role in a balanced portfolio.",
+      lessons: [
+        "Bond fundamentals",
+        "Interest rates",
+        "Government vs corporate",
+        "Portfolio balance",
+      ],
+    },
+    {
+      id: 20,
+      title: "What does Wall Street do",
+      completed: false,
+      unlocked: false,
+      description:
+        "Explore the role of Wall Street, major financial institutions, and how they influence global markets and economy.",
+      lessons: [
+        "Financial district",
+        "Investment banks",
+        "Market makers",
+        "Economic impact",
+      ],
+    },
   ];
 
+  // Calculate smooth curved X/Y positions for circles
   const getCirclePosition = (index: number): Position => {
-    const positions: Position[] = [
-      { x: 50, y: 10 }, // Start center-top
-      { x: 15, y: 25 }, // Left
-      { x: 70, y: 40 }, // Right
-      { x: 25, y: 65 }, // Left-lower
-      { x: 50, y: 85 }, // Center-bottom
-    ];
-    return positions[index] || { x: 50, y: 50 };
-  };
+    const spacingY = 20; // vertical spacing in %
+    const baseY = 8; // starting Y %
 
-  const getConnectionPath = (from: number, to: number): string => {
-    const fromPos = getCirclePosition(from);
-    const toPos = getCirclePosition(to);
+    const amplitude = 30; // max horizontal offset in %
+    const frequency = 0.8; // oscillation speed
 
-    // Create smooth curved path between positions
-    const midX = (fromPos.x + toPos.x) / 2;
-    const midY = (fromPos.y + toPos.y) / 2;
+    const y = baseY + index * spacingY;
+    const x = 50 + amplitude * Math.sin(frequency * index);
 
-    // Calculate control point for curve
-    let controlX = midX;
-    let controlY = midY;
-
-    // Add curve variation based on position relationship
-    const deltaX = toPos.x - fromPos.x;
-    const deltaY = toPos.y - fromPos.y;
-
-    // Create more pronounced curves
-    if (Math.abs(deltaX) > 20) {
-      controlY += deltaX > 0 ? -10 : 10;
-    }
-    if (Math.abs(deltaY) > 20 && Math.abs(deltaX) < 30) {
-      controlX += deltaY > 0 ? 15 : -15;
-    }
-
-    return `M${fromPos.x},${fromPos.y} Q${controlX},${controlY} ${toPos.x},${toPos.y}`;
+    return { x, y };
   };
 
   const getButtonText = (step: Lesson): string => {
@@ -173,63 +359,8 @@ const LearningPath: React.FC = () => {
 
   return (
     <div className="flex-1 relative">
-      <div ref={containerRef} className="relative w-96 h-96 mx-auto">
-        {/* Connection Paths */}
-        <svg
-          className="absolute inset-0 w-full h-full"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-        >
-          {steps.slice(0, -1).map((step, index) => {
-            const nextStep = steps[index + 1];
-            const path = getConnectionPath(index, index + 1);
-            return (
-              <path
-                key={index}
-                d={path}
-                stroke={
-                  step.completed && nextStep.unlocked ? "#10b981" : "#d1d5db"
-                }
-                strokeWidth="0.8"
-                fill="none"
-                strokeLinecap="round"
-                strokeDasharray={
-                  step.completed && nextStep.unlocked ? "0" : "2,1"
-                }
-                className="transition-all duration-500"
-                vectorEffect="non-scaling-stroke"
-              />
-            );
-          })}
-
-          {/* Animated dots on completed paths */}
-          {steps.slice(0, -1).map((step, index) => {
-            const nextStep = steps[index + 1];
-            if (!step.completed || !nextStep.unlocked) return null;
-            const path = getConnectionPath(index, index + 1);
-            return (
-              <g key={`dots-${index}`}>
-                <circle r="0.8" fill="#10b981" opacity="0.8">
-                  <animateMotion
-                    dur="3s"
-                    repeatCount="indefinite"
-                    path={path}
-                  />
-                </circle>
-                <circle r="0.6" fill="#34d399" opacity="0.6">
-                  <animateMotion
-                    dur="3s"
-                    repeatCount="indefinite"
-                    begin="1s"
-                    path={path}
-                  />
-                </circle>
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* Step Circles */}
+      <div ref={containerRef} className="relative w-96 h-[580px] mx-auto">
+        {/* Circles only - no lines or animations */}
         {steps.map((step, index) => {
           const position = getCirclePosition(index);
           return (
@@ -283,7 +414,7 @@ const LearningPath: React.FC = () => {
                 </div>
               </div>
 
-              {/* Small Popup Card */}
+              {/* Popup Card */}
               {selectedStep?.id === step.id && (
                 <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-80">
                   <Card className="shadow-2xl border-2">
