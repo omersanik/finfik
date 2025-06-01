@@ -40,12 +40,14 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 py-1 flex items-center justify-between">
         {/* Left: Logo */}
         <Link href="/">
-          <Image
-            src={theme === "dark" ? finfikwhitelogo : finfiklogo}
-            alt="Finfik Logo"
-            width={100}
-            height={50}
-          />
+          {mounted && (
+            <Image
+              src={theme === "light" ? finfiklogo : finfikwhitelogo}
+              alt="Finfik Logo"
+              width={100}
+              height={50}
+            />
+          )}
         </Link>
 
         {/* Center: Navigation Links */}

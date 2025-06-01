@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth, useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-
 import {
   Form,
   FormField,
@@ -20,12 +19,15 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 import finfiklogo from "@/logo/finfiklogo.svg";
+
 import Image from "next/image";
 import { Mail, Lock } from "lucide-react";
 import Link from "next/link";
 import { signUpSchema } from "@/schemas/signUpSchema";
+import { useTheme } from "next-themes";
 
 export default function SignUpForm() {
+  const { setTheme } = useTheme();
   const { isSignedIn } = useAuth();
   const router = useRouter();
   const { signUp, isLoaded, setActive } = useSignUp();
@@ -36,6 +38,11 @@ export default function SignUpForm() {
   const [verificationError, setVerificationError] = useState<string | null>(
     null
   );
+
+  useEffect(() => {
+    setTheme("light");
+  }, []);
+
   useEffect(() => {
     if (isSignedIn) {
       router.replace("/");
@@ -111,7 +118,7 @@ export default function SignUpForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F7F9FA] px-4">
+    <div className="flex min-h-screen items-center justify-center  px-4">
       <div className="w-full max-w-md flex flex-col items-center gap-1 pt-2">
         <Image
           src={finfiklogo}
@@ -120,12 +127,11 @@ export default function SignUpForm() {
           height={100}
           className="mx-auto"
         />
-        <div className="w-full rounded-2xl bg-white p-5 shadow-md border border-[#E5E8EB]">
+
+        <div className="w-full rounded-2xl">
           {verifying ? (
             <>
-              <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">
-                Verify Your Email
-              </h2>
+              <h2 className="text-2xl font-bold mb-4">Verify Your Email</h2>
               {verificationError && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertTitle>Error</AlertTitle>
@@ -139,18 +145,13 @@ export default function SignUpForm() {
                   placeholder="Enter the 6-digit code"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
-                  className="text-[#2D2D2D]"
                   autoFocus
                 />
-                <Button
-                  type="submit"
-                  isLoading={isSubmitting}
-                  className="bg-[#2ECC71] hover:bg-[#27ae60]"
-                >
+                <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "Verifying..." : "Verify Email"}
                 </Button>
               </form>
-              <p className="mt-4 text-sm text-[#2D2D2D]">
+              <p className="mt-4 text-sm ">
                 Didn&apos;t receive a code?{" "}
                 <button
                   onClick={async () => {
@@ -160,7 +161,7 @@ export default function SignUpForm() {
                       });
                     }
                   }}
-                  className="text-[#F1C40F] underline"
+                  className=" underline"
                 >
                   Resend code
                 </button>
@@ -168,9 +169,7 @@ export default function SignUpForm() {
             </>
           ) : (
             <>
-              <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">
-                Create Your Account
-              </h2>
+              <h2 className="text-2xl font-bold mb-4">Create Your Account</h2>
               {authError && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertTitle>Error</AlertTitle>
@@ -187,10 +186,10 @@ export default function SignUpForm() {
                     name="identifier"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-[#2D2D2D]">Email</FormLabel>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 " />
                             <Input
                               placeholder="your.email@example.com"
                               {...field}
@@ -208,12 +207,10 @@ export default function SignUpForm() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-[#2D2D2D]">
-                          Password
-                        </FormLabel>
+                        <FormLabel>Password</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 " />
                             <Input
                               type="password"
                               placeholder="••••••••"
@@ -232,12 +229,10 @@ export default function SignUpForm() {
                     name="passwordConfirmation"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-[#2D2D2D]">
-                          Confirm Password
-                        </FormLabel>
+                        <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 " />
                             <Input
                               type="password"
                               placeholder="••••••••"
@@ -254,18 +249,15 @@ export default function SignUpForm() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-[#1ABC9C] hover:bg-[#16a085]"
+                    className="w-full"
                   >
                     {isSubmitting ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>
               </Form>
-              <p className="mt-6 text-sm text-center text-[#7F8C8D]">
+              <p className="mt-6 text-sm text-center">
                 Already have an account?{" "}
-                <Link
-                  href="/sign-in"
-                  className="text-[#3498DB] hover:underline font-medium"
-                >
+                <Link href="/sign-in" className=" hover:underline font-medium">
                   Sign in
                 </Link>{" "}
               </p>
