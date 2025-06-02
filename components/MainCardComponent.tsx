@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 interface MainCardComponentProps {
   title: string;
-  thumbnail: StaticImageData;
+  thumbnail: StaticImageData | string;
   description: string;
   slug: string;
 }
@@ -41,12 +41,10 @@ const MainCardComponent = ({
           <CardDescription className="text-center text-base p-3">
             <p>{description}</p>
           </CardDescription>
+          <Link href={`/courses/${slug}`} className="flex w-full">
+            <Button className="w-full">Start</Button>
+          </Link>
         </CardContent>
-        <Link href={`/courses/${slug}`} legacyBehavior>
-          <Button className="mx-4" asChild>
-            <a>Start</a>
-          </Button>
-        </Link>
       </Card>
     </main>
   );

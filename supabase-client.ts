@@ -1,6 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { getAuth } from "@clerk/nextjs/server";
-import { NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,11 +12,16 @@ export const supabaseAdmin = createClient(
 );
 
 // Create a Supabase client for server-side usage with Clerk auth token
-export async function createSupabaseServerClient(
-  req: NextRequest
-): Promise<SupabaseClient> {
-  const { getToken } = getAuth(req);
-  const token = await getToken({ template: "supabase" });
+export const createSupabaseServerClient = async (): Promise<SupabaseClient> => {
+  const userAuth = await auth();
+
+  if (!userAuth) {
+    throw new Error(
+      "Auth not found. Are you calling this in a server component with a signed-in user?"
+    );
+  }
+
+  const token = await userAuth.getToken({ template: "supabase" });
 
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,4 +34,4 @@ export async function createSupabaseServerClient(
       },
     }
   );
-}
+};
