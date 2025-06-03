@@ -19,27 +19,25 @@ const CourseLearningPathCardComponent = ({
   description,
 }: MainCardComponentProps) => {
   return (
-    <main className="flex my-4 sm:mx-12 lg:mx-20 ">
-      <Card className="w-full shadow-2xl h-[80%]">
-        <CardHeader>
-          <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>
-        </CardHeader>
-        <div className="flex justify-center">
-          <Image
-            src={thumbnail}
-            alt="thumbnailimage"
-            width={250}
-            height={250}
-            className="max-w-full h-auto"
-          />
-        </div>
-        <CardContent>
-          <CardDescription className="text-center text-base p-3">
-            <p>{description}</p>
-          </CardDescription>
-        </CardContent>
-      </Card>
-    </main>
+    <Card className="w-full shadow-2xl h-full">
+      <CardHeader>
+        <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>
+      </CardHeader>
+      <div className="flex justify-center">
+        <Image
+          src={thumbnail}
+          alt="thumbnailimage"
+          width={250}
+          height={250}
+          className="max-w-full h-auto"
+        />
+      </div>
+      <CardContent>
+        <CardDescription className="text-center text-base p-3">
+          <p>{description}</p>
+        </CardDescription>
+      </CardContent>
+    </Card>
   );
 };
 

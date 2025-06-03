@@ -1,4 +1,6 @@
+// components/LearningPathClient.tsx
 "use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { Check, Lock, Star, BookOpen } from "lucide-react";
 import {
@@ -25,7 +27,7 @@ interface Position {
   y: number;
 }
 
-const LearningPath: React.FC = () => {
+const LearningPathClient: React.FC<{ steps: Lesson[] }> = ({ steps }) => {
   const [selectedStep, setSelectedStep] = useState<Lesson | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,296 +48,11 @@ const LearningPath: React.FC = () => {
     };
   }, []);
 
-  const steps: Lesson[] = [
-    {
-      id: 1,
-      title: "What is a stock",
-      completed: true,
-      unlocked: true,
-      description:
-        "Learn the fundamental concept of stocks, how they represent ownership in companies, and why people buy and sell them.",
-      lessons: [
-        "Stock basics",
-        "Company ownership",
-        "Share types",
-        "Market participation",
-      ],
-    },
-    {
-      id: 2,
-      title: "First exchange ever",
-      completed: true,
-      unlocked: true,
-      description:
-        "Discover the fascinating history of the first stock exchange and how trading evolved from coffee houses to digital platforms.",
-      lessons: [
-        "Amsterdam Stock Exchange",
-        "Trading evolution",
-        "Historical context",
-        "Modern markets",
-      ],
-    },
-    {
-      id: 3,
-      title: "How to know what to invest",
-      completed: false,
-      unlocked: true,
-      description:
-        "Master the art of investment research, fundamental analysis, and how to evaluate companies before investing your money.",
-      lessons: [
-        "Research methods",
-        "Financial statements",
-        "Company analysis",
-        "Risk assessment",
-      ],
-    },
-    {
-      id: 4,
-      title: "What is a bond",
-      completed: false,
-      unlocked: false,
-      description:
-        "Understand bonds as debt instruments, how they work differently from stocks, and their role in a balanced portfolio.",
-      lessons: [
-        "Bond fundamentals",
-        "Interest rates",
-        "Government vs corporate",
-        "Portfolio balance",
-      ],
-    },
-    {
-      id: 5,
-      title: "What does Wall Street do",
-      completed: false,
-      unlocked: false,
-      description:
-        "Explore the role of Wall Street, major financial institutions, and how they influence global markets and economy.",
-      lessons: [
-        "Financial district",
-        "Investment banks",
-        "Market makers",
-        "Economic impact",
-      ],
-    },
-    {
-      id: 6,
-      title: "What is a stock",
-      completed: false,
-      unlocked: false,
-      description:
-        "Learn the fundamental concept of stocks, how they represent ownership in companies, and why people buy and sell them.",
-      lessons: [
-        "Stock basics",
-        "Company ownership",
-        "Share types",
-        "Market participation",
-      ],
-    },
-    {
-      id: 7,
-      title: "First exchange ever",
-      completed: false,
-      unlocked: false,
-      description:
-        "Discover the fascinating history of the first stock exchange and how trading evolved from coffee houses to digital platforms.",
-      lessons: [
-        "Amsterdam Stock Exchange",
-        "Trading evolution",
-        "Historical context",
-        "Modern markets",
-      ],
-    },
-    {
-      id: 8,
-      title: "How to know what to invest",
-      completed: false,
-      unlocked: false,
-      description:
-        "Master the art of investment research, fundamental analysis, and how to evaluate companies before investing your money.",
-      lessons: [
-        "Research methods",
-        "Financial statements",
-        "Company analysis",
-        "Risk assessment",
-      ],
-    },
-    {
-      id: 9,
-      title: "What is a bond",
-      completed: false,
-      unlocked: false,
-      description:
-        "Understand bonds as debt instruments, how they work differently from stocks, and their role in a balanced portfolio.",
-      lessons: [
-        "Bond fundamentals",
-        "Interest rates",
-        "Government vs corporate",
-        "Portfolio balance",
-      ],
-    },
-    {
-      id: 10,
-      title: "What does Wall Street do",
-      completed: false,
-      unlocked: false,
-      description:
-        "Explore the role of Wall Street, major financial institutions, and how they influence global markets and economy.",
-      lessons: [
-        "Financial district",
-        "Investment banks",
-        "Market makers",
-        "Economic impact",
-      ],
-    },
-    {
-      id: 11,
-      title: "What is a stock",
-      completed: true,
-      unlocked: true,
-      description:
-        "Learn the fundamental concept of stocks, how they represent ownership in companies, and why people buy and sell them.",
-      lessons: [
-        "Stock basics",
-        "Company ownership",
-        "Share types",
-        "Market participation",
-      ],
-    },
-    {
-      id: 12,
-      title: "First exchange ever",
-      completed: true,
-      unlocked: true,
-      description:
-        "Discover the fascinating history of the first stock exchange and how trading evolved from coffee houses to digital platforms.",
-      lessons: [
-        "Amsterdam Stock Exchange",
-        "Trading evolution",
-        "Historical context",
-        "Modern markets",
-      ],
-    },
-    {
-      id: 13,
-      title: "How to know what to invest",
-      completed: false,
-      unlocked: true,
-      description:
-        "Master the art of investment research, fundamental analysis, and how to evaluate companies before investing your money.",
-      lessons: [
-        "Research methods",
-        "Financial statements",
-        "Company analysis",
-        "Risk assessment",
-      ],
-    },
-    {
-      id: 14,
-      title: "What is a bond",
-      completed: false,
-      unlocked: false,
-      description:
-        "Understand bonds as debt instruments, how they work differently from stocks, and their role in a balanced portfolio.",
-      lessons: [
-        "Bond fundamentals",
-        "Interest rates",
-        "Government vs corporate",
-        "Portfolio balance",
-      ],
-    },
-    {
-      id: 15,
-      title: "What does Wall Street do",
-      completed: false,
-      unlocked: false,
-      description:
-        "Explore the role of Wall Street, major financial institutions, and how they influence global markets and economy.",
-      lessons: [
-        "Financial district",
-        "Investment banks",
-        "Market makers",
-        "Economic impact",
-      ],
-    },
-    {
-      id: 16,
-      title: "What is a stock",
-      completed: false,
-      unlocked: false,
-      description:
-        "Learn the fundamental concept of stocks, how they represent ownership in companies, and why people buy and sell them.",
-      lessons: [
-        "Stock basics",
-        "Company ownership",
-        "Share types",
-        "Market participation",
-      ],
-    },
-    {
-      id: 17,
-      title: "First exchange ever",
-      completed: false,
-      unlocked: false,
-      description:
-        "Discover the fascinating history of the first stock exchange and how trading evolved from coffee houses to digital platforms.",
-      lessons: [
-        "Amsterdam Stock Exchange",
-        "Trading evolution",
-        "Historical context",
-        "Modern markets",
-      ],
-    },
-    {
-      id: 18,
-      title: "How to know what to invest",
-      completed: false,
-      unlocked: false,
-      description:
-        "Master the art of investment research, fundamental analysis, and how to evaluate companies before investing your money.",
-      lessons: [
-        "Research methods",
-        "Financial statements",
-        "Company analysis",
-        "Risk assessment",
-      ],
-    },
-    {
-      id: 19,
-      title: "What is a bond",
-      completed: false,
-      unlocked: false,
-      description:
-        "Understand bonds as debt instruments, how they work differently from stocks, and their role in a balanced portfolio.",
-      lessons: [
-        "Bond fundamentals",
-        "Interest rates",
-        "Government vs corporate",
-        "Portfolio balance",
-      ],
-    },
-    {
-      id: 20,
-      title: "What does Wall Street do",
-      completed: false,
-      unlocked: false,
-      description:
-        "Explore the role of Wall Street, major financial institutions, and how they influence global markets and economy.",
-      lessons: [
-        "Financial district",
-        "Investment banks",
-        "Market makers",
-        "Economic impact",
-      ],
-    },
-  ];
-
-  // Calculate smooth curved X/Y positions for circles
   const getCirclePosition = (index: number): Position => {
-    const spacingY = 20; // vertical spacing in %
-    const baseY = 8; // starting Y %
-
-    const amplitude = 30; // max horizontal offset in %
-    const frequency = 0.8; // oscillation speed
+    const spacingY = 20;
+    const baseY = 8;
+    const amplitude = 30;
+    const frequency = 0.8;
 
     const y = baseY + index * spacingY;
     const x = 50 + amplitude * Math.sin(frequency * index);
@@ -360,7 +77,6 @@ const LearningPath: React.FC = () => {
   return (
     <div className="flex-1 relative">
       <div ref={containerRef} className="relative w-96 h-[580px] mx-auto">
-        {/* Circles only - no lines or animations */}
         {steps.map((step, index) => {
           const position = getCirclePosition(index);
           return (
@@ -369,26 +85,20 @@ const LearningPath: React.FC = () => {
               className={`absolute transform -translate-x-1/2 -translate-y-1/2 group ${
                 selectedStep?.id === step.id ? "z-50" : "z-20"
               }`}
-              style={{
-                left: `${position.x}%`,
-                top: `${position.y}%`,
-              }}
+              style={{ left: `${position.x}%`, top: `${position.y}%` }}
             >
-              {/* Step Circle */}
               <div
                 onClick={() =>
                   setSelectedStep(selectedStep?.id === step.id ? null : step)
                 }
-                className={`
-                  relative w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-125 cursor-pointer
+                className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-125 cursor-pointer
                   ${
                     step.completed
                       ? "bg-gradient-to-br from-emerald-400 to-emerald-600 border-4 border-white shadow-emerald-200"
                       : step.unlocked
                       ? "bg-gradient-to-br from-blue-400 to-blue-600 border-4 border-white shadow-blue-200"
                       : "bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-gray-200"
-                  }
-                `}
+                  }`}
               >
                 {step.completed ? (
                   <Check className="w-6 h-6 text-white drop-shadow-sm" />
@@ -398,7 +108,6 @@ const LearningPath: React.FC = () => {
                   <Lock className="w-6 h-6 text-gray-400" />
                 )}
 
-                {/* Completion Badge */}
                 {step.completed && (
                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
                     <Star className="w-2.5 h-2.5 text-yellow-800 fill-current" />
@@ -406,7 +115,6 @@ const LearningPath: React.FC = () => {
                 )}
               </div>
 
-              {/* Hover Title */}
               <div className="absolute top-20 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                 <div className="bg-gray-900 text-white px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg">
                   {step.title}
@@ -414,23 +122,19 @@ const LearningPath: React.FC = () => {
                 </div>
               </div>
 
-              {/* Popup Card */}
               {selectedStep?.id === step.id && (
                 <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-80">
                   <Card className="shadow-2xl border-2">
                     <CardHeader className="pb-3">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`
-                          w-8 h-8 rounded-full flex items-center justify-center
-                          ${
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
                             step.completed
                               ? "bg-gradient-to-br from-emerald-400 to-emerald-600"
                               : step.unlocked
                               ? "bg-gradient-to-br from-blue-400 to-blue-600"
                               : "bg-gradient-to-br from-gray-100 to-gray-200"
-                          }
-                        `}
+                          }`}
                         >
                           {step.completed ? (
                             <Check className="w-4 h-4 text-white" />
@@ -447,15 +151,14 @@ const LearningPath: React.FC = () => {
                       <CardDescription className="text-sm leading-relaxed">
                         {step.description}
                       </CardDescription>
-
                       <div>
                         <h5 className="font-semibold text-sm mb-2">
                           Lesson Topics:
                         </h5>
                         <div className="flex flex-wrap gap-1">
-                          {step.lessons.map((lesson, lessonIndex) => (
+                          {step.lessons.map((lesson, i) => (
                             <Badge
-                              key={lessonIndex}
+                              key={i}
                               variant="secondary"
                               className="text-xs"
                             >
@@ -464,7 +167,6 @@ const LearningPath: React.FC = () => {
                           ))}
                         </div>
                       </div>
-
                       <Button
                         className="w-full"
                         variant={getButtonVariant(step)}
@@ -474,8 +176,6 @@ const LearningPath: React.FC = () => {
                       </Button>
                     </CardContent>
                   </Card>
-
-                  {/* Arrow pointing to circle */}
                   <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-l-2 border-t-2 border-gray-200 rotate-45"></div>
                 </div>
               )}
@@ -487,4 +187,4 @@ const LearningPath: React.FC = () => {
   );
 };
 
-export default LearningPath;
+export default LearningPathClient;
