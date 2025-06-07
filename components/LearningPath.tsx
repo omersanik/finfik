@@ -1,5 +1,6 @@
 // components/LearningPathClient.tsx
 "use client";
+import { useRouter } from "next/navigation";
 
 import React, { useState, useRef, useEffect } from "react";
 import { Check, Lock, Star, BookOpen } from "lucide-react";
@@ -14,12 +15,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface Lesson {
-  id: number;
+  id: string;
   title: string;
   completed: boolean;
   unlocked: boolean;
   description: string;
   lessons: string[];
+  courseSlug: string;
+  order: number;
+  quiz_passed: boolean;
 }
 
 interface Position {
@@ -30,6 +34,10 @@ interface Position {
 const LearningPathClient: React.FC<{ steps: Lesson[] }> = ({ steps }) => {
   const [selectedStep, setSelectedStep] = useState<Lesson | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // Sort steps by order
+  const sortedSteps = [...steps].sort((a, b) => a.order - b.order);
 
   // Close popover when clicking outside
   useEffect(() => {
@@ -77,7 +85,7 @@ const LearningPathClient: React.FC<{ steps: Lesson[] }> = ({ steps }) => {
   return (
     <div className="flex-1 relative">
       <div ref={containerRef} className="relative w-96 h-[580px] mx-auto">
-        {steps.map((step, index) => {
+        {sortedSteps.map((step, index) => {
           const position = getCirclePosition(index);
           return (
             <div
@@ -171,6 +179,13 @@ const LearningPathClient: React.FC<{ steps: Lesson[] }> = ({ steps }) => {
                         className="w-full"
                         variant={getButtonVariant(step)}
                         disabled={!step.unlocked}
+                        onClick={() => {
+                          if (step.unlocked) {
+                            router.push(
+                              `/courses/${step.courseSlug}/${step.id}`
+                            );
+                          }
+                        }}
                       >
                         {getButtonText(step)}
                       </Button>

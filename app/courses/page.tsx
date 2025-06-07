@@ -15,6 +15,7 @@ const Page = async () => {
             description={course.description}
             thumbnail={course.thumbnail_url}
             slug={course.slug}
+            sections={course.sections}
           />
         ))}
       </div>

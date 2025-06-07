@@ -10,7 +10,10 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const hideNavbar = pathname === "/sign-in" || pathname === "/sign-up";
+  const hideNavbar =
+    pathname === "/sign-in" ||
+    pathname === "/sign-up" ||
+    /^\/courses\/[^/]+\/[^/]+$/.test(pathname);
 
   return (
     <>

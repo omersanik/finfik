@@ -5,7 +5,6 @@ import LearningPathClient from "@/components/LearningPath";
 interface CoursePageProps {
   params: { slug: string };
 }
-
 interface CoursePathSection {
   id: number;
   title: string;
@@ -13,6 +12,7 @@ interface CoursePathSection {
   unlocked: boolean;
   description: string;
   lessons: string[];
+  courseSlug: string; // 👈 Add this
 }
 
 export default async function CoursePage({ params }: CoursePageProps) {
@@ -21,13 +21,16 @@ export default async function CoursePage({ params }: CoursePageProps) {
   console.log("Slug received:", params.slug);
 
   const steps = path.sections.map(
-    (section: any): CoursePathSection => ({
-      id: section.id,
+    (section: any, index: number): Lesson => ({
+      id: String(section.id), // 👈 ensure it's a string
       title: section.title,
       completed: section.completed,
       unlocked: section.unlocked,
-      description: section.descriptions?.[0] ?? "No description", // fallback
+      description: section.description ?? "No description",
       lessons: section.lessons || [],
+      courseSlug: params.slug,
+      order: index, // 👈 add this
+      quiz_passed: section.quiz_passed ?? false, // 👈 add this
     })
   );
 

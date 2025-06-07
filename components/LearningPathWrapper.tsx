@@ -8,10 +8,15 @@ interface LearningPathWrapperProps {
   coursePathId: string;
 }
 
-export default async function LearningPathWrapper({ coursePathId }: LearningPathWrapperProps) {
-  console.log("LearningPathWrapper: Fetching sections for course path:", coursePathId);
+export default async function LearningPathWrapper({
+  coursePathId,
+}: LearningPathWrapperProps) {
+  console.log(
+    "LearningPathWrapper: Fetching sections for course path:",
+    coursePathId
+  );
   const sections = await getCoursePathSections(coursePathId);
   console.log("LearningPathWrapper: Fetched sections:", sections);
 
-  return <LearningPath initialSections={sections} />;
+  return <LearningPath steps={sections} />;
 }
