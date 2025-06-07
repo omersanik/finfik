@@ -11,8 +11,10 @@ interface CoursePathSection {
   title: string;
   completed: boolean;
   unlocked: boolean;
+  courseSlug: string;
   description: string;
   lessons: string[];
+  sectionSlug: string;
 }
 
 export default async function CoursePage({ params }: CoursePageProps) {
@@ -28,6 +30,8 @@ export default async function CoursePage({ params }: CoursePageProps) {
       unlocked: section.unlocked,
       description: section.descriptions?.[0] ?? "No description", // fallback
       lessons: section.lessons || [],
+      courseSlug: params.slug,
+      sectionSlug: section.slug, // ensure sectionSlug is included
     })
   );
 

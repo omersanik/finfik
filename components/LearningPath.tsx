@@ -12,14 +12,16 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
+import { useRouter } from "next/navigation";
 interface Lesson {
   id: number;
   title: string;
   completed: boolean;
   unlocked: boolean;
+  courseSlug: string;
   description: string;
   lessons: string[];
+  sectionSlug: string;
 }
 
 interface Position {
@@ -30,7 +32,7 @@ interface Position {
 const LearningPathClient: React.FC<{ steps: Lesson[] }> = ({ steps }) => {
   const [selectedStep, setSelectedStep] = useState<Lesson | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
+  const router = useRouter();
   // Close popover when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -171,6 +173,13 @@ const LearningPathClient: React.FC<{ steps: Lesson[] }> = ({ steps }) => {
                         className="w-full"
                         variant={getButtonVariant(step)}
                         disabled={!step.unlocked}
+                        onClick={() => {
+                          if (step.unlocked) {
+                            router.push(
+                              `/courses/${step.courseSlug}/${step.sectionSlug}` // Ensure sectionSlug is available
+                            );
+                          }
+                        }}
                       >
                         {getButtonText(step)}
                       </Button>
