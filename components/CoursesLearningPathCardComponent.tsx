@@ -1,5 +1,3 @@
-import Image, { StaticImageData } from "next/image";
-import React from "react";
 import {
   Card,
   CardContent,
@@ -7,9 +5,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Image from "next/image";
 interface MainCardComponentProps {
   title: string;
-  thumbnail: StaticImageData;
+  thumbnail: string;
   description: string;
 }
 

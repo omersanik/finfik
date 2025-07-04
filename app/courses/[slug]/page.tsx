@@ -1,9 +1,11 @@
-import { fetchCourse, fetchCoursePath } from "@/lib/db/actions/course-actions";
+// import { fetchCourse, fetchCoursePath } from "@/lib/db/actions/course-actions";
 import CourseLearningPathCardComponent from "@/components/CoursesLearningPathCardComponent";
 import LearningPathClient from "@/components/LearningPath";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 interface CoursePageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 interface CoursePathSection {
@@ -18,9 +20,49 @@ interface CoursePathSection {
 }
 
 export default async function CoursePage({ params }: CoursePageProps) {
-  const path = await fetchCoursePath(params.slug);
-  const courseInfo = await fetchCourse(params.slug);
-  console.log("Slug received:", params.slug);
+  // Await params first
+  const { slug } = await params;
+  // Get authentication token first
+  const { getToken, userId } = await auth();
+
+  // Redirect if not authenticated
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "");
+  if (!baseUrl) throw new Error("NEXT_PUBLIC_SITE_URL is not defined");
+
+  // Get the session token for API requests
+  const token = await getToken();
+
+  // Fetch course path with authentication
+  const pathRes = await fetch(`${baseUrl}/api/courses/${slug}/path`, {
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!pathRes.ok)
+    throw new Error(`Failed to fetch course path: ${pathRes.status}`);
+  const path = await pathRes.json();
+
+  // Fetch course info with authentication
+  const courseRes = await fetch(`${baseUrl}/api/courses/${slug}`, {
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!courseRes.ok)
+    throw new Error(`Failed to fetch course info: ${courseRes.status}`);
+  const courseInfo = await courseRes.json();
+
+  console.log("Slug received:", slug);
 
   const steps = path.sections.map(
     (section: any): CoursePathSection => ({
@@ -28,10 +70,10 @@ export default async function CoursePage({ params }: CoursePageProps) {
       title: section.title,
       completed: section.completed,
       unlocked: section.unlocked,
-      description: section.descriptions?.[0] ?? "No description", // fallback
+      description: section.description ?? "No description", // Use the description from API
       lessons: section.lessons || [],
-      courseSlug: params.slug,
-      sectionSlug: section.slug, // ensure sectionSlug is included
+      courseSlug: slug,
+      sectionSlug: section.slug, // This should now be available from your API response
     })
   );
 
