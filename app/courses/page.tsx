@@ -27,6 +27,7 @@ const Page = async () => {
     slug: string;
     thumbnail_url: string;
     description: string;
+    is_premium_course?: boolean;
   };
   let courses: Course[] = [];
   if (!res.ok) {
@@ -50,6 +51,7 @@ const Page = async () => {
             thumbnail={course.thumbnail_url}
             slug={course.slug}
             courseId={course.id}
+            isPremium={course.is_premium_course}
           />
         ))}
       </div>

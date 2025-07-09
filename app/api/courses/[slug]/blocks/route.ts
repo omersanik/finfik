@@ -55,4 +55,32 @@ export async function GET(req: Request) {
   }));
 
   return NextResponse.json({ blocks: blocksWithItems });
+}
+
+export async function POST(req: Request) {
+  try {
+    const supabase = CreateSupabaseClient();
+    const body = await req.json();
+    const { section_id, title, order_index } = body;
+    if (!section_id || order_index === undefined) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+    const { data, error } = await supabase
+      .from("content_block")
+      .insert([
+        {
+          section_id,
+          title: title || null,
+          order_index,
+        },
+      ])
+      .select()
+      .single();
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ block: data }, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 } 

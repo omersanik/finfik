@@ -2,7 +2,7 @@
 "use client";
 
 import ContentBlockComponent from "./ContentBlock";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import CourseIdNavbar from "./CourseIdNavbar";
 
 interface ContentItem {
@@ -39,8 +39,9 @@ export default function SectionClient({
   courseSlug,
   blocks,
 }: Props) {
-  const [blockIndex, setBlockIndex] = useState(0);
+  const [unlockedIndex, setUnlockedIndex] = useState(0);
   const [finished, setFinished] = useState(false);
+  const blockRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     if (finished) {
@@ -51,11 +52,9 @@ export default function SectionClient({
     }
   }, [finished, courseSlug]);
 
-  const onContinue = async () => {
-    const isLast = blockIndex === blocks.length - 1;
-
+  const handleContinue = async (idx: number) => {
+    const isLast = idx === blocks.length - 1;
     if (isLast) {
-      // Complete section via API (send course_path_section_id as sectionId)
       await fetch("/api/progress/complete-and-unlock", {
         method: "POST",
         body: JSON.stringify({
@@ -65,10 +64,12 @@ export default function SectionClient({
         }),
         headers: { "Content-Type": "application/json" },
       });
-
       setFinished(true);
     } else {
-      setBlockIndex((prev) => prev + 1);
+      setUnlockedIndex((prev) => Math.max(prev, idx + 1));
+      setTimeout(() => {
+        blockRefs.current[idx + 1]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     }
   };
 
@@ -88,23 +89,43 @@ export default function SectionClient({
     );
   }
 
-  const current = blocks[blockIndex];
-
   return (
     <>
       <CourseIdNavbar
         hrefX={`/courses/${courseSlug}`}
-        currentProgress={blockIndex + 1}
+        currentProgress={unlockedIndex + 1}
         totalProgress={blocks.length}
       />
       <div className="max-w-3xl mx-auto p-4 pt-24">
-        <ContentBlockComponent
-          block={current}
-          isVisible={true}
-          onContinue={onContinue}
-          canContinue={true}
-          isLastBlock={blockIndex === blocks.length - 1}
-        />
+        {blocks.slice(0, unlockedIndex + 1).map((block, idx) => (
+          <div
+            key={block.id}
+            ref={el => { blockRefs.current[idx] = el; }}
+            className="mb-12 transition-all duration-700 ease-in-out"
+          >
+            <ContentBlockComponent
+              block={block}
+              isVisible={true}
+              onContinue={() => handleContinue(idx)}
+              canContinue={true}
+              isLastBlock={idx === blocks.length - 1}
+              locked={false}
+              hideContinueButton={true}
+            />
+          </div>
+        ))}
+        {/* Single Continue Button at the bottom */}
+        {unlockedIndex < blocks.length && (
+          <div className="flex justify-center mt-8 sticky bottom-8 z-20">
+            <button
+              onClick={() => handleContinue(unlockedIndex)}
+              className="px-6 py-2 rounded-lg font-medium transition-all text-sm bg-primary text-white shadow hover:bg-primary/90"
+              style={{ minWidth: 160 }}
+            >
+              {unlockedIndex === blocks.length - 1 ? "Finish" : "Continue"}
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

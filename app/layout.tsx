@@ -4,6 +4,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
 import LayoutWrapper from "@/components/LayoutWrapper";
+import PageLoading from "@/components/PageLoading";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,15 +29,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <PageLoading />
             <LayoutWrapper>{children}</LayoutWrapper>
           </ThemeProvider>
         </body>

@@ -13,6 +13,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
+import { Badge } from "@/components/ui/badge";
 
 interface MainCardComponentProps {
   title: string;
@@ -20,6 +21,7 @@ interface MainCardComponentProps {
   description: string;
   slug: string;
   courseId: string; // ✅ Make sure this is passed from the parent
+  isPremium?: boolean;
 }
 
 const MainCardComponent = ({
@@ -28,6 +30,7 @@ const MainCardComponent = ({
   description,
   slug,
   courseId,
+  isPremium = false,
 }: MainCardComponentProps) => {
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
@@ -112,7 +115,16 @@ const MainCardComponent = ({
     <main className="flex my-4 sm:mx-12 lg:mx-20">
       <Card className="w-full sm:w-[35%] shadow-2xl">
         <CardHeader>
-          <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>
+          <div className="flex items-center gap-2 justify-center">
+            <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>
+            {isPremium && (
+              <span className="ml-2">
+                <Badge variant="secondary">
+                  <span role="img" aria-label="throne">🪑</span> Premium
+                </Badge>
+              </span>
+            )}
+          </div>
         </CardHeader>
         <div className="flex justify-center">
           <Image

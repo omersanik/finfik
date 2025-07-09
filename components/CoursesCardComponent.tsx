@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 interface CoursesCardComponentProps {
   title: string;
@@ -18,6 +19,7 @@ interface CoursesCardComponentProps {
   thumbnail: string | StaticImageData;
   slug: string;
   courseId: string;
+  isPremium?: boolean;
 }
 
 const CoursesCardComponent = ({
@@ -26,12 +28,31 @@ const CoursesCardComponent = ({
   thumbnail,
   slug,
   courseId,
+  isPremium = false,
 }: CoursesCardComponentProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleStart = async () => {
     setLoading(true);
+
+    // Premium check before starting the course
+    if (isPremium) {
+      try {
+        const res = await fetch("/api/users/premium-users");
+        if (res.ok) {
+          const data = await res.json();
+          if (!data.is_premium) {
+            window.location.href = "/subscription";
+            return;
+          }
+        }
+      } catch (err) {
+        // fallback: block access if check fails
+        window.location.href = "/subscription";
+        return;
+      }
+    }
 
     const res = await fetch("/api/progress/start-course-and-paths", {
       method: "POST",
@@ -72,7 +93,16 @@ const CoursesCardComponent = ({
         </div>
       )}
       <CardHeader>
-        <CardTitle className="text-xl">{title}</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-xl">{title}</CardTitle>
+          {isPremium && (
+            <span className="ml-2">
+              <Badge variant="secondary" className="bg-yellow-400 text-yellow-900 font-bold px-3 py-1 text-xs flex items-center gap-1 border-yellow-300 shadow-sm">
+                <span role="img" aria-label="crown">👑</span> Premium
+              </Badge>
+            </span>
+          )}
+        </div>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
 

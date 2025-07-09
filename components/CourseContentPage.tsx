@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect, Suspense } from "react";
 import Link from "next/link";
 import ContentBlockComponent from "./ContentBlock";
 import CourseIdNavbar from "./CourseIdNavbar";
+import LoadingAnimation from "./LoadingAnimation";
 
 interface ContentItem {
   id: string;
@@ -53,19 +54,6 @@ interface CourseContentPageProps {
 }
 
 const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
-  console.log("Course Data:", {
-    courseId: courseData.course.id,
-    isPremium: courseData.course.is_premium,
-    sections: courseData.path.sections.map((s) => ({
-      id: s.id,
-      title: s.title,
-      order: s.order,
-      unlocked: s.unlocked,
-      completed: s.completed,
-      blocksCount: s.content_blocks.length,
-    })),
-  });
-
   // Find the current active section (first unlocked but not completed section)
   const findCurrentSection = () => {
     const uncompletedUnlocked = courseData.path.sections.find(
@@ -96,8 +84,19 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [isUpdatingProgress, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const currentSection = courseData.path.sections[currentSectionIndex];
+  
+  // Set loading to false after component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   const currentSectionBlocks = currentSection?.content_blocks || [];
 
   const canAccessCurrentSection = currentSection?.unlocked || false;
@@ -170,13 +169,12 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
           } catch (error) {
             console.error("Error updating progress:", error);
             setError(
-              error instanceof Error
-                ? error.message
-                : "Failed to update progress"
+              "Failed to update progress. Please try again or contact support."
             );
           }
         });
       } else {
+        // If section is already completed, just move to next section
         const nextSectionIndex = currentSectionIndex + 1;
         if (nextSectionIndex < courseData.path.sections.length) {
           setCurrentSectionIndex(nextSectionIndex);
@@ -186,19 +184,8 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
         }
       }
     } else {
-      setCurrentBlockIndex((prev) => prev + 1);
-
-      setTimeout(() => {
-        const nextBlockElement = document.querySelector(
-          `[data-block-index="${currentBlockIndex + 1}"]`
-        );
-        if (nextBlockElement) {
-          nextBlockElement.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }
-      }, 100);
+      // Move to next block in current section
+      setCurrentBlockIndex(currentBlockIndex + 1);
     }
   };
 
@@ -211,8 +198,11 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
       totalBlocks += section.content_blocks.length;
 
       if (sectionIdx < currentSectionIndex) {
+        // All blocks in previous sections are completed
         completedBlocks += section.content_blocks.length;
       } else if (sectionIdx === currentSectionIndex) {
+        // Only count blocks that are actually completed in current section
+        // When currentBlockIndex is 0, we're viewing the first block but haven't completed it yet
         completedBlocks += currentBlockIndex;
       }
     });
@@ -221,6 +211,23 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
   };
 
   const progress = calculateProgress();
+
+  // Debug progress
+  console.log("Progress:", progress);
+
+  // Show loading screen
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#fefaf1] pt-24 pb-12 flex items-center justify-center">
+        <div className="text-center">
+          <Suspense fallback={<div className="w-32 h-32 bg-gray-200 rounded-full animate-pulse"></div>}>
+            <LoadingAnimation size="large" />
+          </Suspense>
+          <p className="mt-4 text-gray-600 text-sm">Loading course content...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If course is premium and user doesn't have access
   if (courseData.course.is_premium && !canAccessCurrentSection) {

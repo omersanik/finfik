@@ -25,8 +25,14 @@ function Navbar() {
         <Link className="m-4" href="/admin/create-a-new-course">
           <Button>Create a new Course</Button>
         </Link>
-        <Link href="/admin/add-sections">
+        <Link className="m-4" href="/admin/add-sections">
           <Button>Add Sections</Button>
+        </Link>
+        <Link className="m-4" href="/admin/add-content-blocks">
+          <Button>Add Content Blocks</Button>
+        </Link>
+        <Link className="m-4" href="/admin/add-content-items">
+          <Button>Add Content Items</Button>
         </Link>
       </div>
     </nav>

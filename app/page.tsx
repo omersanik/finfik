@@ -74,7 +74,7 @@ const Page = async () => {
   );
 
   return (
-    <main>
+    <main className="bg-background text-foreground min-h-screen">
       <h1 className="text-3xl font-semibold my-10 mx-10 font-serif">
         Keep going where you left off
       </h1>
