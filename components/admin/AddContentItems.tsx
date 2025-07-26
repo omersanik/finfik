@@ -1,197 +1,134 @@
 "use client";
-import { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
+import EnhancedContentEditor from './EnhancedContentEditor';
+import ChartEditor from './ChartEditor';
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
   DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
-  block_id: z.string().optional(),
-  type: z.string().optional(),
-  content_text: z.string().optional(),
+  course_id: z.string().min(1, "Course is required"),
+  section_id: z.string().min(1, "Section is required"),
+  block_id: z.string().min(1, "Content Block is required"),
+  order_index: z.number().int().min(0, "Order index must be a non-negative integer"),
+  type: z.string().min(1, "Content type is required"),
   image_url: z.string().optional(),
   quiz_data: z.string().optional(),
-  component_key: z.string().optional(),
-  order_index: z.preprocess(
-    (v) => {
-      if (v === '' || v === undefined || v === null) return undefined;
-      const num = Number(v);
-      return isNaN(num) ? undefined : num;
-    },
-    z.number().optional()
-  ),
   quiz_question: z.string().optional(),
+  content_text: z.string().optional(),
+}).refine((data) => {
+  // For chart type, content_text is optional (will be JSON)
+  if (data.type === 'chart') {
+    return true;
+  }
+  // For other types, content_text is required
+  return data.content_text && data.content_text.trim().length > 0;
+}, {
+  message: "Content is required",
+  path: ["content_text"]
 });
 
-interface ContentBlock {
-  id: string;
-  title: string;
-}
-
-interface CoursePath {
-  id: string;
-  name: string;
-}
-
-interface Section {
-  id: string;
-  title: string;
-}
-
-type ContentItemFormValues = {
-  block_id?: string;
-  type?: string;
-  content_text?: string;
-  image_url?: string;
-  quiz_data?: string;
-  component_key?: string;
-  order_index?: any;
-  quiz_question?: string;
-};
+type ContentItemFormValues = z.infer<typeof formSchema>;
 
 export default function AddContentItems() {
-  const [coursePaths, setCoursePaths] = useState<CoursePath[]>([]);
-  const [sections, setSections] = useState<Section[]>([]);
-  const [blocks, setBlocks] = useState<ContentBlock[]>([]);
-  const [selectedCoursePath, setSelectedCoursePath] = useState<string>("");
-  const [selectedCoursePathName, setSelectedCoursePathName] = useState<string>("");
-  const [selectedSection, setSelectedSection] = useState<string>("");
-  const [selectedSectionName, setSelectedSectionName] = useState<string>("");
-  const [selectedBlock, setSelectedBlock] = useState<string>("");
-  const [selectedBlockName, setSelectedBlockName] = useState<string>("");
-  const [loadingPaths, setLoadingPaths] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [sections, setSections] = useState<any[]>([]);
+  const [blocks, setBlocks] = useState<any[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingSections, setLoadingSections] = useState(false);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [errorCourses, setErrorCourses] = useState("");
+  const [errorSections, setErrorSections] = useState("");
+  const [errorBlocks, setErrorBlocks] = useState("");
 
   const form = useForm<ContentItemFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      course_id: "",
+      section_id: "",
       block_id: "",
+      order_index: 0,
       type: "",
-      content_text: "",
       image_url: "",
       quiz_data: "",
-      component_key: "",
-      order_index: undefined,
       quiz_question: "",
+      content_text: "",
     },
   });
 
-  // Fetch course paths on mount
+  // Fetch courses on mount
   useEffect(() => {
-    const fetchCoursePaths = async () => {
-      try {
-        const response = await fetch("/api/admin/course-paths");
-        if (response.ok) {
-          const data = await response.json();
-          setCoursePaths(data);
-        } else {
-          setCoursePaths([]);
-        }
-      } catch (error) {
-        setCoursePaths([]);
-      } finally {
-        setLoadingPaths(false);
-      }
-    };
-    fetchCoursePaths();
+    setLoadingCourses(true);
+    fetch("/api/admin/course-paths")
+      .then(res => res.json())
+      .then(data => {
+        setCourses(data);
+        setLoadingCourses(false);
+      })
+      .catch(() => {
+        setErrorCourses("Failed to load courses");
+        setLoadingCourses(false);
+      });
   }, []);
 
-  // Fetch sections when course path changes
+  // Fetch sections when course changes
   useEffect(() => {
-    if (!selectedCoursePath) return;
+    const courseId = form.watch("course_id");
+    if (!courseId) {
+      setSections([]);
+      setBlocks([]);
+      form.setValue("section_id", "");
+      form.setValue("block_id", "");
+      return;
+    }
     setLoadingSections(true);
-    setSections([]);
-    setSelectedSection("");
-    setSelectedSectionName("");
-    setBlocks([]);
-    setSelectedBlock("");
-    setSelectedBlockName("");
-    form.setValue("block_id", "");
-    const fetchSections = async () => {
-      try {
-        const response = await fetch(`/api/admin/sections?course_path_id=${selectedCoursePath}`);
-        if (response.ok) {
-          const data = await response.json();
+    fetch(`/api/admin/sections?course_path_id=${courseId}`)
+      .then(res => res.json())
+      .then(data => {
           setSections(data);
-        } else {
-          setSections([]);
-        }
-      } catch (error) {
-        setSections([]);
-      } finally {
         setLoadingSections(false);
-      }
-    };
-    fetchSections();
-  }, [selectedCoursePath]);
+      })
+      .catch(() => {
+        setErrorSections("Failed to load sections");
+        setLoadingSections(false);
+      });
+  }, [form.watch("course_id")]);
 
   // Fetch blocks when section changes
   useEffect(() => {
-    if (!selectedSection) return;
-    setLoadingBlocks(true);
+    const sectionId = form.watch("section_id");
+    if (!sectionId) {
     setBlocks([]);
-    setSelectedBlock("");
-    setSelectedBlockName("");
     form.setValue("block_id", "");
-    // Find the course path slug (use name as fallback)
-    const cp = coursePaths.find((c) => c.id === selectedCoursePath);
-    const slug = (cp as any)?.slug || cp?.name;
-    if (!slug) {
-      setLoadingBlocks(false);
       return;
     }
-    const fetchBlocks = async () => {
-      try {
-        const response = await fetch(`/api/courses/${slug}/blocks?section_id=${selectedSection}`);
-        if (response.ok) {
-          const data = await response.json();
-          setBlocks(data.blocks || []);
-        } else {
-          setBlocks([]);
-        }
-      } catch (error) {
-        setBlocks([]);
-      } finally {
+    setLoadingBlocks(true);
+    fetch(`/api/admin/blocks?section_id=${sectionId}`)
+      .then(res => res.json())
+      .then(data => {
+        setBlocks(data);
         setLoadingBlocks(false);
-      }
-    };
-    fetchBlocks();
-  }, [selectedSection, selectedCoursePath, coursePaths]);
+      })
+      .catch(() => {
+        setErrorBlocks("Failed to load blocks");
+        setLoadingBlocks(false);
+      });
+  }, [form.watch("section_id")]);
 
-  function handleCoursePathSelect(id: string, name: string) {
-    setSelectedCoursePath(id);
-    setSelectedCoursePathName(name);
-  }
-  function handleSectionSelect(id: string, name: string) {
-    setSelectedSection(id);
-    setSelectedSectionName(name);
-  }
-  function handleBlockSelect(id: string, title: string) {
-    setSelectedBlock(id);
-    setSelectedBlockName(title);
-    form.setValue("block_id", id);
-  }
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setSubmitting(true);
+
+  async function onSubmit(values: ContentItemFormValues) {
+    setMessage(null);
     try {
       const response = await fetch("/api/admin/content-items", {
         method: "POST",
@@ -199,231 +136,184 @@ export default function AddContentItems() {
         body: JSON.stringify(values),
       });
       if (response.ok) {
+        setMessage("Content item created successfully!");
         form.reset();
-        setSelectedBlock("");
-        setSelectedBlockName("");
-        alert("Content item created successfully!");
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.error || "Failed to create content item"}`);
+        setMessage(`Error: ${errorData.error || "Failed to create content item"}`);
       }
     } catch (error) {
-      alert("An unexpected error occurred. Please try again.");
-    } finally {
-      setSubmitting(false);
+      setMessage("An unexpected error occurred. Please try again.");
     }
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {/* Course Path Dropdown (not a FormField) */}
+    <div className="max-w-2xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Add Content Item</h1>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Course Dropdown */}
         <div>
-          <FormLabel>Course Path</FormLabel>
+          <label className="block font-semibold mb-2">Course</label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full justify-start">
-                {selectedCoursePathName || "Select a course path..."}
+              <Button type="button" variant="outline" className="w-full justify-start" disabled={loadingCourses}>
+                {loadingCourses
+                  ? "Loading..."
+                  : courses.find(c => c.id === form.watch("course_id"))?.name || "Select a course"}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-full">
-              {loadingPaths ? (
-                <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
-              ) : coursePaths.length > 0 ? (
-                coursePaths.map((cp) => (
-                  <DropdownMenuItem
-                    key={cp.id}
-                    onClick={() => handleCoursePathSelect(cp.id, cp.name)}
-                  >
-                    {cp.name}
+            <DropdownMenuContent className="w-full min-w-[200px]">
+              <DropdownMenuLabel>Pick a course</DropdownMenuLabel>
+              {errorCourses && <DropdownMenuItem disabled>{errorCourses}</DropdownMenuItem>}
+              {courses.map(course => (
+                <DropdownMenuItem key={course.id} onClick={() => form.setValue("course_id", course.id)}>
+                  {course.name}
                   </DropdownMenuItem>
-                ))
-              ) : (
-                <DropdownMenuItem disabled>No course paths found</DropdownMenuItem>
-              )}
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <FormDescription>Select the course path.</FormDescription>
+          {form.formState.errors.course_id && <div className="text-red-500 text-sm mt-1">{form.formState.errors.course_id.message}</div>}
         </div>
-        {/* Section Dropdown (not a FormField) */}
+        {/* Section Dropdown */}
         <div>
-          <FormLabel>Section</FormLabel>
+          <label className="block font-semibold mb-2">Section</label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full justify-start" disabled={!selectedCoursePath}>
-                {selectedSectionName || "Select a section..."}
+              <Button type="button" variant="outline" className="w-full justify-start" disabled={!form.watch("course_id") || loadingSections}>
+                {loadingSections
+                  ? "Loading..."
+                  : sections.find(s => s.id === form.watch("section_id"))?.title || (!form.watch("course_id") ? "Select a course first" : "Select a section")}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-full">
-              {loadingSections ? (
-                <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
-              ) : sections.length > 0 ? (
-                sections.map((section) => (
-                  <DropdownMenuItem
-                    key={section.id}
-                    onClick={() => handleSectionSelect(section.id, section.title)}
-                  >
+            <DropdownMenuContent className="w-full min-w-[200px]">
+              <DropdownMenuLabel>Pick a section</DropdownMenuLabel>
+              {errorSections && <DropdownMenuItem disabled>{errorSections}</DropdownMenuItem>}
+              {sections.map(section => (
+                <DropdownMenuItem key={section.id} onClick={() => form.setValue("section_id", section.id)}>
                     {section.title}
                   </DropdownMenuItem>
-                ))
-              ) : (
-                <DropdownMenuItem disabled>No sections found</DropdownMenuItem>
-              )}
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <FormDescription>Select the section.</FormDescription>
+          {form.formState.errors.section_id && <div className="text-red-500 text-sm mt-1">{form.formState.errors.section_id.message}</div>}
         </div>
         {/* Block Dropdown */}
-        <FormField
-          control={form.control}
-          name="block_id"
-          render={() => (
-            <FormItem>
-              <FormLabel>Content Block</FormLabel>
-              <FormControl>
+        <div>
+          <label className="block font-semibold mb-2">Content Block</label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start" disabled={!selectedSection}>
-                      {selectedBlockName || "Select a content block..."}
+              <Button type="button" variant="outline" className="w-full justify-start" disabled={!form.watch("section_id") || loadingBlocks}>
+                {loadingBlocks
+                  ? "Loading..."
+                  : blocks.find(b => b.id === form.watch("block_id"))?.title || (!form.watch("section_id") ? "Select a section first" : "Select a content block")}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full">
-                    {loadingBlocks ? (
-                      <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
-                    ) : blocks.length > 0 ? (
-                      blocks.map((block) => (
-                        <DropdownMenuItem
-                          key={block.id}
-                          onClick={() => handleBlockSelect(block.id, block.title)}
-                        >
-                          {block.title || block.id}
+            <DropdownMenuContent className="w-full min-w-[200px]">
+              <DropdownMenuLabel>Pick a content block</DropdownMenuLabel>
+              {errorBlocks && <DropdownMenuItem disabled>{errorBlocks}</DropdownMenuItem>}
+              {blocks.map(block => (
+                <DropdownMenuItem key={block.id} onClick={() => form.setValue("block_id", block.id)}>
+                  {block.title}
                         </DropdownMenuItem>
-                      ))
-                    ) : (
-                      <DropdownMenuItem disabled>No content blocks found</DropdownMenuItem>
-                    )}
+              ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </FormControl>
-              <FormDescription>Select the content block for this item (optional).</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* Type */}
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <FormControl>
-                <Input placeholder="Type (e.g. text, image, quiz, animation)" {...field} />
-              </FormControl>
-              <FormDescription>Type of content item (optional).</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* Content Text */}
-        <FormField
-          control={form.control}
-          name="content_text"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Content Text</FormLabel>
-              <FormControl>
-                <Input placeholder="Content Text" {...field} />
-              </FormControl>
-              <FormDescription>Text content (optional).</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* Image URL */}
-        <FormField
-          control={form.control}
-          name="image_url"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image URL</FormLabel>
-              <FormControl>
-                <Input placeholder="Image URL" {...field} />
-              </FormControl>
-              <FormDescription>Image URL (optional).</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* Quiz Data */}
-        <FormField
-          control={form.control}
-          name="quiz_data"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Quiz Data</FormLabel>
-              <FormControl>
-                <Input placeholder="Quiz Data (JSON)" {...field} />
-              </FormControl>
-              <FormDescription>Quiz data in JSON format (optional).</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* Component Key */}
-        <FormField
-          control={form.control}
-          name="component_key"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Component Key</FormLabel>
-              <FormControl>
-                <Input placeholder="Component Key" {...field} />
-              </FormControl>
-              <FormDescription>Component key (optional).</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* Order Index */}
-        <FormField
-          control={form.control}
-          name="order_index"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Order Index</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="Order Index"
-                  value={field.value ?? ""}
-                  onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseInt(e.target.value))}
-                />
-              </FormControl>
-              <FormDescription>Order index (optional).</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* Quiz Question */}
-        <FormField
-          control={form.control}
-          name="quiz_question"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Quiz Question</FormLabel>
-              <FormControl>
-                <Input placeholder="Quiz Question" {...field} />
-              </FormControl>
-              <FormDescription>Quiz question (optional).</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={submitting}>
-          {submitting ? "Creating..." : "Submit"}
+          {form.formState.errors.block_id && <div className="text-red-500 text-sm mt-1">{form.formState.errors.block_id.message}</div>}
+        </div>
+        {/* Content Type Dropdown */}
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">Content Type</label>
+          <Select onValueChange={(value) => form.setValue("type", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select content type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="text">Text (Rich Content)</SelectItem>
+              <SelectItem value="image">Image</SelectItem>
+              <SelectItem value="quiz">Quiz</SelectItem>
+              <SelectItem value="animation">Animation</SelectItem>
+              <SelectItem value="math">Mathematical Formula</SelectItem>
+              <SelectItem value="chart">Chart/Graph</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {/* Order Index Input */}
+        <div>
+          <label className="block font-semibold mb-2">Order Index</label>
+          <input
+            type="number"
+            className="w-full border rounded p-2"
+            placeholder="Order Index"
+            value={form.watch("order_index") ?? ""}
+            onChange={e => form.setValue("order_index", e.target.value === "" ? 0 : parseInt(e.target.value))}
+            min={0}
+          />
+          {form.formState.errors.order_index && <div className="text-red-500 text-sm mt-1">{form.formState.errors.order_index.message}</div>}
+        </div>
+        {/* Image URL Input */}
+        <div>
+          <label className="block font-semibold mb-2">Image URL</label>
+          <input
+            type="text"
+            className="w-full border rounded p-2"
+            placeholder="https://example.com/image.jpg"
+            value={form.watch("image_url") ?? ""}
+            onChange={e => form.setValue("image_url", e.target.value)}
+          />
+        </div>
+        {/* Quiz Data Input */}
+        <div>
+          <label className="block font-semibold mb-2">Quiz Data (JSON)</label>
+          <input
+            type="text"
+            className="w-full border rounded p-2 font-mono"
+            placeholder='{"question": "What is 2+2?", "options": ["3", "4", "5"], "answer": 1}'
+            value={form.watch("quiz_data") ?? ""}
+            onChange={e => form.setValue("quiz_data", e.target.value)}
+          />
+        </div>
+        {/* Quiz Question Input */}
+        <div>
+          <label className="block font-semibold mb-2">Quiz Question</label>
+          <input
+            type="text"
+            className="w-full border rounded p-2"
+            placeholder="Quiz question (optional)"
+            value={form.watch("quiz_question") ?? ""}
+            onChange={e => form.setValue("quiz_question", e.target.value)}
+          />
+        </div>
+        {/* Enhanced Content Editor or Chart Editor */}
+        {form.watch("type") === "chart" ? (
+          <div>
+            <label className="block font-semibold mb-2">Chart Configuration</label>
+            <ChartEditor
+              value={form.watch("content_text") || ""}
+              onChange={(value) => form.setValue("content_text", value)}
+              placeholder="Configure your chart..."
+            />
+            {form.formState.errors.content_text && (
+              <div className="text-red-500 text-sm mt-1">{form.formState.errors.content_text.message}</div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <label className="block font-semibold mb-2">Content Text</label>
+            <EnhancedContentEditor
+              value={form.watch("content_text") || ""}
+              onChange={(value) => form.setValue("content_text", value)}
+              placeholder="Enter your content here..."
+            />
+            {form.formState.errors.content_text && (
+              <div className="text-red-500 text-sm mt-1">{form.formState.errors.content_text.message}</div>
+            )}
+          </div>
+        )}
+        <Button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Saving..." : "Submit"}
         </Button>
+        {message && <div className="mt-2 text-sm text-center">{message}</div>}
       </form>
-    </Form>
+    </div>
   );
 } 

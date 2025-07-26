@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = CreateSupabaseClient();
 
-    const { title, description, slug, thumbnail_url, is_premium_course } =
+    const { title, description, slug, thumbnail_url, is_premium_course, coming_soon } =
       await req.json();
 
     if (!title || !description || !slug || !thumbnail_url) {
@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
           slug,
           thumbnail_url,
           is_premium_course,
+          coming_soon,
         },
       ])
       .select()

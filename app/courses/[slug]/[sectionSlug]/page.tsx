@@ -2,6 +2,9 @@ import SectionClient from "@/components/SectionClient";
 import { CreateSupabaseClient } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 export default async function SectionPage({
   params,
@@ -13,13 +16,19 @@ export default async function SectionPage({
   // Early return if sectionSlug is missing
   if (!sectionSlug || sectionSlug === "undefined" || sectionSlug === "") {
     return (
-      <div>
-        <h2>Invalid Section Slug</h2>
-        <p>Section slug is missing or invalid: &quot;{sectionSlug}&quot;</p>
-        <p>Course slug: &quot;{slug}&quot;</p>
-        <p>Please check the URL and try again.</p>
-        <p>Expected URL format: /courses/course-slug/section-slug</p>
-      </div>
+      <Card className="max-w-xl mx-auto mt-16">
+        <CardHeader>
+          <CardTitle>Invalid Section Slug</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription>Section slug is missing or invalid: <span className="font-mono">{sectionSlug}</span></CardDescription>
+          <p className="mt-2 text-muted-foreground">Course slug: <span className="font-mono">{slug}</span></p>
+          <Alert variant="destructive" className="mt-4">
+            <AlertTitle>URL Format Error</AlertTitle>
+            <AlertDescription>Expected URL format: <span className="font-mono">/courses/course-slug/section-slug</span></AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -40,10 +49,14 @@ export default async function SectionPage({
 
   if (courseError || !course) {
     return (
-      <div>
-        <h2>Course Not Found</h2>
-        <p>No course found with slug: {slug}</p>
-      </div>
+      <Card className="max-w-xl mx-auto mt-16">
+        <CardHeader>
+          <CardTitle>Course Not Found</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription>No course found with slug: <span className="font-mono">{slug}</span></CardDescription>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -57,14 +70,18 @@ export default async function SectionPage({
       .single();
     if (userError || !user || !user.is_premium) {
       debugInfo = (
-        <div style={{ background: '#fffbe6', color: '#b45309', padding: 16, borderRadius: 8, margin: 16 }}>
-          <h2>DEBUG: Premium Access Restriction</h2>
-          <p><b>course.is_premium_course:</b> {String(course.is_premium_course)}</p>
-          <p><b>userId (clerk_id):</b> {userId}</p>
-          <p><b>user:</b> {user ? JSON.stringify(user) : 'null'}</p>
-          <p><b>userError:</b> {userError ? userError.message : 'none'}</p>
-          <p><b>Expected:</b> If you see this, you should be redirected to /subscription. If not, check your Supabase users table for a row with this clerk_id and is_premium=false.</p>
-        </div>
+        <Alert variant="destructive" className="max-w-xl mx-auto mt-8">
+          <AlertTitle>Premium Access Restriction</AlertTitle>
+          <AlertDescription>
+            <div className="space-y-1">
+              <div><b>course.is_premium_course:</b> {String(course.is_premium_course)}</div>
+              <div><b>userId (clerk_id):</b> {userId}</div>
+              <div><b>user:</b> {user ? JSON.stringify(user) : 'null'}</div>
+              <div><b>userError:</b> {userError ? userError.message : 'none'}</div>
+              <div className="text-xs text-muted-foreground mt-2">If you see this, you should be redirected to <span className="font-mono">/subscription</span>. If not, check your Supabase users table for a row with this clerk_id and is_premium=false.</div>
+            </div>
+          </AlertDescription>
+        </Alert>
       );
       // Comment out the redirect for debugging
       // redirect("/subscription");
@@ -80,10 +97,14 @@ export default async function SectionPage({
 
   if (coursePathError || !coursePath) {
     return (
-      <div>
-        <h2>Course Path Not Found</h2>
-        <p>No course path found for course: {slug}</p>
-      </div>
+      <Card className="max-w-xl mx-auto mt-16">
+        <CardHeader>
+          <CardTitle>Course Path Not Found</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription>No course path found for course: <span className="font-mono">{slug}</span></CardDescription>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -97,44 +118,77 @@ export default async function SectionPage({
 
   if (sectionError || !section) {
     return (
-      <div>
-        <h2>Section Not Found</h2>
-        <p>No section found with slug: {sectionSlug}</p>
-        <p>In course: {slug}</p>
-      </div>
+      <Card className="max-w-xl mx-auto mt-16">
+        <CardHeader>
+          <CardTitle>Section Not Found</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription>No section found with slug: <span className="font-mono">{sectionSlug}</span></CardDescription>
+          <p className="mt-2 text-muted-foreground">In course: <span className="font-mono">{slug}</span></p>
+        </CardContent>
+      </Card>
     );
   }
 
   // 4. Fetch content blocks and items directly from Supabase
   const { data: blocks, error: blocksError } = await supabase
     .from("content_block")
-    .select("id, section_id, title, order_index, created_at, content_items(id, block_id, type, content_text, image_url, quiz_data, component_key, order_index, created_at)")
+    .select("id, section_id, title, order_index, created_at")
     .eq("section_id", section.id)
     .order("order_index", { ascending: true });
 
-  if (blocksError) {
-    return (
-      <div>
-        <h2>Error Loading Section Content</h2>
-        <p>Error: {blocksError.message}</p>
-        <p>Section slug: {sectionSlug}</p>
-      </div>
-    );
+  let itemsByBlock: Record<string, any[]> = {};
+  if (blocks && blocks.length > 0) {
+    const blockIds = blocks.map((b: any) => b.id);
+    const { data: items, error: itemsError } = await supabase
+      .from("content_item")
+      .select("id, block_id, type, content_text, image_url, quiz_data, component_key, order_index, created_at, content_type, styling_data, math_formula, interactive_data, media_files, font_settings, layout_config, animation_settings")
+      .in("block_id", blockIds);
+    if (!itemsError && items) {
+      itemsByBlock = items.reduce((acc: any, item: any) => {
+        if (!acc[item.block_id]) acc[item.block_id] = [];
+        acc[item.block_id].push(item);
+        return acc;
+      }, {});
+    }
   }
 
+  // Attach items to blocks
+  const blocksWithItems = (blocks || []).map((block: any) => ({
+    ...block,
+    content_items: itemsByBlock[block.id] || [],
+  }));
+
   // Sort blocks by order_index
-  const sortedBlocks = [...(blocks || [])].sort(
-    (a, b) => (a.order_index || 0) - (b.order_index || 0)
+  const sortedBlocks = [...blocksWithItems].sort(
+    (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
   );
 
   // Sort each block's content items by order_index
-  sortedBlocks.forEach((block, index) => {
+  sortedBlocks.forEach((block: any, index: number) => {
     if (block.content_items && Array.isArray(block.content_items)) {
       block.content_items.sort(
-        (a, b) => (a.order_index || 0) - (b.order_index || 0)
+        (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
       );
     }
   });
+
+  if (blocksError) {
+    return (
+      <Card className="max-w-xl mx-auto mt-16">
+        <CardHeader>
+          <CardTitle>Error Loading Section Content</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{blocksError.message}</AlertDescription>
+          </Alert>
+          <p className="mt-2 text-muted-foreground">Section slug: <span className="font-mono">{sectionSlug}</span></p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>

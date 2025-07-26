@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
 interface CoursesCardComponentProps {
   title: string;
@@ -20,6 +21,7 @@ interface CoursesCardComponentProps {
   slug: string;
   courseId: string;
   isPremium?: boolean;
+  comingSoon?: boolean;
 }
 
 const CoursesCardComponent = ({
@@ -29,6 +31,7 @@ const CoursesCardComponent = ({
   slug,
   courseId,
   isPremium = false,
+  comingSoon = false,
 }: CoursesCardComponentProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -75,14 +78,14 @@ const CoursesCardComponent = ({
     (typeof thumbnail === "string" ? thumbnail.trim() !== "" : true);
 
   return (
-    <Card className="w-full max-w-md rounded-2xl shadow-lg overflow-hidden transition hover:scale-[1.02] hover:shadow-xl duration-300">
+    <Card className="w-full max-w-md rounded-2xl shadow-lg overflow-hidden transition hover:scale-[1.02] hover:shadow-xl duration-300 flex flex-col h-full">
       {hasValidThumbnail ? (
         <Image
           src={thumbnail}
           alt={title}
           width={1000}
           height={1000}
-          className="w-full h-48 object-contain bg-white"
+          className="w-full h-48 object-contain"
         />
       ) : (
         <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
@@ -106,11 +109,23 @@ const CoursesCardComponent = ({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
 
-      <CardFooter className="justify-end">
-        <Button onClick={handleStart} disabled={loading}>
-          {loading ? "Starting..." : "Start"}
-        </Button>
-      </CardFooter>
+      <div className="flex-1 flex items-end">
+        <CardFooter className="w-full justify-end">
+          <Button onClick={handleStart} disabled={loading || comingSoon}
+            className={comingSoon ? 'bg-yellow-100 border border-yellow-400 text-yellow-900 font-bold uppercase' : ''}>
+            {comingSoon ? (
+              <span className="font-bold uppercase text-yellow-900">Coming Soon</span>
+            ) : loading ? (
+              <span className="flex items-center gap-2 justify-center">
+                <Loader2 className="animate-spin h-4 w-4" />
+                Starting...
+              </span>
+            ) : (
+              "Start"
+            )}
+          </Button>
+        </CardFooter>
+      </div>
     </Card>
   );
 };

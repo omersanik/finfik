@@ -1,12 +1,15 @@
 import MainCardComponent from "@/components/MainCardComponent";
 import SectionCardComponent from "@/components/SectionCardComponent";
 import { auth } from "@clerk/nextjs/server";
+import BeautifulLandingPage from "@/components/BeautifulLandingPage";
+import StreakCounter from "@/components/StreakCounter";
 
 const Page = async () => {
   const { userId, getToken } = await auth();
 
   if (!userId) {
-    return <h1 className="text-3xl m-10">Landing Page</h1>;
+    // Render the new beautiful landing page component
+    return <BeautifulLandingPage />;
   }
 
   const token = await getToken();
@@ -17,6 +20,14 @@ const Page = async () => {
     slug: string;
     thumbnail_url: string;
     description: string;
+    coming_soon?: boolean;
+  };
+
+  type Streak = {
+    current_streak: number;
+    longest_streak: number;
+    last_completed_date: string | null;
+    week: boolean[];
   };
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -61,56 +72,123 @@ const Page = async () => {
         "Content-Type": "application/json",
       },
     });
-    if (!res.ok) throw new Error(`Failed to fetch last taken course: ${res.status}`);
+    if (!res.ok)
+      throw new Error(`Failed to fetch last taken course: ${res.status}`);
     lastTakenCourse = await res.json();
   } catch (err) {
     console.error("Error fetching last taken course:", err);
   }
 
+  // Fetch progress for all enrolled courses
+  let courseProgress: Record<string, any> = {};
+  if (enrolledCourses.length > 0) {
+    try {
+      const courseIds = enrolledCourses.map(course => course.id);
+      const progressRes = await fetch(`${baseUrl}/api/progress/batch-course-progress`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ courseIds }),
+      });
+      
+      if (progressRes.ok) {
+        courseProgress = await progressRes.json();
+      }
+    } catch (err) {
+      console.error("Error fetching course progress:", err);
+    }
+  }
+
+  // Fetch streak
+  let streak: Streak = { current_streak: 0, longest_streak: 0, last_completed_date: null, week: [false, false, false, false, false, false, false] };
+  try {
+    const res = await fetch(`${baseUrl}/api/streak`, {
+      headers: { Authorization: `Bearer ${await getToken()}` },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      streak = await res.json();
+    }
+  } catch (err) {
+    console.error("Error fetching streak:", err);
+  }
+
   // Remove enrolled from the main course list
   const enrolledIds = new Set(enrolledCourses.map((c) => c.id));
   const unEnrolledCourses = allCourses.filter(
-    (course) => !enrolledIds.has(course.id)
+    (course) => !enrolledIds.has(course.id) && !course.coming_soon
   );
+  const visibleEnrolledCourses = enrolledCourses.filter((course) => !course.coming_soon);
 
   return (
     <main className="bg-background text-foreground min-h-screen">
       <h1 className="text-3xl font-semibold my-10 mx-10 font-serif">
         Keep going where you left off
       </h1>
-
-      {lastTakenCourse ? (
-        <MainCardComponent
-          title={lastTakenCourse.title}
-          thumbnail={lastTakenCourse.thumbnail_url}
-          description={lastTakenCourse.description}
-          slug={lastTakenCourse.slug}
-          courseId={lastTakenCourse.id}
-        />
-      ) : (
-        <p className="mx-10 text-gray-500">
-          No recent course found. Start a new one below!
-        </p>
-      )}
+      <div className="mx-10 mb-8 flex flex-col md:flex-row md:items-start justify-center gap-2">
+        {lastTakenCourse ? (
+          <>
+            <div className="flex-1 max-w-xl flex md:block items-start">
+              <MainCardComponent
+                title={lastTakenCourse.title}
+                thumbnail={lastTakenCourse.thumbnail_url}
+                description={lastTakenCourse.description}
+                slug={lastTakenCourse.slug}
+                courseId={lastTakenCourse.id}
+                comingSoon={!!lastTakenCourse.coming_soon}
+              />
+            </div>
+            <div className="flex-shrink-0 flex md:block items-start">
+              <StreakCounter
+                currentStreak={streak.current_streak}
+                longestStreak={streak.longest_streak}
+                lastCompletedDate={streak.last_completed_date}
+                week={streak.week}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="w-full flex flex-col items-center">
+            <StreakCounter
+              currentStreak={streak.current_streak}
+              longestStreak={streak.longest_streak}
+              lastCompletedDate={streak.last_completed_date}
+              week={streak.week}
+            />
+            <p className="text-gray-500 mt-6">
+              No recent course found. Start a new one below!
+            </p>
+          </div>
+        )}
+      </div>
 
       <p className="text-3xl font-bold pt-6 my-6 mx-10">Your Courses</p>
 
-      <div className="flex flex-wrap gap-6 justify-start px-12 mb-6">
-        {enrolledCourses.length > 0 ? (
-          enrolledCourses.map((course: Course) => (
-            <SectionCardComponent
-              key={course.id}
-              title={course.title}
-              thumbnail={course.thumbnail_url}
-              slug={course.slug}
-              courseId={course.id}
-            />
-          ))
-        ) : (
-          <p className="text-gray-500">
-            You haven't enrolled in any courses yet.
-          </p>
-        )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-12 mb-6">
+        {visibleEnrolledCourses.map((course: Course) => (
+          <SectionCardComponent
+            key={course.id}
+            title={course.title}
+            thumbnail={course.thumbnail_url}
+            slug={course.slug}
+            courseId={course.id}
+            initialProgress={courseProgress[course.id]?.progress || 0}
+            comingSoon={!!course.coming_soon}
+          />
+        ))}
+        {unEnrolledCourses.map((course: Course) => (
+          <SectionCardComponent
+            key={course.id}
+            title={course.title}
+            thumbnail={course.thumbnail_url}
+            slug={course.slug}
+            courseId={course.id}
+            initialProgress={0}
+            comingSoon={!!course.coming_soon}
+          />
+        ))}
       </div>
     </main>
   );

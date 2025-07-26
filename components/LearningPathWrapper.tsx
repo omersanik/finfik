@@ -1,8 +1,9 @@
 // components/LearningPathWrapper.tsx
-import React from "react";
+import React, { useState } from "react";
 
 import { getCoursePathSections } from "@/lib/db/actions/course-actions";
 import LearningPath from "./LearningPath";
+import { Loader2 } from "lucide-react";
 
 interface LearningPathWrapperProps {
   coursePathId: string;

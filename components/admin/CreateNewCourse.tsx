@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const formSchema = z.object({
@@ -23,6 +24,7 @@ const formSchema = z.object({
   slug: z.string().min(1, { message: "Slug is required" }),
   thumbnail_url: z.string().optional(),
   is_premium_course: z.boolean().default(false),
+  coming_soon: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -36,6 +38,7 @@ export default function CreateNewCourse() {
       slug: "",
       thumbnail_url: "",
       is_premium_course: false,
+      coming_soon: false,
     },
   });
 
@@ -153,6 +156,22 @@ export default function CreateNewCourse() {
           )}
         />
         <Button type="submit">Submit</Button>
+        <FormField
+          control={form.control}
+          name="coming_soon"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+              <FormLabel className="mr-2">Coming Soon?</FormLabel>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+              <FormDescription>
+                Toggle this on if the course should be marked as coming soon.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </form>
     </Form>
   );

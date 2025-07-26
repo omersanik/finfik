@@ -1,40 +1,13 @@
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import React, { ReactNode } from "react";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import AdminClientLayout from "./AdminClientLayout";
 
-interface AdminLayoutProps {
-  children: ReactNode;
-}
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { userId } = await auth();
+  if (!userId) return <div>You must be logged in to view this page!</div>;
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+  const role = user?.publicMetadata?.role;
+  if (role !== "admin") return <div>You must be an Admin to visit the Admin Page</div>;
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  return (
-    <div className="admin-layout">
-      <Navbar />
-      <main>{children}</main>
-    </div>
-  );
-};
-
-export default AdminLayout;
-
-function Navbar() {
-  return (
-    <nav className="flex items-center jusify-center gap-4 mt-4">
-      <h2 className="text-2xl">Admin Panel</h2>
-      <div className="ml-4">
-        <Link className="m-4" href="/admin/create-a-new-course">
-          <Button>Create a new Course</Button>
-        </Link>
-        <Link className="m-4" href="/admin/add-sections">
-          <Button>Add Sections</Button>
-        </Link>
-        <Link className="m-4" href="/admin/add-content-blocks">
-          <Button>Add Content Blocks</Button>
-        </Link>
-        <Link className="m-4" href="/admin/add-content-items">
-          <Button>Add Content Items</Button>
-        </Link>
-      </div>
-    </nav>
-  );
+  return <AdminClientLayout>{children}</AdminClientLayout>;
 }

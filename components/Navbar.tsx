@@ -6,11 +6,21 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
-import { House, Landmark, LogOut, Moon, Sun, User, Wallet } from "lucide-react";
+import {
+  House,
+  Landmark,
+  LogOut,
+  Moon,
+  Sun,
+  User,
+  Wallet,
+  Crown,
+} from "lucide-react";
 
 import finfiklogo from "@/logo/finfiklogo.svg";
 import finfikwhitelogo from "@/logo/finfikwhitelogo.svg";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -21,20 +31,111 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
-import { useClerk } from "@clerk/nextjs";
+import { useClerk, useUser, useAuth } from "@clerk/nextjs";
+import { Flame } from "lucide-react";
 
 const Navbar = () => {
   const { signOut } = useClerk();
-
+  const { getToken } = useAuth();
   const { setTheme, theme } = useTheme();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [premiumLoading, setPremiumLoading] = useState(true);
+  const [streak, setStreak] = useState({ current_streak: 0, longest_streak: 0 });
+  const [streakLoading, setStreakLoading] = useState(true);
+  const { user } = useUser();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    const checkPremiumStatus = async () => {
+      if (!user) return;
+
+      try {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        console.log("Base URL:", baseUrl); // Debug log
+
+        const token = await getToken();
+        console.log("Token received:", token ? "✓" : "✗"); // Debug log
+
+        const apiUrl = `${baseUrl}/api/users/premium-users`;
+        console.log("API URL:", apiUrl); // Debug log
+
+        const res = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        console.log("Response status:", res.status); // Debug log
+        console.log("Response ok:", res.ok); // Debug log
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("API Error:", errorText);
+          throw new Error(
+            `Failed to fetch user premium status: ${res.status} ${errorText}`
+          );
+        }
+
+        const data = await res.json();
+        console.log("Premium data:", data); // Debug log
+        setIsPremiumUser(data.is_premium);
+      } catch (error) {
+        console.error("Error fetching the premium status", error);
+        // For now, let's not show premium badge on error
+        setIsPremiumUser(false);
+      } finally {
+        setPremiumLoading(false);
+      }
+    };
+
+    if (mounted && user) {
+      checkPremiumStatus();
+    }
+  }, [mounted, user, getToken]);
+
+  // Fetch streak data
+  useEffect(() => {
+    const fetchStreak = async () => {
+      if (!user) return;
+
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        const token = await getToken();
+
+        const res = await fetch(`${baseUrl}/api/streak`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+
+        if (res.ok) {
+          const streakData = await res.json();
+          setStreak({
+            current_streak: streakData.current_streak,
+            longest_streak: streakData.longest_streak
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching streak:", error);
+      } finally {
+        setStreakLoading(false);
+      }
+    };
+
+    if (mounted && user) {
+      fetchStreak();
+    }
+  }, [mounted, user, getToken]);
+
   if (!mounted) return null;
+
   return (
     <header className="w-full border-b shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-1 flex items-center justify-between">
@@ -75,11 +176,31 @@ const Navbar = () => {
           </Link>
         </nav>
 
-        {/* Right: Premium Button, Theme Toggle, Avatar */}
+        {/* Right: Premium Button/Badge, Theme Toggle, Avatar */}
         <div className="flex items-center justify-center gap-4">
-          <Button className="rounded-3xl px-6 text-base hidden sm:block">
-            Go Premium
-          </Button>
+          {/* Streak Counter */}
+          {!streakLoading && streak.current_streak > 0 && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold shadow-md">
+              <Flame className="size-4 animate-pulse" />
+              <span>{streak.current_streak}</span>
+            </div>
+          )}
+
+          {/* Premium Status */}
+          {!premiumLoading &&
+            (isPremiumUser ? (
+              <Badge
+                variant="default"
+                className="hidden sm:flex items-center gap-1 px-4 py-2 text-sm font-medium"
+              >
+                <Crown className="size-4" />
+                Premium
+              </Badge>
+            ) : (
+              <Button className="rounded-3xl px-6 text-base hidden sm:block hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg">
+                <Link href="/subscription">Go Premium</Link>
+              </Button>
+            ))}
 
           {/* Theme Toggle */}
           <DropdownMenu>
@@ -101,12 +222,11 @@ const Navbar = () => {
           </DropdownMenu>
 
           {/* Avatar */}
-
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Avatar className="hidden sm:block">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>CN</AvatarFallback>
+                <AvatarImage src={user?.imageUrl} />
+                <AvatarFallback>FF</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -117,10 +237,13 @@ const Navbar = () => {
                 </DropdownMenuLabel>
               </Link>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-start gap-1">
-                <Wallet className="size-4" />
-                Billing
-              </DropdownMenuItem>
+              <Link href="/subscription">
+                {" "}
+                <DropdownMenuItem className="flex items-start gap-1">
+                  <Wallet className="size-4" />
+                  Billing
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem
                 className="flex items-start gap-1 text-red-700"
                 onClick={() => signOut()}

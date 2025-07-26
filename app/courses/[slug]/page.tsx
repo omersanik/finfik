@@ -3,6 +3,7 @@ import CourseLearningPathCardComponent from "@/components/CoursesLearningPathCar
 import LearningPathClient from "@/components/LearningPath";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 interface CoursePageProps {
   params: Promise<{ slug: string }>;
@@ -64,6 +65,20 @@ export default async function CoursePage({ params }: CoursePageProps) {
 
   console.log("Slug received:", slug);
 
+  if (courseInfo.coming_soon) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <div className="bg-white border rounded-xl shadow p-10 max-w-lg mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4">Coming Soon!</h2>
+          <p className="text-lg text-gray-600 mb-6">This course is not yet available. Please check back soon!</p>
+          <Button asChild>
+            <a href="/courses" className="text-white">Back to Courses</a>
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
   const steps = path.sections.map(
     (section: any): CoursePathSection => ({
       id: section.id,
@@ -87,14 +102,23 @@ export default async function CoursePage({ params }: CoursePageProps) {
               <CourseLearningPathCardComponent
                 {...courseInfo}
                 thumbnail={courseInfo.thumbnail_url}
+                courseId={courseInfo.id}
+                comingSoon={!!courseInfo.coming_soon}
               />
             </div>
           </div>
 
           {/* Learning Path - Right Side */}
-          <div className="flex-1 min-w-0">
-            <LearningPathClient steps={steps} />
-          </div>
+          { !courseInfo.coming_soon && (
+            <div className="flex-1 min-w-0">
+              <LearningPathClient steps={steps} />
+            </div>
+          )}
+          { courseInfo.coming_soon && (
+            <div className="flex-1 min-w-0">
+              <LearningPathClient steps={steps} comingSoon={true} />
+            </div>
+          )}
         </div>
       </div>
     </main>

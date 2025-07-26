@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Check, Lock, Star, BookOpen } from "lucide-react";
+import { Check, Lock, Star, BookOpen, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -29,10 +29,11 @@ interface Position {
   y: number;
 }
 
-const LearningPathClient: React.FC<{ steps: Lesson[] }> = ({ steps }) => {
+const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = ({ steps, comingSoon = false }) => {
   const [selectedStep, setSelectedStep] = useState<Lesson | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
   // Close popover when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,6 +79,12 @@ const LearningPathClient: React.FC<{ steps: Lesson[] }> = ({ steps }) => {
 
   return (
     <div className="flex-1 relative">
+      {comingSoon && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80">
+          <div className="bg-yellow-100 text-yellow-800 font-bold px-6 py-3 rounded-xl shadow text-2xl mb-2">Coming Soon</div>
+          <div className="text-gray-600 text-lg">This course is not yet available.</div>
+        </div>
+      )}
       <div ref={containerRef} className="relative w-96 h-[580px] mx-auto">
         {steps.map((step, index) => {
           const position = getCirclePosition(index);
@@ -172,16 +179,26 @@ const LearningPathClient: React.FC<{ steps: Lesson[] }> = ({ steps }) => {
                       <Button
                         className="w-full"
                         variant={getButtonVariant(step)}
-                        disabled={!step.unlocked}
-                        onClick={() => {
-                          if (step.unlocked) {
-                            router.push(
-                              `/courses/${step.courseSlug}/${step.sectionSlug}` // Ensure sectionSlug is available
-                            );
+                        disabled={!step.unlocked || loadingIndex === index || comingSoon}
+                        onClick={async () => {
+                          if (step.unlocked && !comingSoon) {
+                            setLoadingIndex(index);
+                            setTimeout(() => {
+                              router.push(`/courses/${step.courseSlug}/${step.sectionSlug}`);
+                            }, 200);
                           }
                         }}
                       >
-                        {getButtonText(step)}
+                        {comingSoon ? (
+                          <span className="text-yellow-700 font-semibold">Coming Soon</span>
+                        ) : loadingIndex === index ? (
+                          <span className="flex items-center gap-2 justify-center">
+                            <Loader2 className="animate-spin h-4 w-4" />
+                            Starting...
+                          </span>
+                        ) : (
+                          getButtonText(step)
+                        )}
                       </Button>
                     </CardContent>
                   </Card>

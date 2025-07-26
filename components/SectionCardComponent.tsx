@@ -1,15 +1,20 @@
 "use client";
-import { Card, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Progress } from "./ui/progress";
 
 interface SectionCardComponentProp {
   title: string;
   thumbnail: string;
   slug: string;
   courseId: string;
+  initialProgress?: number;
+  comingSoon?: boolean;
 }
 
 const SectionCardComponent = ({
@@ -17,14 +22,53 @@ const SectionCardComponent = ({
   thumbnail,
   slug,
   courseId,
+  initialProgress = 0,
+  comingSoon = false,
 }: SectionCardComponentProp) => {
   const { getToken } = useAuth();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(initialProgress);
+  const [progressLoading, setProgressLoading] = useState(initialProgress === 0);
 
   // Debug log to see render state
-  console.log("SectionCardComponent rendered. slug:", slug, "courseId:", courseId);
+  console.log(
+    "SectionCardComponent rendered. slug:",
+    slug,
+    "courseId:",
+    courseId
+  );
+
+  // Get progress for this course (only if no initial progress provided)
+  useEffect(() => {
+    if (initialProgress === 0) {
+      const getProgress = async () => {
+        try {
+          const progressRes = await fetch("/api/progress/course-progress", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ courseId }),
+          });
+          
+          if (progressRes.ok) {
+            const progressData = await progressRes.json();
+            setProgress(progressData.progress);
+          }
+        } catch (err) {
+          console.error("Failed to get progress", err);
+        } finally {
+          setProgressLoading(false);
+        }
+      };
+
+      getProgress();
+    } else {
+      setProgressLoading(false);
+    }
+  }, [courseId, initialProgress]);
 
   const handleContinue = async () => {
+    setLoading(true);
     try {
       const token = await getToken();
       console.log("Token:", token);
@@ -32,6 +76,7 @@ const SectionCardComponent = ({
       console.log("Course ID:", courseId);
       if (!token) {
         alert("No auth token found. Please sign in again.");
+        setLoading(false);
         return;
       }
       const res = await fetch("/api/progress/update-last-accessed", {
@@ -46,40 +91,74 @@ const SectionCardComponent = ({
       console.log("update-last-accessed response:", res.status, text);
       if (!res.ok) {
         alert("Failed to update last accessed: " + text);
+        setLoading(false);
         return;
       }
     } catch (err) {
       console.error("Failed to update last_accessed", err);
       alert("Error updating last accessed: " + err);
+      setLoading(false);
       return;
     }
+    setLoading(false);
     router.push(`/courses/${slug}`);
   };
 
   return (
-    <div className="w-[446px] h-[377px] sm:w-1/2 lg:w-1/3 p-4">
-      <Card className="shadow-2xl h-full flex max-sm:flex-col justify-between">
-        <CardHeader>
-          <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>
-        </CardHeader>
-
-        <div className="flex justify-center">
+    <Card className="shadow-2xl h-full flex flex-col">
+      <CardHeader>
+        <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col justify-between">
+        <div className="flex justify-center items-center mb-4">
           <Image
             src={thumbnail}
             alt={`Thumbnail for ${title}`}
             width={200}
             height={200}
-            className="max-w-full h-auto"
+            className="max-w-full"
           />
         </div>
 
-        <div className="mx-4 mb-4">
-          <Button className="w-full" onClick={handleContinue}>
-            Continue
+        {/* Progress Bar */}
+        <div className="mb-4 px-2">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-muted-foreground">
+              {progressLoading ? "Loading..." : `${progress}% Complete`}
+            </span>
+            {!progressLoading && progress > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {progress}%
+              </span>
+            )}
+          </div>
+          <Progress 
+            value={progress} 
+            className="h-2"
+          />
+        </div>
+
+        <div>
+          {comingSoon && (
+            <div className="mb-2 text-center text-yellow-700 font-semibold bg-yellow-100 rounded py-1">
+              Coming Soon
+            </div>
+          )}
+          <Button className="w-full px-8" onClick={handleContinue} disabled={loading || comingSoon}>
+            {comingSoon ? (
+              <span className="text-yellow-700 font-semibold">Coming Soon</span>
+            ) : loading ? (
+              <span className="flex items-center gap-2 justify-center">
+                <Loader2 className="animate-spin h-4 w-4" />
+                Continuing...
+              </span>
+            ) : (
+              "Continue"
+            )}
           </Button>
         </div>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

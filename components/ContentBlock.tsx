@@ -2,17 +2,27 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import LoadingAnimation from "./LoadingAnimation";
+import MathFormulaRenderer from "./MathFormulaRenderer";
+import ChartRenderer from "./ChartRenderer";
 
 interface ContentItem {
   id: string;
   block_id: string;
-  type: "text" | "image" | "quiz" | "animation";
+  type: "text" | "image" | "quiz" | "animation" | "calculator" | "math" | "chart";
   content_text?: string;
   image_url?: string;
   quiz_data?: any;
   component_key?: string;
   order_index: number;
   created_at: string;
+  content_type?: string;
+  styling_data?: any;
+  math_formula?: string;
+  interactive_data?: any;
+  media_files?: any;
+  font_settings?: any;
+  layout_config?: any;
+  animation_settings?: any;
 }
 
 interface ContentBlock {
@@ -32,6 +42,9 @@ interface ContentBlockProps {
   isLastBlock: boolean;
   locked?: boolean;
   hideContinueButton?: boolean;
+  onQuizAnswer?: (answer: any) => void;
+  quizAnswer?: any;
+  quizCompleted?: boolean;
 }
 
 const ContentBlockComponent = ({
@@ -42,9 +55,11 @@ const ContentBlockComponent = ({
   isLastBlock,
   locked = false,
   hideContinueButton = false,
+  onQuizAnswer,
+  quizAnswer,
+  quizCompleted = false,
 }: ContentBlockProps) => {
   const [quizAnswers, setQuizAnswers] = useState<Record<string, any>>({});
-  const [quizCompleted, setQuizCompleted] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [quizData, setQuizData] = useState<any>(null);
   const [shuffledOptions, setShuffledOptions] = useState<Record<string, any[]>>({});
@@ -57,7 +72,6 @@ const ContentBlockComponent = ({
 
   // Reset quiz state when block changes
   useEffect(() => {
-    setQuizCompleted(false);
     setQuizAnswers({ quiz: undefined });
     setShowFeedback(false);
     setIsCorrect(false);
@@ -107,6 +121,11 @@ const ContentBlockComponent = ({
       ...prev,
       [questionId]: answer,
     }));
+    
+    // Notify parent component about the answer selection
+    if (onQuizAnswer) {
+      onQuizAnswer(answer);
+    }
   };
 
   const checkQuizCompletion = () => {
@@ -116,7 +135,7 @@ const ContentBlockComponent = ({
     const hasAnswered = quizAnswers.quiz !== undefined;
 
     if (hasAnswered) {
-      setQuizCompleted(true);
+      // Quiz completion is now managed by parent component
     }
   };
 
@@ -139,17 +158,11 @@ const ContentBlockComponent = ({
       setShowFeedback(true);
       
       if (isAnswerCorrect) {
-        // Only set quiz completed if answer is correct
-        setQuizCompleted(true);
-        
         // Hide feedback after 2 seconds
         setTimeout(() => {
           setShowFeedback(false);
         }, 2000);
       } else {
-        // If answer is incorrect, reset quiz state and don't proceed
-        setQuizCompleted(false);
-        
         // Hide feedback after 2 seconds
         setTimeout(() => {
           setShowFeedback(false);
@@ -202,9 +215,46 @@ const ContentBlockComponent = ({
       case "text":
         return (
           <div key={item.id} className="mb-3">
-            <p className="text-gray-800 dark:text-neutral-200 leading-relaxed text-sm font-light font-lora">
-              {item.content_text}
-            </p>
+            <div
+              className="prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto"
+              dangerouslySetInnerHTML={{ __html: item.content_text || "" }}
+              style={{
+                fontFamily: item.font_settings?.fontFamily,
+                fontSize: item.font_settings?.fontSize,
+                color: item.font_settings?.color,
+                textAlign: item.font_settings?.textAlign,
+              }}
+            />
+          </div>
+        );
+
+      case "math":
+        // Extract formula from content_text if math_formula is empty (for existing content)
+        let formula = item.math_formula || "";
+        if (!formula && item.content_text) {
+          const mathFormulaMatch = item.content_text.match(/data-formula="([^"]+)"/);
+          if (mathFormulaMatch) {
+            formula = mathFormulaMatch[1];
+          }
+        }
+        
+        return (
+          <div key={item.id} className="mb-3">
+            <MathFormulaRenderer
+              formula={formula}
+              display="block"
+              className={item.styling_data?.className}
+            />
+          </div>
+        );
+
+      case "chart":
+        return (
+          <div key={item.id} className="mb-6">
+            <ChartRenderer
+              chartData={item.content_text || "{}"}
+              className={item.styling_data?.className}
+            />
           </div>
         );
 

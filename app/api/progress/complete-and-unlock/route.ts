@@ -41,9 +41,13 @@ export async function POST(request: NextRequest) {
 
     // Start transaction-like operations
     try {
+      // 1. Get today's date in UTC (YYYY-MM-DD)
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
       // 1. Mark the current section as completed
       console.log("Marking current section as completed...");
-      const { error: updateError } = await supabase
+      // Always update completed_at to todayStr
+      const { data: upserted, error: updateError } = await supabase
         .from("course_path_section_progress")
         .upsert(
           [
@@ -52,18 +56,76 @@ export async function POST(request: NextRequest) {
               course_path_section_id: course_path_section_id,
               completed: true,
               unlocked: true,
+              completed_at: todayStr,
               updated_at: new Date().toISOString(),
             },
           ],
           { onConflict: "clerk_id,course_path_section_id" }
-        );
-
+        )
+        .select();
       if (updateError) {
         console.error("Error marking section as completed:", updateError);
         throw updateError;
       }
+      // If the row already existed and was completed before, force update completed_at
+      if (upserted && upserted.length > 0 && upserted[0].completed && upserted[0].completed_at !== todayStr) {
+        await supabase
+          .from("course_path_section_progress")
+          .update({ completed_at: todayStr, updated_at: new Date().toISOString() })
+          .eq("clerk_id", userId)
+          .eq("course_path_section_id", course_path_section_id);
+      }
 
       console.log("Section marked as completed successfully");
+
+      // === Streak logic ===
+      // 2. Get yesterday's date in UTC (YYYY-MM-DD)
+      const yesterday = new Date(today);
+      yesterday.setUTCDate(today.getUTCDate() - 1);
+      const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+      // 3. Fetch current streak info
+      let streakRow = null;
+      {
+        const { data, error } = await supabase
+          .from("user_streaks")
+          .select("current_streak, last_completed_date, longest_streak")
+          .eq("clerk_id", userId)
+          .single();
+        if (!error && data) streakRow = data;
+      }
+
+      let newStreak = 1;
+      let newLongest = 1;
+      if (streakRow) {
+        if (streakRow.last_completed_date === todayStr) {
+          // Already updated today, do nothing
+          newStreak = streakRow.current_streak;
+          newLongest = streakRow.longest_streak;
+        } else if (streakRow.last_completed_date === yesterdayStr) {
+          // Continue streak
+          newStreak = streakRow.current_streak + 1;
+          newLongest = Math.max(newStreak, streakRow.longest_streak);
+        } else {
+          // Reset streak
+          newStreak = 1;
+          newLongest = Math.max(1, streakRow.longest_streak);
+        }
+      }
+
+      // 4. Upsert streak row
+      const { error: streakError } = await supabase
+        .from("user_streaks")
+        .upsert({
+          clerk_id: userId,
+          current_streak: newStreak,
+          last_completed_date: todayStr,
+          longest_streak: newLongest,
+        }, { onConflict: "clerk_id" });
+      if (streakError) {
+        console.error("Error updating streak:", streakError);
+      }
+      // === End streak logic ===
 
       // 2. Look up the current section to get order and course_path_id
       const { data: currentSection, error: currentSectionError } = await supabase

@@ -14,6 +14,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface MainCardComponentProps {
   title: string;
@@ -22,6 +24,7 @@ interface MainCardComponentProps {
   slug: string;
   courseId: string; // ✅ Make sure this is passed from the parent
   isPremium?: boolean;
+  comingSoon?: boolean;
 }
 
 const MainCardComponent = ({
@@ -31,28 +34,48 @@ const MainCardComponent = ({
   slug,
   courseId,
   isPremium = false,
+  comingSoon = false,
 }: MainCardComponentProps) => {
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressLoading, setProgressLoading] = useState(true);
   const router = useRouter();
   const { getToken } = useAuth();
 
   // Debug log to see render state
   console.log("MainCardComponent rendered. enrolled:", enrolled, "courseId:", courseId, "slug:", slug);
 
-  // Check if user is enrolled
+  // Check if user is enrolled and get progress
   useEffect(() => {
-    const checkEnrollment = async () => {
+    const checkEnrollmentAndProgress = async () => {
       try {
         const res = await fetch(`/api/progress/check-enrollment?slug=${slug}`);
-        setEnrolled(res.status === 200);
+        const isEnrolled = res.status === 200;
+        setEnrolled(isEnrolled);
+        
+        if (isEnrolled) {
+          // Get progress for enrolled course
+          const progressRes = await fetch("/api/progress/course-progress", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ courseId }),
+          });
+          
+          if (progressRes.ok) {
+            const progressData = await progressRes.json();
+            setProgress(progressData.progress);
+          }
+        }
       } catch (err) {
-        console.error("Failed to check enrollment", err);
+        console.error("Failed to check enrollment or progress", err);
+      } finally {
+        setProgressLoading(false);
       }
     };
 
-    checkEnrollment();
-  }, [courseId]);
+    checkEnrollmentAndProgress();
+  }, [courseId, slug]);
 
   // If not enrolled, start the course
   const handleStart = async () => {
@@ -112,16 +135,21 @@ const MainCardComponent = ({
   };
 
   return (
-    <main className="flex my-4 sm:mx-12 lg:mx-20">
-      <Card className="w-full sm:w-[35%] shadow-2xl">
+    <main className="flex">
+      <Card className="w-full max-w-lg shadow-2xl">
         <CardHeader>
           <div className="flex items-center gap-2 justify-center">
-            <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>
+            <CardTitle className="text-xl mt-6 text-center">{title}</CardTitle>
             {isPremium && (
               <span className="ml-2">
                 <Badge variant="secondary">
                   <span role="img" aria-label="throne">🪑</span> Premium
                 </Badge>
+              </span>
+            )}
+            {comingSoon && (
+              <span className="ml-2">
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-400">Coming Soon</Badge>
               </span>
             )}
           </div>
@@ -132,26 +160,64 @@ const MainCardComponent = ({
             alt="thumbnailimage"
             width={250}
             height={250}
-            style={{ width: 250, height: "auto", objectFit: "contain" }}
-            className="max-w-full h-auto"
+            style={{ width: 250, height: 250, objectFit: "cover" }}
+            className="rounded-lg"
           />
         </div>
         <CardContent>
-          <CardDescription className="text-center text-base p-3">
+          <CardDescription className="text-center text-sm p-3">
             <p>{description}</p>
           </CardDescription>
 
-          {enrolled === null ? (
+          {/* Progress Bar for enrolled courses */}
+          {enrolled && !comingSoon && (
+            <div className="mb-4 px-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-muted-foreground">
+                  {progressLoading ? "Loading progress..." : `${progress}% Complete`}
+                </span>
+                {!progressLoading && progress > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {progress}%
+                  </span>
+                )}
+              </div>
+              <Progress 
+                value={progress} 
+                className="h-2"
+              />
+            </div>
+          )}
+
+          {comingSoon ? (
+            <Button disabled className="w-full">
+              <span className="text-yellow-700 font-semibold">Coming Soon</span>
+            </Button>
+          ) : enrolled === null ? (
             <Button disabled className="w-full">
               Loading...
             </Button>
           ) : enrolled ? (
             <Button className="w-full" onClick={handleContinue} disabled={loading}>
-              {loading ? "Continuing..." : "Continue"}
+              {loading ? (
+                <span className="flex items-center gap-2 justify-center">
+                  <Loader2 className="animate-spin h-4 w-4" />
+                  Continuing...
+                </span>
+              ) : (
+                "Continue"
+              )}
             </Button>
           ) : (
             <Button className="w-full" onClick={handleStart} disabled={loading}>
-              {loading ? "Starting..." : "Start"}
+              {loading ? (
+                <span className="flex items-center gap-2 justify-center">
+                  <Loader2 className="animate-spin h-4 w-4" />
+                  Starting...
+                </span>
+              ) : (
+                "Start"
+              )}
             </Button>
           )}
         </CardContent>

@@ -74,10 +74,24 @@ export default function SignUpForm() {
       setVerifying(true);
     } catch (error: any) {
       console.error("Sign-up error:", error);
-      setAuthError(
-        error.errors?.[0]?.message ||
-          "An error occurred during sign-up. Please try again."
-      );
+      
+      // Handle specific Clerk errors
+      let errorMessage = "An error occurred during sign-up. Please try again.";
+      
+      if (error.errors && error.errors.length > 0) {
+        const firstError = error.errors[0];
+        
+        // Check for existing email error
+        if (firstError.message?.includes("already exists") || 
+            firstError.message?.includes("already registered") ||
+            firstError.code === "form_identifier_exists") {
+          errorMessage = "An account with this email already exists. Please sign in instead.";
+        } else if (firstError.message) {
+          errorMessage = firstError.message;
+        }
+      }
+      
+      setAuthError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -195,7 +209,16 @@ export default function SignUpForm() {
               {authError && (
                 <Alert variant="destructive" className="mb-2 w-full">
                   <AlertTitle className="text-sm">Error</AlertTitle>
-                  <AlertDescription className="text-xs">{authError}</AlertDescription>
+                  <AlertDescription className="text-xs">
+                    {authError}
+                    {authError.includes("already exists") && (
+                      <div className="mt-2">
+                        <Link href="/sign-in" className="text-blue-600 hover:underline font-medium">
+                          Click here to sign in instead
+                        </Link>
+                      </div>
+                    )}
+                  </AlertDescription>
                 </Alert>
               )}
               <Form {...form}>
