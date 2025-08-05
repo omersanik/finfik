@@ -6,6 +6,7 @@ import MathFormulaRenderer from "./MathFormulaRenderer";
 import ChartRenderer from "./ChartRenderer";
 import LottieAnimation from "./LottieAnimation";
 import DragDropInteractive from "./DragDropInteractive";
+import { getContentImageUrl, getThumbnailUrl } from "@/lib/thumbnail-utils";
 import { 
   Table, 
   TableBody, 
@@ -334,6 +335,15 @@ const ContentBlockComponent = ({
 
   const renderContentItem = (item: ContentItem) => {
     console.log("RENDERING ITEM:", item.id, item.type, "content_text:", item.content_text, "math_formula:", item.math_formula);
+    console.log("FULL ITEM DATA:", item);
+    console.log("SWITCH DEBUG:", {
+      itemId: item.id,
+      itemType: item.type,
+      itemTypeLength: item.type?.length,
+      itemTypeTrimmed: item.type?.trim(),
+      itemTypeLowerCase: item.type?.toLowerCase()
+    });
+    
     switch (item.type) {
       case "text":
         // Only render if type is exactly 'text'
@@ -385,35 +395,50 @@ const ContentBlockComponent = ({
         );
 
       case "image":
-        // Only check for external images on client side
-        const isExternalImage = isClient
-          ? item.image_url?.startsWith("http") &&
-            !item.image_url.includes(window.location.hostname)
-          : item.image_url?.startsWith("http");
-
+        console.log("IMAGE ITEM DEBUG:", {
+          itemId: item.id,
+          image_url: item.image_url,
+          hasImageUrl: !!item.image_url,
+          imageUrlType: typeof item.image_url,
+          fullItem: item
+        });
+        
+        // Try using the same function as thumbnails first
+        console.log("ORIGINAL IMAGE PATH:", item.image_url);
+        const imageUrl = getThumbnailUrl(item.image_url || null);
+        console.log("IMAGE DEBUG:", {
+          originalImageUrl: item.image_url,
+          processedImageUrl: imageUrl,
+          itemId: item.id,
+          usingThumbnailFunction: true
+        });
+        // Also log to alert for visibility
+        console.warn("IMAGE DEBUG ALERT:", {
+          originalImageUrl: item.image_url,
+          processedImageUrl: imageUrl,
+          itemId: item.id,
+          decodedUrl: decodeURIComponent(imageUrl),
+          hasSpaces: item.image_url?.includes(' ') || false
+        });
         return (
           <div key={item.id} className="mb-1">
             <div className="relative w-full max-w-sm mx-auto">
-              {isExternalImage ? (
-                <img
-                  src={item.image_url}
-                  alt="Course content"
-                  className="w-full"
-                  onError={(e) => {
-                    e.currentTarget.src = "/placeholder-image.jpg";
-                  }}
-                />
-              ) : (
-                <Image
-                  src={item.image_url || "/placeholder-image.jpg"}
-                  alt="Course content"
-                  width={350}
-                  height={250}
-                  className="w-full"
-                  style={{ width: "100%", height: "auto" }}
-                  priority={false}
-                />
-              )}
+              <Image
+                src={imageUrl}
+                alt="Course content"
+                width={350}
+                height={250}
+                className="w-full"
+                style={{ width: "100%", height: "auto" }}
+                priority={false}
+                onError={(e) => {
+                  console.log("IMAGE ERROR:", {
+                    failedUrl: e.currentTarget.src,
+                    itemId: item.id
+                  });
+                  e.currentTarget.src = "/placeholder-image.jpg";
+                }}
+              />
             </div>
           </div>
         );
@@ -484,10 +509,18 @@ const ContentBlockComponent = ({
         );
 
       case "animation":
+        // Process animation path through Supabase URL function
+        const animationUrl = getThumbnailUrl(item.image_url || null);
+        console.log("ANIMATION DEBUG:", {
+          originalPath: item.image_url,
+          processedUrl: animationUrl,
+          itemId: item.id
+        });
+        
         return (
           <div key={item.id} className="mb-4">
             <LottieAnimation
-              animationPath={item.image_url || '/animations/default-animation.json'}
+              animationPath={animationUrl}
               size="custom"
               width={item.animation_settings?.width || 400}
               height={item.animation_settings?.height || 400}

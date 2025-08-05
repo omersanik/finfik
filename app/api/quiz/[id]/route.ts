@@ -72,34 +72,54 @@ export async function GET(
         } catch (parseError) {
           console.error("Parse failed:", parseError);
           
-          // Fallback: manually parse the array using regex to handle commas within quotes
-          const match = contentItem.quiz_data.match(/\[(.*)\]/);
-          if (match) {
-            const optionsString = match[1];
-            // Use regex to split by comma, but not within quotes
-            const options = optionsString.match(/"([^"]*(?:\\"[^"]*)*)"|'([^']*(?:\\'[^']*)*)'/g);
-            if (options) {
-              rawData = options.map((option: string) => {
-                return option.trim()
-                  .replace(/^["']/, '')  // Remove leading quote
-                  .replace(/["']$/, '')  // Remove trailing quote
-                  .replace(/\\"/g, '"')  // Unescape quotes
-                  .replace(/\\'/g, "'"); // Unescape single quotes
-              });
+          // Handle the specific case where there's a missing quote
+          // Original: "[\"It values future decision flexibility\", \"It compares stock prices to peers\" ,It ignores risk\", \"It only applies to dividends\"]"
+          // Fix: Add missing quote before "It ignores risk"
+          let fixedData = contentItem.quiz_data;
+          
+          // Fix the specific pattern where there's a comma followed by text without a quote
+          fixedData = fixedData.replace(/"\s*,\s*([^"\\])/g, '", "$1');
+          
+          // Also handle the case where there might be escaped quotes
+          fixedData = fixedData.replace(/"\s*,\s*([^"\\][^"]*?)\\"/g, '", "$1"');
+          
+          console.log("Attempting to fix malformed JSON:", fixedData);
+          
+          try {
+            rawData = JSON.parse(fixedData);
+            console.log("Successfully parsed fixed data:", rawData);
+          } catch (secondParseError) {
+            console.error("Second parse attempt failed:", secondParseError);
+            
+            // Fallback: manually parse the array using regex to handle commas within quotes
+            const match = contentItem.quiz_data.match(/\[(.*)\]/);
+            if (match) {
+              const optionsString = match[1];
+              // Use regex to split by comma, but not within quotes
+              const options = optionsString.match(/"([^"]*(?:\\"[^"]*)*)"|'([^']*(?:\\'[^']*)*)'/g);
+              if (options) {
+                rawData = options.map((option: string) => {
+                  return option.trim()
+                    .replace(/^["']/, '')  // Remove leading quote
+                    .replace(/["']$/, '')  // Remove trailing quote
+                    .replace(/\\"/g, '"')  // Unescape quotes
+                    .replace(/\\'/g, "'"); // Unescape single quotes
+                });
+              } else {
+                // If regex matching fails, try splitting by comma but be more careful
+                const options = optionsString.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map((option: string) => {
+                  return option.trim()
+                    .replace(/^["']/, '')  // Remove leading quote
+                    .replace(/["']$/, '')  // Remove trailing quote
+                    .replace(/\\"/g, '"')  // Unescape quotes
+                    .replace(/\\'/g, "'"); // Unescape single quotes
+                });
+                rawData = options;
+              }
+              console.log("Manually parsed options:", rawData);
             } else {
-              // If regex matching fails, try splitting by comma but be more careful
-              const options = optionsString.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map((option: string) => {
-                return option.trim()
-                  .replace(/^["']/, '')  // Remove leading quote
-                  .replace(/["']$/, '')  // Remove trailing quote
-                  .replace(/\\"/g, '"')  // Unescape quotes
-                  .replace(/\\'/g, "'"); // Unescape single quotes
-              });
-              rawData = options;
+              throw new Error("Could not parse quiz data");
             }
-            console.log("Manually parsed options:", rawData);
-          } else {
-            throw new Error("Could not parse quiz data");
           }
         }
       } else {
