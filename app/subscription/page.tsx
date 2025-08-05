@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -59,7 +59,7 @@ const plans = [
   },
 ];
 
-export default function SubscriptionPage() {
+function SubscriptionContent() {
   const { user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -270,5 +270,25 @@ export default function SubscriptionPage() {
         All users start on the Free Plan by default. Cancel anytime. Secure payments powered by Stripe.
       </p>
     </div>
+  );
+}
+
+export default function SubscriptionPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
+        <div className="mb-8 text-center">
+          <div className="text-5xl mb-2">👑</div>
+          <h1 className="text-4xl font-bold mb-2 text-foreground">
+            Choose Your Plan
+          </h1>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Loading subscription options...
+          </p>
+        </div>
+      </div>
+    }>
+      <SubscriptionContent />
+    </Suspense>
   );
 }
