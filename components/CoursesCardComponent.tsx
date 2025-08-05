@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { getThumbnailUrl } from "@/lib/thumbnail-utils";
 
 interface CoursesCardComponentProps {
   title: string;
@@ -103,7 +104,7 @@ const CoursesCardComponent = ({
       )}
       {hasValidThumbnail ? (
         <Image
-          src={thumbnail}
+          src={typeof thumbnail === 'string' ? getThumbnailUrl(thumbnail) : thumbnail}
           alt={title}
           width={1000}
           height={1000}

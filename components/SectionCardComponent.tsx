@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Progress } from "./ui/progress";
+import { getThumbnailUrl } from "@/lib/thumbnail-utils";
 
 interface SectionCardComponentProp {
   title: string;
@@ -135,7 +136,7 @@ const SectionCardComponent = ({
       <CardContent className="flex-1 flex flex-col justify-between">
         <div className="flex justify-center items-center mb-4">
           <Image
-            src={thumbnail}
+            src={getThumbnailUrl(thumbnail)}
             alt={`Thumbnail for ${title}`}
             width={200}
             height={200}

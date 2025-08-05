@@ -11,6 +11,7 @@ import Image from "next/image";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
+import { getThumbnailUrl } from "@/lib/thumbnail-utils";
 interface MainCardComponentProps {
   title: string;
   thumbnail: string;
@@ -93,7 +94,7 @@ const CourseLearningPathCardComponent = ({
       </CardHeader>
       <div className="flex justify-center flex-shrink-0">
         <Image
-          src={thumbnail}
+          src={getThumbnailUrl(thumbnail)}
           alt="thumbnailimage"
           width={250}
           height={250}

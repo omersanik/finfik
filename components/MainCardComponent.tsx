@@ -16,6 +16,7 @@ import { useAuth } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { getThumbnailUrl } from "@/lib/thumbnail-utils";
 
 interface MainCardComponentProps {
   title: string;
@@ -178,7 +179,7 @@ const MainCardComponent = ({
         </CardHeader>
         <div className="flex justify-center">
           <Image
-            src={thumbnail && typeof thumbnail === "string" && thumbnail.trim() !== "" ? thumbnail : "/fallback-image.png"}
+                            src={thumbnail && typeof thumbnail === "string" && thumbnail.trim() !== "" ? getThumbnailUrl(thumbnail) : "/fallback-image.png"}
             alt="thumbnailimage"
             width={250}
             height={250}
