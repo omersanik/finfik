@@ -1,6 +1,8 @@
 "use client";
 import EnhancedContentEditor from './EnhancedContentEditor';
 import ChartEditor from './ChartEditor';
+import TableEditor from './TableEditor';
+import DragDropEditor from './DragDropEditor';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,9 +27,23 @@ const formSchema = z.object({
   quiz_data: z.string().optional(),
   quiz_question: z.string().optional(),
   content_text: z.string().optional(),
+  math_formula: z.string().optional(),
+  drag_drop_title: z.string().optional(),
+  drag_drop_instructions: z.string().optional(),
+  drag_drop_items: z.string().optional(),
+  drag_drop_categories: z.string().optional(),
 }).refine((data) => {
-  // For chart type, content_text is optional (will be JSON)
-  if (data.type === 'chart') {
+  // For math type, math_formula is required
+  if (data.type === 'math') {
+    return data.math_formula && data.math_formula.trim().length > 0;
+  }
+  // For drag-drop type, only items and categories are required
+  if (data.type === 'drag-drop') {
+    return data.drag_drop_items && data.drag_drop_items.trim().length > 0 &&
+           data.drag_drop_categories && data.drag_drop_categories.trim().length > 0;
+  }
+  // For chart, animation, quiz, and table types, content_text is optional
+  if (data.type === 'chart' || data.type === 'animation' || data.type === 'quiz' || data.type === 'table') {
     return true;
   }
   // For other types, content_text is required
@@ -50,6 +66,12 @@ export default function AddContentItems() {
   const [errorCourses, setErrorCourses] = useState("");
   const [errorSections, setErrorSections] = useState("");
   const [errorBlocks, setErrorBlocks] = useState("");
+  const [dragDropData, setDragDropData] = useState({
+    title: "",
+    instructions: "",
+    items: [] as Array<{ id: string; text: string; category: string }>,
+    categories: [] as string[]
+  });
 
   const form = useForm<ContentItemFormValues>({
     resolver: zodResolver(formSchema),
@@ -63,6 +85,11 @@ export default function AddContentItems() {
       quiz_data: "",
       quiz_question: "",
       content_text: "",
+      math_formula: "",
+      drag_drop_title: "",
+      drag_drop_instructions: "",
+      drag_drop_items: "",
+      drag_drop_categories: "",
     },
   });
 
@@ -129,6 +156,7 @@ export default function AddContentItems() {
 
   async function onSubmit(values: ContentItemFormValues) {
     setMessage(null);
+    console.log('Submitting form with values:', values);
     try {
       const response = await fetch("/api/admin/content-items", {
         method: "POST",
@@ -137,7 +165,24 @@ export default function AddContentItems() {
       });
       if (response.ok) {
         setMessage("Content item created successfully!");
-        form.reset();
+        // Reset form but preserve the content type selection
+        const currentType = form.watch("type");
+        form.reset({
+          course_id: "",
+          section_id: "",
+          block_id: "",
+          order_index: 0,
+          type: currentType || "",
+          image_url: "",
+          quiz_data: "",
+          quiz_question: "",
+          content_text: "",
+          math_formula: "",
+          drag_drop_title: "",
+          drag_drop_instructions: "",
+          drag_drop_items: "",
+          drag_drop_categories: "",
+        });
       } else {
         const errorData = await response.json();
         setMessage(`Error: ${errorData.error || "Failed to create content item"}`);
@@ -223,17 +268,20 @@ export default function AddContentItems() {
         {/* Content Type Dropdown */}
         <div className="mb-4">
           <label className="block font-semibold mb-2">Content Type</label>
-          <Select onValueChange={(value) => form.setValue("type", value)}>
+          <Select onValueChange={(value) => form.setValue("type", value)} value={form.watch("type")}>
             <SelectTrigger>
               <SelectValue placeholder="Select content type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="text">Text (Rich Content)</SelectItem>
+              <SelectItem value="text">Text</SelectItem>
               <SelectItem value="image">Image</SelectItem>
               <SelectItem value="quiz">Quiz</SelectItem>
+              <SelectItem value="chart">Chart</SelectItem>
               <SelectItem value="animation">Animation</SelectItem>
-              <SelectItem value="math">Mathematical Formula</SelectItem>
-              <SelectItem value="chart">Chart/Graph</SelectItem>
+              <SelectItem value="calculator">Calculator</SelectItem>
+              <SelectItem value="math">Math Formula</SelectItem>
+              <SelectItem value="table">Table</SelectItem>
+              <SelectItem value="drag-drop">Drag & Drop</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -283,7 +331,7 @@ export default function AddContentItems() {
             onChange={e => form.setValue("quiz_question", e.target.value)}
           />
         </div>
-        {/* Enhanced Content Editor or Chart Editor */}
+        {/* Enhanced Content Editor, Chart Editor, or Math Formula Input */}
         {form.watch("type") === "chart" ? (
           <div>
             <label className="block font-semibold mb-2">Chart Configuration</label>
@@ -295,6 +343,59 @@ export default function AddContentItems() {
             {form.formState.errors.content_text && (
               <div className="text-red-500 text-sm mt-1">{form.formState.errors.content_text.message}</div>
             )}
+          </div>
+        ) : form.watch("type") === "table" ? (
+          <div>
+            <label className="block font-semibold mb-2">Table Content</label>
+            <TableEditor
+              value={form.watch("content_text") || ""}
+              onChange={(value) => form.setValue("content_text", value)}
+              placeholder="Create your table here..."
+            />
+            {form.formState.errors.content_text && (
+              <div className="text-red-500 text-sm mt-1">{form.formState.errors.content_text.message}</div>
+            )}
+          </div>
+        ) : form.watch("type") === "math" ? (
+          <div>
+            <label className="block font-semibold mb-2">LaTeX Mathematical Formula</label>
+            <textarea
+              className="w-full border rounded p-2 font-mono text-sm"
+              placeholder="Enter LaTeX formula (e.g., \text{Value} = \sum_{t=1}^{n} \frac{CF_t}{(1 + r)^t})"
+              value={form.watch("math_formula") || ""}
+              onChange={(e) => form.setValue("math_formula", e.target.value)}
+              rows={4}
+            />
+            {form.formState.errors.math_formula && (
+              <div className="text-red-500 text-sm mt-1">{form.formState.errors.math_formula.message}</div>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Enter your mathematical formula in LaTeX format. This will be rendered using KaTeX.
+            </p>
+          </div>
+        ) : form.watch("type") === "drag-drop" ? (
+          <div>
+            <DragDropEditor
+              value={dragDropData}
+              onChange={(newData) => {
+                setDragDropData(newData);
+                // Convert to the format expected by the form
+                const itemsText = newData.items.map(item => `${item.text} → ${item.category}`).join('\n');
+                const categoriesText = newData.categories.join('\n');
+                
+                console.log('Setting form values:', {
+                  title: newData.title,
+                  instructions: newData.instructions,
+                  items: itemsText,
+                  categories: categoriesText
+                });
+                
+                form.setValue("drag_drop_title", newData.title);
+                form.setValue("drag_drop_instructions", newData.instructions);
+                form.setValue("drag_drop_items", itemsText);
+                form.setValue("drag_drop_categories", categoriesText);
+              }}
+            />
           </div>
         ) : (
           <div>

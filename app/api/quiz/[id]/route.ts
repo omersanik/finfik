@@ -72,18 +72,31 @@ export async function GET(
         } catch (parseError) {
           console.error("Parse failed:", parseError);
           
-          // Fallback: manually parse the array
+          // Fallback: manually parse the array using regex to handle commas within quotes
           const match = contentItem.quiz_data.match(/\[(.*)\]/);
           if (match) {
             const optionsString = match[1];
-            // Split by comma and clean each option
-                         const options = optionsString.split(',').map((option: string) => {
-               return option.trim()
-                 .replace(/^["']/, '')  // Remove leading quote
-                 .replace(/["']$/, '')  // Remove trailing quote
-                 .replace(/\\"/g, '"'); // Unescape quotes
-             });
-            rawData = options;
+            // Use regex to split by comma, but not within quotes
+            const options = optionsString.match(/"([^"]*(?:\\"[^"]*)*)"|'([^']*(?:\\'[^']*)*)'/g);
+            if (options) {
+              rawData = options.map((option: string) => {
+                return option.trim()
+                  .replace(/^["']/, '')  // Remove leading quote
+                  .replace(/["']$/, '')  // Remove trailing quote
+                  .replace(/\\"/g, '"')  // Unescape quotes
+                  .replace(/\\'/g, "'"); // Unescape single quotes
+              });
+            } else {
+              // If regex matching fails, try splitting by comma but be more careful
+              const options = optionsString.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map((option: string) => {
+                return option.trim()
+                  .replace(/^["']/, '')  // Remove leading quote
+                  .replace(/["']$/, '')  // Remove trailing quote
+                  .replace(/\\"/g, '"')  // Unescape quotes
+                  .replace(/\\'/g, "'"); // Unescape single quotes
+              });
+              rawData = options;
+            }
             console.log("Manually parsed options:", rawData);
           } else {
             throw new Error("Could not parse quiz data");

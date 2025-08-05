@@ -67,6 +67,10 @@ export async function POST(request: NextRequest) {
         console.error("Error marking section as completed:", updateError);
         throw updateError;
       }
+      
+      console.log('Stored completed_at date:', todayStr);
+      console.log('Upserted data:', upserted);
+      
       // If the row already existed and was completed before, force update completed_at
       if (upserted && upserted.length > 0 && upserted[0].completed && upserted[0].completed_at !== todayStr) {
         await supabase
@@ -84,6 +88,12 @@ export async function POST(request: NextRequest) {
       yesterday.setUTCDate(today.getUTCDate() - 1);
       const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
+      console.log('Streak Debug - Dates:', {
+        today: todayStr,
+        yesterday: yesterdayStr,
+        userId
+      });
+
       // 3. Fetch current streak info
       let streakRow = null;
       {
@@ -95,25 +105,33 @@ export async function POST(request: NextRequest) {
         if (!error && data) streakRow = data;
       }
 
+      console.log('Streak Debug - Current streak data:', streakRow);
+
       let newStreak = 1;
       let newLongest = 1;
+      
       if (streakRow) {
         if (streakRow.last_completed_date === todayStr) {
-          // Already updated today, do nothing
+          // Already completed something today, don't change streak count
           newStreak = streakRow.current_streak;
           newLongest = streakRow.longest_streak;
+          console.log('Streak Debug - Already completed today, no change to streak count');
         } else if (streakRow.last_completed_date === yesterdayStr) {
           // Continue streak
           newStreak = streakRow.current_streak + 1;
           newLongest = Math.max(newStreak, streakRow.longest_streak);
+          console.log('Streak Debug - Continuing streak:', { oldStreak: streakRow.current_streak, newStreak });
         } else {
           // Reset streak
           newStreak = 1;
           newLongest = Math.max(1, streakRow.longest_streak);
+          console.log('Streak Debug - Resetting streak to 1');
         }
+      } else {
+        console.log('Streak Debug - No existing streak, starting at 1');
       }
 
-      // 4. Upsert streak row
+      // 4. Always update streak row with current date
       const { error: streakError } = await supabase
         .from("user_streaks")
         .upsert({
@@ -124,6 +142,8 @@ export async function POST(request: NextRequest) {
         }, { onConflict: "clerk_id" });
       if (streakError) {
         console.error("Error updating streak:", streakError);
+      } else {
+        console.log('Streak Debug - Updated streak successfully:', { newStreak, newLongest, lastCompletedDate: todayStr });
       }
       // === End streak logic ===
 

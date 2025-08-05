@@ -5,13 +5,13 @@ import { CreateSupabaseClient } from "@/supabase-client";
 function getLast7Days() {
   const today = new Date();
   const last7Days = [];
-  
+
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setUTCDate(today.getUTCDate() - i);
     last7Days.push(date);
   }
-  
+
   return last7Days;
 }
 
@@ -29,12 +29,22 @@ export async function GET() {
     .eq("clerk_id", userId)
     .single();
 
+  if (streakError) return console.error(streakError);
+
   // Get all completed_at dates for the last 7 days
   const last7Days = getLast7Days();
   const startDate = last7Days[0]; // 7 days ago
-  const endDate = last7Days[6];   // today
+  const endDate = last7Days[6]; // today
   const startStr = startDate.toISOString().slice(0, 10);
   const endStr = endDate.toISOString().slice(0, 10);
+
+  console.log("Streak API Debug:", {
+    userId,
+    last7Days: last7Days.map((d) => d.toISOString().slice(0, 10)),
+    startStr,
+    endStr,
+    streakData,
+  });
 
   const { data: completions, error: completionsError } = await supabase
     .from("course_path_section_progress")
@@ -44,25 +54,68 @@ export async function GET() {
     .gte("completed_at", startStr)
     .lte("completed_at", endStr);
 
+  console.log("Raw completions from DB:", completions);
+  console.log(
+    "Completions found:",
+    completions?.map((c) => c.completed_at)
+  );
+
   // Build last 7 days array (oldest to newest)
   const week = Array(7).fill(false);
-  
+
   if (completions) {
+    console.log("Processing completions:", completions.length, "completions");
+
+    // Create a set of unique completion dates to avoid duplicates
+    const uniqueCompletionDates = new Set<string>();
+
     completions.forEach((row: { completed_at: string }) => {
       if (!row.completed_at) return;
-      const completionDate = new Date(row.completed_at);
-      const completionDateStr = completionDate.toISOString().slice(0, 10);
-      
-      // Find which day in the last 7 days this completion belongs to
-      const dayIndex = last7Days.findIndex(day => 
-        day.toISOString().slice(0, 10) === completionDateStr
+
+      // Handle both date string and timestamp formats
+      let completionDateStr;
+      if (row.completed_at.includes("T")) {
+        // It's a timestamp, extract date part
+        completionDateStr = row.completed_at.split("T")[0];
+      } else {
+        // It's already a date string
+        completionDateStr = row.completed_at;
+      }
+
+      uniqueCompletionDates.add(completionDateStr);
+      console.log(
+        "Added completion date:",
+        completionDateStr,
+        "from:",
+        row.completed_at
       );
-      
+    });
+
+    console.log("Unique completion dates:", Array.from(uniqueCompletionDates));
+
+    // Process unique completion dates
+    uniqueCompletionDates.forEach((completionDateStr) => {
+      // Find which day in the last 7 days this completion belongs to
+      const dayIndex = last7Days.findIndex((day) => {
+        const dayStr = day.toISOString().slice(0, 10);
+        return dayStr === completionDateStr;
+      });
+
+      console.log("Day index found:", dayIndex, "for date:", completionDateStr);
+
       if (dayIndex !== -1) {
         week[dayIndex] = true;
+        console.log("Marked day", dayIndex, "as completed");
       }
     });
   }
+
+  console.log("Final week array:", week);
+  console.log("Final streak data:", {
+    current_streak: streakData?.current_streak || 0,
+    longest_streak: streakData?.longest_streak || 0,
+    last_completed_date: streakData?.last_completed_date || null,
+  });
 
   return NextResponse.json({
     current_streak: streakData?.current_streak || 0,
@@ -70,4 +123,4 @@ export async function GET() {
     last_completed_date: streakData?.last_completed_date || null,
     week,
   });
-} 
+}

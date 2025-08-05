@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("course_enrollments")
-    .select("courses(id, title, slug, thumbnail_url, description)")
+    .select("courses(id, title, slug, thumbnail_url, description, course_level)")
     .eq("clerk_id", userId);
 
   if (error) {

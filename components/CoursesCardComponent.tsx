@@ -22,6 +22,7 @@ interface CoursesCardComponentProps {
   courseId: string;
   isPremium?: boolean;
   comingSoon?: boolean;
+  courseLevel?: 'Easy' | 'Medium' | 'Hard';
 }
 
 const CoursesCardComponent = ({
@@ -32,6 +33,7 @@ const CoursesCardComponent = ({
   courseId,
   isPremium = false,
   comingSoon = false,
+  courseLevel,
 }: CoursesCardComponentProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -77,8 +79,28 @@ const CoursesCardComponent = ({
     thumbnail &&
     (typeof thumbnail === "string" ? thumbnail.trim() !== "" : true);
 
+  const getLevelBadgeColor = (level: string) => {
+    switch (level) {
+      case 'Easy':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'Medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Hard':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   return (
-    <Card className="w-full max-w-md rounded-2xl shadow-lg overflow-hidden transition hover:scale-[1.02] hover:shadow-xl duration-300 flex flex-col h-full">
+    <Card className="w-full max-w-md rounded-2xl shadow-lg overflow-hidden transition hover:scale-[1.02] hover:shadow-xl duration-300 flex flex-col h-full relative">
+      {courseLevel && (
+        <div className="absolute top-4 right-4 z-10">
+          <Badge variant="outline" className={`${getLevelBadgeColor(courseLevel)} font-medium`}>
+            {courseLevel}
+          </Badge>
+        </div>
+      )}
       {hasValidThumbnail ? (
         <Image
           src={thumbnail}

@@ -58,16 +58,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch progress" }, { status: 500 });
     }
 
-    // Count unlocked sections
-    const unlockedSections = progress?.filter(p => p.unlocked).length || 0;
+    // Count completed sections instead of unlocked sections
+    const completedSections = progress?.filter(p => p.completed).length || 0;
     
-    // Calculate progress: (unlocked sections / total sections) * 100
-    const progressPercentage = Math.round((unlockedSections / totalSections) * 100);
+    // Calculate progress: (completed sections / total sections) * 100
+    const progressPercentage = Math.round((completedSections / totalSections) * 100);
 
     return NextResponse.json({
       progress: progressPercentage,
       totalSections,
-      unlockedSections
+      completedSections
     });
 
   } catch (error) {

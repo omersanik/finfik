@@ -25,6 +25,7 @@ interface MainCardComponentProps {
   courseId: string; // ✅ Make sure this is passed from the parent
   isPremium?: boolean;
   comingSoon?: boolean;
+  courseLevel?: 'Easy' | 'Medium' | 'Hard';
 }
 
 const MainCardComponent = ({
@@ -35,6 +36,7 @@ const MainCardComponent = ({
   courseId,
   isPremium = false,
   comingSoon = false,
+  courseLevel,
 }: MainCardComponentProps) => {
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,6 +47,19 @@ const MainCardComponent = ({
 
   // Debug log to see render state
   console.log("MainCardComponent rendered. enrolled:", enrolled, "courseId:", courseId, "slug:", slug);
+
+  const getLevelBadgeColor = (level: string) => {
+    switch (level) {
+      case 'Easy':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'Medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Hard':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
   // Check if user is enrolled and get progress
   useEffect(() => {
@@ -136,7 +151,14 @@ const MainCardComponent = ({
 
   return (
     <main className="flex">
-      <Card className="w-full max-w-lg shadow-2xl">
+      <Card className="w-full max-w-lg shadow-2xl relative">
+        {courseLevel && (
+          <div className="absolute top-4 right-4 z-10">
+            <Badge variant="outline" className={`${getLevelBadgeColor(courseLevel)} font-medium`}>
+              {courseLevel}
+            </Badge>
+          </div>
+        )}
         <CardHeader>
           <div className="flex items-center gap-2 justify-center">
             <CardTitle className="text-xl mt-6 text-center">{title}</CardTitle>

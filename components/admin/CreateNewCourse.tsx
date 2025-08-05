@@ -16,6 +16,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const formSchema = z.object({
@@ -25,6 +32,7 @@ const formSchema = z.object({
   thumbnail_url: z.string().optional(),
   is_premium_course: z.boolean().default(false),
   coming_soon: z.boolean().default(false),
+  course_level: z.enum(["Easy", "Medium", "Hard"]).default("Medium"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -39,6 +47,7 @@ export default function CreateNewCourse() {
       thumbnail_url: "",
       is_premium_course: false,
       coming_soon: false,
+      course_level: "Medium",
     },
   });
 
@@ -130,6 +139,31 @@ export default function CreateNewCourse() {
               </FormControl>
               <FormDescription>
                 This is the URL of the thumbnail image for your course.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="course_level"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Course Level</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select course level" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Easy">Easy</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Hard">Hard</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Choose the difficulty level of your course.
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import ContentBlockComponent from "./ContentBlock";
 import CourseIdNavbar from "./CourseIdNavbar";
 import LoadingAnimation from "./LoadingAnimation";
+import { Button } from "./ui/button";
 
 interface ContentItem {
   id: string;
@@ -113,13 +114,12 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
     currentOrder: number
   ) => {
     try {
-      const response = await fetch("/api/course/complete-section", {
+      const response = await fetch("/api/progress/complete-and-unlock", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: userId,
           sectionId: sectionId,
           courseId: courseId,
           currentOrder: currentOrder,
@@ -155,6 +155,9 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
 
             // Update the local state to reflect completion
             currentSection.completed = true;
+
+            // Add a small delay to allow streak data to be processed
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             // Check if there's a next section and unlock it
             const nextSectionIndex = currentSectionIndex + 1;
@@ -313,19 +316,19 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
       <div className="min-h-screen bg-[#fefaf1] pt-24 pb-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold text-center mb-2 text-gray-900">
+            <h1 className="text-xl font-bold text-center mb-4 text-gray-900">
               {courseData.path.name}
             </h1>
 
             {/* Section indicator */}
             {!showCongratulations && (
-              <div className="text-center mb-6">
-                <p className="text-sm text-gray-600">
+              <div className="text-center mb-8">
+                <p className="text-xs text-gray-600">
                   Section {currentSection?.order}: {currentSection?.title}
                 </p>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2 max-w-md mx-auto">
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2 max-w-md mx-auto">
                   <div
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
                     style={{
                       width: `${
                         currentSectionBlocks.length > 0
@@ -357,7 +360,7 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
             )}
 
             {!showCongratulations ? (
-              <div className="space-y-4">
+              <div className="space-y-6 pb-20">
                 {currentSectionBlocks
                   .slice(0, currentBlockIndex + 1)
                   .map((block, index) => (
@@ -378,32 +381,48 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
                   ))}
               </div>
             ) : (
-              <div className="text-center mt-8">
-                <div className="p-6 bg-green-50 rounded-lg border border-green-200 max-w-md mx-auto">
-                  <h2 className="text-xl font-bold text-green-800 mb-3">
-                    🎉 Congratulations!
-                  </h2>
-                  <p className="text-green-700 mb-4 text-sm">
-                    You've completed the entire course!
-                  </p>
+              <div className="text-center py-12">
+                <h2 className="text-3xl font-bold text-green-600 mb-4">
+                  🎉 Congratulations!
+                </h2>
+                <p className="text-lg text-gray-600 mb-6">
+                  You've completed this section. Great job!
+                </p>
+                <Button
+                  onClick={() => {
+                    const nextSectionIndex = currentSectionIndex + 1;
+                    if (nextSectionIndex < courseData.path.sections.length) {
+                      setCurrentSectionIndex(nextSectionIndex);
+                      setCurrentBlockIndex(0);
+                    } else {
+                      setShowCongratulations(false);
+                    }
+                  }}
+                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold"
+                >
+                  Continue to Next Section
+                </Button>
+              </div>
+            )}
 
-                  {error && (
-                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                      <p className="text-yellow-700 text-xs">
-                        Note: There was an issue updating your progress, but you
-                        completed the course.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Link
-                      href={`/courses/${courseData.course.slug}`}
-                      className="block px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm"
-                    >
-                      Back to Course
-                    </Link>
-                  </div>
+            {/* Fixed Bottom Bar with Continue Button - Matching Navbar Design */}
+            {!showCongratulations && (
+              <div className="w-full fixed bottom-0 left-0 bg-background border-t border-border shadow-sm z-50 h-20 flex items-center px-4">
+                <div className="w-full flex justify-center">
+                  <Button
+                    onClick={handleContinue}
+                    disabled={isUpdatingProgress}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-4 rounded-full font-semibold shadow-lg text-lg"
+                  >
+                    {isUpdatingProgress ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Processing...
+                      </span>
+                    ) : (
+                      "Continue"
+                    )}
+                  </Button>
                 </div>
               </div>
             )}

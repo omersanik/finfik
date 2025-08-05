@@ -178,8 +178,8 @@ const Navbar = () => {
 
         {/* Right: Premium Button/Badge, Theme Toggle, Avatar */}
         <div className="flex items-center justify-center gap-4">
-          {/* Streak Counter */}
-          {!streakLoading && streak.current_streak > 0 && (
+          {/* Streak Counter - Always show */}
+          {!streakLoading && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold shadow-md">
               <Flame className="size-4 animate-pulse" />
               <span>{streak.current_streak}</span>

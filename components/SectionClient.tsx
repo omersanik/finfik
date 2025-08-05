@@ -1,11 +1,11 @@
 // File: components/SectionClient.tsx
 "use client";
 
-import ContentBlockComponent from "./ContentBlock";
-import { useState, useEffect, useRef } from "react";
-import CourseIdNavbar from "./CourseIdNavbar";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import ContentBlockComponent from "./ContentBlock";
+import CourseIdNavbar from "./CourseIdNavbar";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { CheckCircle, XCircle } from "lucide-react";
@@ -49,6 +49,8 @@ export default function SectionClient({
   const [buttonLoading, setButtonLoading] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, any>>({});
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [dragDropCompleted, setDragDropCompleted] = useState(false);
+  const [dragDropReady, setDragDropReady] = useState(false);
   const [allowContinue, setAllowContinue] = useState(false);
   const [feedback, setFeedback] = useState<{ open: boolean; correct: boolean }>({ open: false, correct: false });
   const [showFullProgress, setShowFullProgress] = useState(false);
@@ -64,9 +66,23 @@ export default function SectionClient({
   }, [finished, courseSlug]);
 
   const hasQuiz = blocks[unlockedIndex]?.content_items.some((item: any) => item.type === "quiz") || false;
+  const hasDragDrop = blocks[unlockedIndex]?.content_items.some((item: any) => item.type === "drag-drop") || false;
 
   const handleQuizAnswer = (answer: any) => {
     setQuizAnswers(prev => ({ ...prev, [unlockedIndex]: answer }));
+  };
+
+  const handleDragDropComplete = (isCompleted: boolean) => {
+    if (isCompleted) {
+      setDragDropCompleted(true);
+      setDragDropReady(true);
+      // Show congratulations popup for correct drag-drop
+      setFeedback({ open: true, correct: true });
+    } else {
+      // This means all items are dropped but not necessarily correct
+      setDragDropReady(true);
+      setDragDropCompleted(false);
+    }
   };
 
   const handleCheckAnswer = async () => {
@@ -104,9 +120,27 @@ export default function SectionClient({
   const handleContinue = async (idx: number) => {
     const currentBlock = blocks[idx];
     const hasQuizInBlock = currentBlock?.content_items.some((item: any) => item.type === "quiz") || false;
+    const hasDragDropInBlock = currentBlock?.content_items.some((item: any) => item.type === "drag-drop") || false;
     
     // If there's a quiz and no answer selected, don't proceed
     if (hasQuizInBlock && quizAnswers[idx] === undefined) {
+      return;
+    }
+    
+    // If there's a drag-drop and not completed, check the answers first
+    if (hasDragDropInBlock && !dragDropCompleted) {
+      // Call the global function to check drag-drop answers
+      if (typeof window !== 'undefined' && (window as any).checkDragDropAnswers) {
+        const isCorrect = (window as any).checkDragDropAnswers();
+        if (isCorrect) {
+          // If correct, allow progression
+          setDragDropCompleted(true);
+          setDragDropReady(true);
+        } else {
+          // Show feedback popup for incorrect answers
+          setFeedback({ open: true, correct: false });
+        }
+      }
       return;
     }
     
@@ -137,6 +171,8 @@ export default function SectionClient({
       // Reset quiz state for next block
       setQuizAnswers(prev => ({ ...prev, [idx + 1]: undefined }));
       setQuizCompleted(false);
+      setDragDropCompleted(false);
+      setDragDropReady(false);
       setAllowContinue(false);
       setTimeout(() => {
         blockRefs.current[idx + 1]?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -168,7 +204,7 @@ export default function SectionClient({
         currentProgress={showFullProgress ? blocks.length : unlockedIndex}
         totalProgress={blocks.length}
       />
-      <div className="max-w-3xl mx-auto p-4 pt-24">
+      <div className="max-w-4xl mx-auto p-4 pt-24 pb-20">
         {blocks.slice(0, unlockedIndex + 1).map((block, idx) => (
           <div
             key={block.id}
@@ -186,46 +222,63 @@ export default function SectionClient({
               onQuizAnswer={handleQuizAnswer}
               quizAnswer={quizAnswers[idx]}
               quizCompleted={quizCompleted}
+              onDragDropComplete={handleDragDropComplete}
+              dragDropCompletedProp={dragDropCompleted}
             />
           </div>
         ))}
-        {/* Single Continue Button at the bottom */}
-        {unlockedIndex < blocks.length && (
-          <div className="flex justify-center mt-8 sticky bottom-8 z-20">
+        {/* Fixed Bottom Bar with Continue Button - Matching Navbar Design */}
+        <div className="w-full fixed bottom-0 left-0 bg-background border-t border-border shadow-sm z-50 h-24 flex items-center px-4">
+          <div className="w-full flex justify-center">
             <Button
               onClick={() => handleContinue(unlockedIndex)}
-              className="px-6 py-2 rounded-lg font-medium transition-all text-sm bg-primary text-white shadow hover:bg-primary/90"
-              style={{ minWidth: 160 }}
-              disabled={buttonLoading || (hasQuiz && quizAnswers[unlockedIndex] === undefined)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-4 rounded-full font-semibold shadow-lg text-lg"
+              style={{ minWidth: 180 }}
+              disabled={buttonLoading || (hasQuiz && quizAnswers[unlockedIndex] === undefined) || (hasDragDrop && !dragDropReady)}
             >
               {buttonLoading ? (
                 <span className="flex items-center gap-2 justify-center">
-                  <Loader2 className="animate-spin h-4 w-4" />
+                  <Loader2 className="animate-spin h-5 w-5" />
                   Processing...
                 </span>
-              ) : hasQuiz && quizAnswers[unlockedIndex] !== undefined && !quizCompleted ? "Check Answer" : unlockedIndex === blocks.length - 1 ? "Finish" : "Continue"}
+              ) : (hasQuiz && quizAnswers[unlockedIndex] !== undefined && !quizCompleted) || (hasDragDrop && !dragDropCompleted) ? "Check Answer" : unlockedIndex === blocks.length - 1 ? "Finish" : "Continue"}
             </Button>
           </div>
-        )}
-        {/* Feedback Card Popup */}
+        </div>
+        {/* Feedback Card Popup - Inside Footer */}
         {feedback.open && (
-          <div className="fixed left-1/2 bottom-8 z-50 transform -translate-x-1/2 animate-slideup">
-            <Card className={`w-[420px] shadow-2xl border-2 flex items-center justify-center overflow-hidden ${feedback.correct ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500'}`}>
-              <CardContent className="py-2 px-4 flex flex-row items-center justify-between w-full">
-                <div className="flex flex-row items-center gap-2">
+          <div className="fixed left-0 right-0 bottom-0 z-50 animate-slideup h-24">
+            <Card className={`w-full h-full shadow-2xl border-2 flex items-center justify-center overflow-hidden rounded-none ${feedback.correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+              <CardContent className="py-2 px-6 flex flex-row items-center justify-center w-full max-w-2xl">
+                <div className="flex flex-row items-center gap-3">
                   {feedback.correct ? (
-                    <CheckCircle className="w-7 h-7 text-green-600" />
+                    <div className="p-1.5 bg-green-100 rounded-full">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    </div>
                   ) : (
-                    <XCircle className="w-7 h-7 text-red-600" />
+                    <div className="p-1.5 bg-red-100 rounded-full">
+                      <XCircle className="w-5 h-5 text-red-600" />
+                    </div>
                   )}
-                  <span className={`text-base font-bold ${feedback.correct ? 'text-green-700' : 'text-red-700'}`}>{feedback.correct ? "Correct!" : "Wrong answer"}</span>
+                  <span className={`text-base font-semibold ${feedback.correct ? 'text-green-800' : 'text-red-800'}`}>
+                    {feedback.correct ? "🎉 Correct! Well done!" : "Incorrect answer"}
+                  </span>
                 </div>
                 {feedback.correct ? (
-                  <Button size="sm" className="ml-2" onClick={() => { setFeedback({ open: false, correct: false }); handleContinue(unlockedIndex); }}>
+                  <Button 
+                    size="sm" 
+                    className="ml-6 bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-full shadow-lg text-base" 
+                    onClick={() => { setFeedback({ open: false, correct: false }); handleContinue(unlockedIndex); }}
+                  >
                     Continue
                   </Button>
                 ) : (
-                  <Button size="sm" variant="destructive" className="ml-2" onClick={() => setFeedback({ open: false, correct: false })}>
+                  <Button 
+                    size="sm" 
+                    variant="destructive" 
+                    className="ml-6 font-semibold px-8 py-3 rounded-full shadow-lg text-base" 
+                    onClick={() => setFeedback({ open: false, correct: false })}
+                  >
                     Try Again
                   </Button>
                 )}

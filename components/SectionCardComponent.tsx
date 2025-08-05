@@ -1,6 +1,7 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,7 @@ interface SectionCardComponentProp {
   courseId: string;
   initialProgress?: number;
   comingSoon?: boolean;
+  courseLevel?: 'Easy' | 'Medium' | 'Hard';
 }
 
 const SectionCardComponent = ({
@@ -24,6 +26,7 @@ const SectionCardComponent = ({
   courseId,
   initialProgress = 0,
   comingSoon = false,
+  courseLevel,
 }: SectionCardComponentProp) => {
   const { getToken } = useAuth();
   const router = useRouter();
@@ -38,6 +41,19 @@ const SectionCardComponent = ({
     "courseId:",
     courseId
   );
+
+  const getLevelBadgeColor = (level: string) => {
+    switch (level) {
+      case 'Easy':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'Medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Hard':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
   // Get progress for this course (only if no initial progress provided)
   useEffect(() => {
@@ -105,7 +121,14 @@ const SectionCardComponent = ({
   };
 
   return (
-    <Card className="shadow-2xl h-full flex flex-col">
+    <Card className="shadow-2xl h-full flex flex-col relative">
+      {courseLevel && (
+        <div className="absolute top-4 right-4 z-10">
+          <Badge variant="outline" className={`${getLevelBadgeColor(courseLevel)} font-medium`}>
+            {courseLevel}
+          </Badge>
+        </div>
+      )}
       <CardHeader>
         <CardTitle className="text-2xl mt-6 text-center">{title}</CardTitle>
       </CardHeader>

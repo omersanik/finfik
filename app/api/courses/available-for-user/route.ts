@@ -24,12 +24,12 @@ export async function GET(req: NextRequest) {
   if (enrolledCourseIds.length > 0) {
     ({ data: courses, error: courseError } = await supabase
       .from("courses")
-      .select("*")
+      .select("*, course_level")
       .not("id", "in", `(${enrolledCourseIds.join(",")})`));
   } else {
     ({ data: courses, error: courseError } = await supabase
       .from("courses")
-      .select("*"));
+      .select("*, course_level"));
   }
 
   if (courseError) {

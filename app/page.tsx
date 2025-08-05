@@ -3,6 +3,7 @@ import SectionCardComponent from "@/components/SectionCardComponent";
 import { auth } from "@clerk/nextjs/server";
 import BeautifulLandingPage from "@/components/BeautifulLandingPage";
 import StreakCounter from "@/components/StreakCounter";
+import { redirect } from "next/navigation";
 
 const Page = async () => {
   const { userId, getToken } = await auth();
@@ -21,6 +22,7 @@ const Page = async () => {
     thumbnail_url: string;
     description: string;
     coming_soon?: boolean;
+    course_level?: 'Easy' | 'Medium' | 'Hard';
   };
 
   type Streak = {
@@ -122,6 +124,11 @@ const Page = async () => {
   );
   const visibleEnrolledCourses = enrolledCourses.filter((course) => !course.coming_soon);
 
+  // If user has no enrolled courses, redirect to courses page
+  if (enrolledCourses.length === 0) {
+    return redirect('/courses');
+  }
+
   return (
     <main className="bg-background text-foreground min-h-screen">
       <h1 className="text-3xl font-semibold my-10 mx-10 font-serif">
@@ -138,6 +145,7 @@ const Page = async () => {
                 slug={lastTakenCourse.slug}
                 courseId={lastTakenCourse.id}
                 comingSoon={!!lastTakenCourse.coming_soon}
+                courseLevel={lastTakenCourse.course_level}
               />
             </div>
             <div className="flex-shrink-0 flex md:block items-start">
@@ -151,12 +159,6 @@ const Page = async () => {
           </>
         ) : (
           <div className="w-full flex flex-col items-center">
-            <StreakCounter
-              currentStreak={streak.current_streak}
-              longestStreak={streak.longest_streak}
-              lastCompletedDate={streak.last_completed_date}
-              week={streak.week}
-            />
             <p className="text-gray-500 mt-6">
               No recent course found. Start a new one below!
             </p>
@@ -176,6 +178,7 @@ const Page = async () => {
             courseId={course.id}
             initialProgress={courseProgress[course.id]?.progress || 0}
             comingSoon={!!course.coming_soon}
+            courseLevel={course.course_level}
           />
         ))}
         {unEnrolledCourses.map((course: Course) => (
@@ -187,6 +190,7 @@ const Page = async () => {
             courseId={course.id}
             initialProgress={0}
             comingSoon={!!course.coming_soon}
+            courseLevel={course.course_level}
           />
         ))}
       </div>

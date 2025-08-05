@@ -1,6 +1,7 @@
 "use client";
 
 import { useEditor, EditorContent } from '@tiptap/react';
+import './EnhancedContentEditor.css';
 import StarterKit from '@tiptap/starter-kit';
 import Bold from '@tiptap/extension-bold';
 import Italic from '@tiptap/extension-italic';
@@ -77,6 +78,8 @@ interface EnhancedContentEditorProps {
 export default function EnhancedContentEditor({ value, onChange, placeholder }: EnhancedContentEditorProps) {
   const [showMathDialog, setShowMathDialog] = useState(false);
   const [mathFormula, setMathFormula] = useState('');
+  const [showInlineMathDialog, setShowInlineMathDialog] = useState(false);
+  const [inlineMathFormula, setInlineMathFormula] = useState('');
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [imageAlt, setImageAlt] = useState('');
@@ -87,7 +90,18 @@ export default function EnhancedContentEditor({ value, onChange, placeholder }: 
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        bold: false,
+        italic: false,
+        underline: false,
+        strike: false,
+        heading: false,
+        codeBlock: false,
+        link: false,
+      }),
       Bold,
       Italic,
       Underline,
@@ -126,21 +140,32 @@ export default function EnhancedContentEditor({ value, onChange, placeholder }: 
       }),
       Color,
     ],
-    content: value,
+    content: value || '',
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
+    editable: true,
+    autofocus: false,
     immediatelyRender: false,
   });
 
   const insertMath = useCallback(() => {
     if (editor && mathFormula.trim()) {
-      const mathHTML = `<span class="math-formula" data-formula="${mathFormula}">${mathFormula}</span>`;
+      const mathHTML = `<span class="math-formula" data-formula="${mathFormula}"></span>`;
       editor.chain().focus().insertContent(mathHTML).run();
       setMathFormula('');
       setShowMathDialog(false);
     }
   }, [editor, mathFormula]);
+
+  const insertInlineMath = useCallback(() => {
+    if (editor && inlineMathFormula.trim()) {
+      const mathHTML = `<span class="math-formula inline" data-formula="${inlineMathFormula}"></span>`;
+      editor.chain().focus().insertContent(mathHTML).run();
+      setInlineMathFormula('');
+      setShowInlineMathDialog(false);
+    }
+  }, [editor, inlineMathFormula]);
 
   const insertImage = useCallback(() => {
     if (editor && imageUrl.trim()) {
@@ -278,7 +303,10 @@ export default function EnhancedContentEditor({ value, onChange, placeholder }: 
             type="button"
             size="sm"
             variant={editor.isActive('bulletList') ? 'secondary' : 'ghost'}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            onClick={() => {
+              console.log('Bullet list button clicked');
+              editor.chain().focus().toggleBulletList().run();
+            }}
           >
             <ListIcon className="h-4 w-4" />
           </Button>
@@ -286,7 +314,10 @@ export default function EnhancedContentEditor({ value, onChange, placeholder }: 
             type="button"
             size="sm"
             variant={editor.isActive('orderedList') ? 'secondary' : 'ghost'}
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            onClick={() => {
+              console.log('Ordered list button clicked');
+              editor.chain().focus().toggleOrderedList().run();
+            }}
           >
             <ListOrderedIcon className="h-4 w-4" />
           </Button>
@@ -332,7 +363,7 @@ export default function EnhancedContentEditor({ value, onChange, placeholder }: 
         <div className="flex items-center gap-1 border-r pr-2">
           <Dialog open={showMathDialog} onOpenChange={setShowMathDialog}>
             <DialogTrigger asChild>
-              <Button type="button" size="sm" variant="ghost">
+              <Button type="button" size="sm" variant="ghost" title="Insert block math formula">
                 <CalculatorIcon className="h-4 w-4" />
               </Button>
             </DialogTrigger>
@@ -340,18 +371,27 @@ export default function EnhancedContentEditor({ value, onChange, placeholder }: 
               <DialogHeader>
                 <DialogTitle>Insert Mathematical Formula</DialogTitle>
                 <DialogDescription>
-                  Enter a LaTeX mathematical formula
+                  Enter a LaTeX mathematical formula (displayed as a block)
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="math-formula">Formula</Label>
-                  <Input
+                  <Textarea
                     id="math-formula"
                     value={mathFormula}
                     onChange={(e) => setMathFormula(e.target.value)}
                     placeholder="Enter LaTeX formula..."
+                    rows={6}
                   />
+                </div>
+                <div className="text-sm text-gray-500">
+                  <p>Examples for block math:</p>
+                  <ul className="list-disc list-inside mt-1">
+                    <li><code>{"\\textbf{Where:}"}</code> - for bold text</li>
+                    <li><code>{"\\begin{align*} ... \\end{align*}"}</code> - for aligned equations</li>
+                    <li><code>{"\\text{Cash flow in year } t"}</code> - for text within math</li>
+                  </ul>
                 </div>
               </div>
               <DialogFooter>
@@ -360,6 +400,54 @@ export default function EnhancedContentEditor({ value, onChange, placeholder }: 
                 </Button>
                 <Button onClick={insertMath}>
                   Insert Formula
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={showInlineMathDialog} onOpenChange={setShowInlineMathDialog}>
+            <DialogTrigger asChild>
+              <Button type="button" size="sm" variant="ghost" title="Insert inline math formula">
+                <TypeIcon className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Insert Inline Mathematical Formula</DialogTitle>
+                <DialogDescription>
+                  Enter a LaTeX mathematical formula (displayed inline with text)
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="inline-math-formula">Formula</Label>
+                  <Input
+                    id="inline-math-formula"
+                    value={inlineMathFormula}
+                    onChange={(e) => setInlineMathFormula(e.target.value)}
+                    placeholder="e.g., CF_t, r, n, \alpha, \beta..."
+                  />
+                </div>
+                <div className="text-sm text-gray-500">
+                  <p>Examples for inline math:</p>
+                  <ul className="list-disc list-inside mt-1">
+                    <li><code>CF_t</code> - for subscript</li>
+                    <li><code>r</code> - for italic variable</li>
+                    <li><code>n</code> - for italic variable</li>
+                    <li><code>\alpha</code> - for Greek letters</li>
+                    <li><code>\beta</code> - for Greek letters</li>
+                  </ul>
+                  <p className="mt-2 text-xs text-gray-400">
+                    <strong>Note:</strong> For complex formulas with multiple lines, use the calculator button (block math) instead.
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowInlineMathDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={insertInlineMath}>
+                  Insert Inline Formula
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -464,7 +552,14 @@ export default function EnhancedContentEditor({ value, onChange, placeholder }: 
 
       {/* Editor Content */}
       <div className="p-4">
-        <EditorContent editor={editor} className="min-h-[200px] prose prose-sm sm:prose lg:prose-lg xl:prose-2xl max-w-none" />
+        <EditorContent 
+          editor={editor} 
+          className="min-h-[200px] prose prose-sm sm:prose lg:prose-lg xl:prose-2xl max-w-none focus:outline-none" 
+          style={{
+            '--tw-prose-bullets': 'currentColor',
+            '--tw-prose-counters': 'currentColor',
+          } as React.CSSProperties}
+        />
       </div>
     </div>
   );

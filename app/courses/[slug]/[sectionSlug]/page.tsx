@@ -142,7 +142,7 @@ export default async function SectionPage({
     const blockIds = blocks.map((b: any) => b.id);
     const { data: items, error: itemsError } = await supabase
       .from("content_item")
-      .select("id, block_id, type, content_text, image_url, quiz_data, component_key, order_index, created_at, content_type, styling_data, math_formula, interactive_data, media_files, font_settings, layout_config, animation_settings")
+      .select("id, block_id, type, content_text, image_url, quiz_data, component_key, order_index, created_at, content_type, styling_data, math_formula, interactive_data, media_files, font_settings, layout_config, animation_settings, drag_drop_title, drag_drop_instructions, drag_drop_items, drag_drop_categories")
       .in("block_id", blockIds);
     if (!itemsError && items) {
       itemsByBlock = items.reduce((acc: any, item: any) => {

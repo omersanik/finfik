@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "@/supabase-client";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     console.log("Webhook received:", JSON.stringify(body, null, 2));
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const eventType = body.type;
     const user = body.data;
 
-    const email = user.email_addresses?.[0]?.email_address;
+    const email = user.email_addresses?.[0]?.email_address || "empty@email.com";
     const name = `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim();
     const clerk_id = user.id;
 

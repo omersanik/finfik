@@ -26,24 +26,45 @@ export async function POST(req: NextRequest) {
       font_settings,
       layout_config,
       animation_settings,
+      drag_drop_title,
+      drag_drop_instructions,
+      drag_drop_items,
+      drag_drop_categories,
     } = body;
     
     console.log("Type being inserted:", type);
+    console.log("Drag-drop data being inserted:", {
+      drag_drop_title,
+      drag_drop_instructions,
+      drag_drop_items,
+      drag_drop_categories
+    });
     
-    // Extract math formula from content_text if type is math
-    let extractedMathFormula = math_formula;
-    let cleanedContentText = content_text;
+    // Handle math formula properly
+    let finalMathFormula = math_formula;
+    let finalContentText = content_text;
     
-    if (type === 'math' && content_text) {
-      console.log("Processing math content:", content_text);
-      // Extract formula from span tag
-      const mathFormulaMatch = content_text.match(/data-formula="([^"]+)"/);
-      if (mathFormulaMatch) {
-        extractedMathFormula = mathFormulaMatch[1];
-        console.log("Extracted math formula:", extractedMathFormula);
-        // Remove the math formula span from content_text
-        cleanedContentText = content_text.replace(/<span class="math-formula"[^>]*>.*?<\/span>/g, '');
-        console.log("Cleaned content text:", cleanedContentText);
+    // For math type, use the math_formula field directly and set content_text to null
+    if (type === 'math') {
+      finalMathFormula = math_formula || '';
+      finalContentText = null; // Don't store content_text for math items
+      console.log("Math item - using math_formula:", finalMathFormula);
+    } else if (content_text && content_text.includes('class="math-formula"')) {
+      // Check if this is inline math (part of text content) or block math
+      if (content_text.includes('class="math-formula inline"')) {
+        // Keep inline math formulas in content_text - they're part of the text
+        finalContentText = content_text;
+        console.log("Keeping inline math in content_text:", content_text);
+      } else {
+        // Legacy: extract block math formula from content_text for non-math items
+        console.log("Processing block math content in text:", content_text);
+        const mathFormulaMatch = content_text.match(/data-formula="([^"]+)"/);
+        if (mathFormulaMatch) {
+          finalMathFormula = mathFormulaMatch[1];
+          console.log("Extracted math formula:", finalMathFormula);
+          finalContentText = content_text.replace(/<span class="math-formula"[^>]*>.*?<\/span>/g, '');
+          console.log("Cleaned content text:", finalContentText);
+        }
       }
     }
     
@@ -53,7 +74,7 @@ export async function POST(req: NextRequest) {
         {
           block_id: block_id || null,
           type: type || null,
-          content_text: cleanedContentText || null,
+          content_text: finalContentText || null,
           image_url: image_url || null,
           quiz_data: quiz_data || null,
           component_key: component_key || null,
@@ -61,12 +82,16 @@ export async function POST(req: NextRequest) {
           quiz_question: quiz_question || null,
           content_type: content_type || 'text',
           styling_data: styling_data || null,
-          math_formula: extractedMathFormula || null,
+          math_formula: finalMathFormula || null,
           interactive_data: interactive_data || null,
           media_files: media_files || null,
           font_settings: font_settings || null,
           layout_config: layout_config || null,
           animation_settings: animation_settings || null,
+          drag_drop_title: drag_drop_title || null,
+          drag_drop_instructions: drag_drop_instructions || null,
+          drag_drop_items: drag_drop_items || null,
+          drag_drop_categories: drag_drop_categories || null,
         },
       ])
       .select()

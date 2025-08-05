@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
         title,
         slug,
         thumbnail_url,
-        description
+        description,
+        course_level
       )
     `
     )

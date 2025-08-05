@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     if (!coursePaths || coursePaths.length === 0) {
       // Return 0 progress for all courses
       courseIds.forEach(courseId => {
-        results[courseId] = { progress: 0, totalSections: 0, unlockedSections: 0 };
+        results[courseId] = { progress: 0, totalSections: 0, completedSections: 0 };
       });
       return NextResponse.json(results);
     }
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     if (!sections || sections.length === 0) {
       // Return 0 progress for all courses
       courseIds.forEach(courseId => {
-        results[courseId] = { progress: 0, totalSections: 0, unlockedSections: 0 };
+        results[courseId] = { progress: 0, totalSections: 0, completedSections: 0 };
       });
       return NextResponse.json(results);
     }
@@ -99,27 +99,27 @@ export async function POST(request: NextRequest) {
         results[courseId] = { 
           progress: 0, 
           totalSections: 0, 
-          unlockedSections: 0 
+          completedSections: 0 
         };
         return;
       }
 
-      // Count unlocked sections for this course
-      let unlockedSections = 0;
+      // Count completed sections for this course instead of unlocked sections
+      let completedSections = 0;
       courseSectionsList.forEach(section => {
         const sectionProgress = progressMap.get(section.id);
-        if (sectionProgress && sectionProgress.unlocked) {
-          unlockedSections++;
+        if (sectionProgress && sectionProgress.completed) {
+          completedSections++;
         }
       });
 
-      // Calculate progress: (unlocked sections / total sections) * 100
-      const progressPercentage = Math.round((unlockedSections / totalSections) * 100);
+      // Calculate progress: (completed sections / total sections) * 100
+      const progressPercentage = Math.round((completedSections / totalSections) * 100);
 
       results[courseId] = {
         progress: progressPercentage,
         totalSections,
-        unlockedSections
+        completedSections
       };
     });
 
