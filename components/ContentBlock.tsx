@@ -619,19 +619,11 @@ const ContentBlockComponent = ({
               }
               const [text, fullCategory] = parts.map(s => s.trim());
               
-              // Handle empty category - try to infer from context
+              // Handle empty category or "undefined" string - try to infer from context
               let correctCategory = fullCategory;
-              if (!fullCategory) {
-                console.warn('Empty category for item:', text, '- attempting to infer...');
-                // Try to infer category based on the text
-                if (text.toLowerCase().includes('rental') || text.toLowerCase().includes('property')) {
-                  correctCategory = 'Asset';
-                } else if (text.toLowerCase().includes('subscription') || text.toLowerCase().includes('handbag')) {
-                  correctCategory = 'Liability';
-                } else {
-                  console.error('Cannot infer category for item:', text);
-                  return null;
-                }
+              if (!fullCategory || fullCategory === 'undefined') {
+                console.error('Invalid category for item:', text, '- category is undefined or empty');
+                return null;
               } else {
                 // Extract just the category name (before any parentheses)
                 correctCategory = fullCategory.split('(')[0].trim();
@@ -667,7 +659,13 @@ const ContentBlockComponent = ({
         if (!dragDropData) {
           return (
             <div key={item.id} className="mb-4 p-4 bg-red-50 border border-red-200 rounded">
-              <p className="text-red-600">Error loading drag and drop activity</p>
+              <p className="text-red-600 font-semibold">Error loading drag and drop activity</p>
+              <p className="text-red-500 text-sm mt-2">
+                Some items have undefined categories. Please check the admin panel to fix the drag and drop data.
+              </p>
+              <p className="text-gray-600 text-xs mt-1">
+                Expected format: "Item text → Category name" (one per line)
+              </p>
             </div>
           );
         }

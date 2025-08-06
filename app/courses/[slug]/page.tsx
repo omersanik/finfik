@@ -88,7 +88,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
       description: section.description ?? "No description", // Use the description from API
       lessons: section.lessons || [],
       courseSlug: slug,
-      sectionSlug: section.slug, // This should now be available from your API response
+      sectionSlug: section.slug?.trim() || section.slug, // Trim any leading/trailing spaces
     })
   );
 

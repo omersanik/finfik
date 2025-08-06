@@ -184,7 +184,7 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
                           if (step.unlocked && !comingSoon) {
                             setLoadingIndex(index);
                             setTimeout(() => {
-                              router.push(`/courses/${step.courseSlug}/${step.sectionSlug}`);
+                              router.push(`/courses/${step.courseSlug}/${step.sectionSlug.trim()}`);
                             }, 200);
                           }
                         }}

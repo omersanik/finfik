@@ -42,8 +42,8 @@ const formSchema = z.object({
     return data.drag_drop_items && data.drag_drop_items.trim().length > 0 &&
            data.drag_drop_categories && data.drag_drop_categories.trim().length > 0;
   }
-  // For chart, animation, quiz, and table types, content_text is optional
-  if (data.type === 'chart' || data.type === 'animation' || data.type === 'quiz' || data.type === 'table') {
+  // For chart, animation, quiz, table, and image types, content_text is optional
+  if (data.type === 'chart' || data.type === 'animation' || data.type === 'quiz' || data.type === 'table' || data.type === 'image') {
     return true;
   }
   // For other types, content_text is required

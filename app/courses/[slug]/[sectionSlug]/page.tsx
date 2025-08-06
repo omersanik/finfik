@@ -112,7 +112,7 @@ export default async function SectionPage({
   const { data: section, error: sectionError } = await supabase
     .from("course_path_sections")
     .select("id, title, order, course_path_id")
-    .eq("slug", sectionSlug)
+    .eq("slug", sectionSlug.trim())
     .eq("course_path_id", coursePath.id)
     .single();
 
