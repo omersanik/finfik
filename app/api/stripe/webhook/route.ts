@@ -40,12 +40,32 @@ export async function POST(req: NextRequest) {
     }
     console.log("Checkout session completed for userId:", userId, "subscriptionId:", subscriptionId, "plan:", subscriptionPlan);
     if (userId) {
-      const { error } = await supabaseAdmin
+      // First, try to update the user if they exist
+      const { error: updateError } = await supabaseAdmin
         .from("users")
         .update({ is_premium: true, subscription_id: subscriptionId || null, subscription_plan: subscriptionPlan })
         .eq("clerk_id", userId);
-      if (error) {
-        console.error("Supabase update error:", error);
+      
+      if (updateError) {
+        console.error("Supabase update error:", updateError);
+        
+        // If user doesn't exist, create them
+        if (updateError.code === 'PGRST116') {
+          const { error: createError } = await supabaseAdmin
+            .from("users")
+            .insert([{ 
+              clerk_id: userId, 
+              is_premium: true, 
+              subscription_id: subscriptionId || null, 
+              subscription_plan: subscriptionPlan 
+            }]);
+          
+          if (createError) {
+            console.error("Failed to create user:", createError);
+          } else {
+            console.log("User created and upgraded to premium:", userId);
+          }
+        }
       } else {
         console.log("User upgraded to premium:", userId);
       }
@@ -110,15 +130,15 @@ export async function POST(req: NextRequest) {
     const subscription = event.data.object as Stripe.Subscription;
     console.log("Subscription updated:", subscription.id, "status:", subscription.status);
     
-    if (subscription.status === "canceled" || subscription.status === "unpaid") {
-      // Find user by subscription ID
-      const { data: user, error: fetchError } = await supabaseAdmin
-        .from("users")
-        .select("clerk_id")
-        .eq("subscription_id", subscription.id)
-        .single();
-      
-      if (!fetchError && user) {
+    // Find user by subscription ID
+    const { data: user, error: fetchError } = await supabaseAdmin
+      .from("users")
+      .select("clerk_id")
+      .eq("subscription_id", subscription.id)
+      .single();
+    
+    if (!fetchError && user) {
+      if (subscription.status === "canceled" || subscription.status === "unpaid") {
         console.log("Removing premium access for user:", user.clerk_id);
         const { error: updateError } = await supabaseAdmin
           .from("users")
@@ -131,6 +151,17 @@ export async function POST(req: NextRequest) {
         
         if (updateError) {
           console.error("Error removing premium access:", updateError);
+        }
+      } else if (subscription.status === "active") {
+        // Ensure premium status is active for active subscriptions
+        console.log("Ensuring premium access for user:", user.clerk_id);
+        const { error: updateError } = await supabaseAdmin
+          .from("users")
+          .update({ is_premium: true })
+          .eq("clerk_id", user.clerk_id);
+        
+        if (updateError) {
+          console.error("Error ensuring premium access:", updateError);
         }
       }
     }

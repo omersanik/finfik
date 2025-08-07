@@ -34,11 +34,23 @@ export async function POST(req: NextRequest) {
           clerk_id: userId,
           course_id,
           enrolled_at: new Date().toISOString(),
+          last_accessed: new Date().toISOString(),
         },
       ]);
 
     if (enrollError) {
       return new Response(enrollError.message, { status: 500 });
+    }
+  } else {
+    // Update last_accessed for existing enrollment
+    const { error: updateError } = await supabase
+      .from("course_enrollments")
+      .update({ last_accessed: new Date().toISOString() })
+      .eq("clerk_id", userId)
+      .eq("course_id", course_id);
+
+    if (updateError) {
+      return new Response(updateError.message, { status: 500 });
     }
   }
 
