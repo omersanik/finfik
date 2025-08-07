@@ -16,8 +16,29 @@ export async function GET() {
     .eq("clerk_id", userId)
     .single();
 
-  if (error || !user) {
-    return new Response(JSON.stringify({ error: error?.message || "User not found" }), { status: 404 });
+  if (error) {
+    console.error("Database error:", error);
+    // If user doesn't exist, create them with default values
+    if (error.code === 'PGRST116') {
+      const { data: newUser, error: createError } = await supabase
+        .from("users")
+        .insert([{ clerk_id: userId, is_premium: false, subscription_plan: null }])
+        .select("is_premium, subscription_plan")
+        .single();
+      
+      if (createError) {
+        console.error("Error creating user:", createError);
+        return new Response(JSON.stringify({ error: "Failed to create user" }), { status: 500 });
+      }
+      
+      return new Response(JSON.stringify({ is_premium: newUser.is_premium, subscription_plan: newUser.subscription_plan }), { status: 200 });
+    }
+    
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
+
+  if (!user) {
+    return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
   }
 
   return new Response(JSON.stringify({ is_premium: user.is_premium, subscription_plan: user.subscription_plan }), { status: 200 });

@@ -29,7 +29,10 @@ export async function GET() {
     .eq("clerk_id", userId)
     .single();
 
-  if (streakError) return console.error(streakError);
+  if (streakError) {
+    console.error(streakError);
+    return NextResponse.json({ error: "Failed to fetch streak data" }, { status: 500 });
+  }
 
   // Get all completed_at dates for the last 7 days
   const last7Days = getLast7Days();

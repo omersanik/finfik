@@ -54,5 +54,87 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Handle subscription cancellation with grace period
+  if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object as Stripe.Subscription;
+    console.log("Subscription deleted:", subscription.id);
+    
+    // Find user by subscription ID
+    const { data: user, error: fetchError } = await supabaseAdmin
+      .from("users")
+      .select("clerk_id, subscription_id")
+      .eq("subscription_id", subscription.id)
+      .single();
+    
+    if (fetchError || !user) {
+      console.error("User not found for subscription:", subscription.id);
+      return new Response(JSON.stringify({ received: true }), { status: 200 });
+    }
+
+    // Check if subscription was canceled at period end (grace period)
+    if (subscription.cancel_at_period_end) {
+      console.log("Subscription canceled at period end - keeping premium until end of current period");
+      // Keep premium status until the end of the current period
+      const { error: updateError } = await supabaseAdmin
+        .from("users")
+        .update({ 
+          subscription_plan: null,
+          subscription_id: null,
+          // Don't set is_premium to false yet - it will be handled when the period actually ends
+        })
+        .eq("clerk_id", user.clerk_id);
+      
+      if (updateError) {
+        console.error("Error updating user for grace period:", updateError);
+      }
+    } else {
+      // Immediate cancellation - remove premium access
+      console.log("Subscription immediately canceled - removing premium access");
+      const { error: updateError } = await supabaseAdmin
+        .from("users")
+        .update({ 
+          is_premium: false, 
+          subscription_id: null, 
+          subscription_plan: null 
+        })
+        .eq("clerk_id", user.clerk_id);
+      
+      if (updateError) {
+        console.error("Error removing premium access:", updateError);
+      }
+    }
+  }
+
+  // Handle subscription updates (like when grace period ends)
+  if (event.type === "customer.subscription.updated") {
+    const subscription = event.data.object as Stripe.Subscription;
+    console.log("Subscription updated:", subscription.id, "status:", subscription.status);
+    
+    if (subscription.status === "canceled" || subscription.status === "unpaid") {
+      // Find user by subscription ID
+      const { data: user, error: fetchError } = await supabaseAdmin
+        .from("users")
+        .select("clerk_id")
+        .eq("subscription_id", subscription.id)
+        .single();
+      
+      if (!fetchError && user) {
+        console.log("Removing premium access for user:", user.clerk_id);
+        const { error: updateError } = await supabaseAdmin
+          .from("users")
+          .update({ 
+            is_premium: false, 
+            subscription_id: null, 
+            subscription_plan: null 
+          })
+          .eq("clerk_id", user.clerk_id);
+        
+        if (updateError) {
+          console.error("Error removing premium access:", updateError);
+        }
+      }
+    }
+  }
+
   return new Response(JSON.stringify({ received: true }), { status: 200 });
 } 

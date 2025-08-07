@@ -73,10 +73,16 @@ export default function SignInForm() {
       }
     } catch (error: any) {
       console.error("Sign-in error:", error);
-      setAuthError(
-        error.errors?.[0]?.message ||
-          "An error occurred during sign-in. Please try again."
-      );
+      const errorMessage = error.errors?.[0]?.message || "An error occurred during sign-in. Please try again.";
+      
+      // Check if it's a "not found" error and suggest signing up
+      if (errorMessage.toLowerCase().includes("not found") || 
+          errorMessage.toLowerCase().includes("doesn't exist") ||
+          errorMessage.toLowerCase().includes("no account")) {
+        setAuthError("No account found with this email. Please sign up instead.");
+      } else {
+        setAuthError(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }

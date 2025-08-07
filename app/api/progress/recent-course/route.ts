@@ -42,8 +42,7 @@ export async function POST(req: NextRequest) {
     )
     .eq("clerk_id", userId)
     .order("last_accessed", { ascending: false })
-    .limit(1)
-    .single();
+    .limit(1);
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
