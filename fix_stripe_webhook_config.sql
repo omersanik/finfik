@@ -1,0 +1,25 @@
+-- Instructions to fix Stripe webhook configuration
+-- 
+-- The issue is that Stripe is sending webhooks to /api/webhook instead of /api/stripe/webhook
+-- 
+-- To fix this, you need to update your Stripe webhook endpoint URL in the Stripe Dashboard:
+-- 
+-- 1. Go to https://dashboard.stripe.com/webhooks
+-- 2. Find your webhook endpoint
+-- 3. Click on it to edit
+-- 4. Change the endpoint URL from:
+--    http://localhost:3000/api/webhook
+--    to:
+--    http://localhost:3000/api/stripe/webhook
+-- 
+-- For production, change from:
+--    https://yourdomain.com/api/webhook
+--    to:
+--    https://yourdomain.com/api/stripe/webhook
+-- 
+-- 5. Save the changes
+-- 
+-- The webhook should now work correctly and update user premium status after checkout.
+-- 
+-- Note: I've also created a redirect route at /api/webhook that forwards to /api/stripe/webhook
+-- as a temporary fix, but updating the Stripe configuration is the proper solution. 

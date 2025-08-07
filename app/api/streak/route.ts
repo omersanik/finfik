@@ -31,7 +31,29 @@ export async function GET() {
 
   if (streakError) {
     console.error(streakError);
-    return NextResponse.json({ error: "Failed to fetch streak data" }, { status: 500 });
+    // If user doesn't exist in user_streaks table, create them with default values
+    if (streakError.code === 'PGRST116') {
+      const { data: newStreakData, error: createError } = await supabase
+        .from("user_streaks")
+        .insert([{ 
+          clerk_id: userId, 
+          current_streak: 0, 
+          longest_streak: 0, 
+          last_completed_date: null 
+        }])
+        .select("current_streak, longest_streak, last_completed_date")
+        .single();
+      
+      if (createError) {
+        console.error("Error creating user streak:", createError);
+        return NextResponse.json({ error: "Failed to create user streak" }, { status: 500 });
+      }
+      
+      // Use the newly created streak data
+      const streakData = newStreakData;
+    } else {
+      return NextResponse.json({ error: "Failed to fetch streak data" }, { status: 500 });
+    }
   }
 
   // Get all completed_at dates for the last 7 days
