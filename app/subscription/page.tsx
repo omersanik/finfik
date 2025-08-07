@@ -185,8 +185,15 @@ function SubscriptionContent() {
         headers: { "Content-Type": "application/json" },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to open customer portal.");
-      window.location.href = data.url;
+      if (!res.ok) {
+        if (data.error && data.error.includes("not configured")) {
+          setError("Subscription management portal is not available yet. You can cancel your subscription using the 'Cancel Subscription' button below.");
+        } else {
+          throw new Error(data.error || "Failed to open customer portal.");
+        }
+      } else {
+        window.location.href = data.url;
+      }
     } catch (e: any) {
       setError(e.message || "Failed to open customer portal. Please try again.");
     } finally {
@@ -248,7 +255,11 @@ function SubscriptionContent() {
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <p className="text-sm text-yellow-800">
                     <strong>Important:</strong> This will immediately cancel your Stripe subscription and remove premium access.
-                    You can also manage your subscription through Stripe's customer portal for more options.
+                    {isPremium && (
+                      <span className="block mt-1">
+                        Note: The customer portal is not configured yet, so this is the only way to cancel your subscription.
+                      </span>
+                    )}
                   </p>
                 </div>
                 <p className="text-destructive font-semibold">

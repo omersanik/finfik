@@ -117,11 +117,7 @@ const Page = async () => {
     console.error("Error fetching streak:", err);
   }
 
-  // Remove enrolled from the main course list
-  const enrolledIds = new Set(enrolledCourses.map((c) => c.id));
-  const unEnrolledCourses = allCourses.filter(
-    (course) => !enrolledIds.has(course.id) && !course.coming_soon
-  );
+  // Filter out coming soon courses from enrolled courses
   const visibleEnrolledCourses = enrolledCourses.filter((course) => !course.coming_soon);
 
   // If user has no enrolled courses, redirect to courses page
@@ -169,20 +165,30 @@ const Page = async () => {
       <p className="text-3xl font-bold pt-6 my-6 mx-10">Your Courses</p>
 
       {visibleEnrolledCourses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-12 mb-6">
-          {visibleEnrolledCourses.map((course: Course) => (
-            <SectionCardComponent
-              key={course.id}
-              title={course.title}
-              thumbnail={course.thumbnail_url}
-              slug={course.slug}
-              courseId={course.id}
-              initialProgress={courseProgress[course.id]?.progress || 0}
-              comingSoon={!!course.coming_soon}
-              courseLevel={course.course_level}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-12 mb-6">
+            {visibleEnrolledCourses.map((course: Course) => (
+              <SectionCardComponent
+                key={course.id}
+                title={course.title}
+                thumbnail={course.thumbnail_url}
+                slug={course.slug}
+                courseId={course.id}
+                initialProgress={courseProgress[course.id]?.progress || 0}
+                comingSoon={!!course.coming_soon}
+                courseLevel={course.course_level}
+              />
+            ))}
+          </div>
+          <div className="text-center py-4 px-12">
+            <p className="text-muted-foreground text-sm">
+              Want to explore more courses? 
+              <a href="/courses" className="text-primary hover:underline ml-1">
+                Browse all available courses
+              </a>
+            </p>
+          </div>
+        </>
       ) : (
         <div className="text-center py-8 px-12">
           <p className="text-muted-foreground text-lg">
@@ -194,29 +200,7 @@ const Page = async () => {
         </div>
       )}
 
-      {/* Show available courses section only if there are unenrolled courses */}
-      {unEnrolledCourses.length > 0 && (
-        <>
-          <p className="text-3xl font-bold pt-6 my-6 mx-10">Available Courses</p>
-          <p className="text-muted-foreground mx-10 mb-6">
-            Explore these courses to expand your financial knowledge
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-12 mb-6">
-            {unEnrolledCourses.map((course: Course) => (
-              <SectionCardComponent
-                key={course.id}
-                title={course.title}
-                thumbnail={course.thumbnail_url}
-                slug={course.slug}
-                courseId={course.id}
-                initialProgress={0}
-                comingSoon={!!course.coming_soon}
-                courseLevel={course.course_level}
-              />
-            ))}
-          </div>
-        </>
-      )}
+
     </main>
   );
 };

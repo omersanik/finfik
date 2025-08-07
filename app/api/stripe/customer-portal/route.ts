@@ -38,6 +38,16 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ url: session.url }), { status: 200 });
   } catch (error: any) {
     console.error("Customer portal error:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    
+    // Check if it's a configuration error
+    if (error.type === 'StripeInvalidRequestError' && error.message.includes('configuration')) {
+      return new Response(JSON.stringify({ 
+        error: "Customer portal not configured. Please contact support to set up subscription management." 
+      }), { status: 500 });
+    }
+    
+    return new Response(JSON.stringify({ 
+      error: "Failed to open customer portal. Please try again or contact support." 
+    }), { status: 500 });
   }
 } 
