@@ -73,7 +73,7 @@ function SortableItem({ item, isChecking, shakingItems }: {
       {...attributes}
       {...listeners}
       className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
-        isDragging ? 'opacity-50' : ''
+        isDragging ? 'opacity-0' : ''
       } ${
         shakingItems.has(item.id)
           ? 'animate-shake bg-destructive/10 text-destructive'
@@ -122,7 +122,7 @@ function DroppableCategory({ category, children }: {
 // Drag Overlay Component
 function DragOverlayItem({ item }: { item: DragItem }) {
   return (
-    <div className="px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg opacity-90">
+    <div className="px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg">
       {item.text}
       <span className="w-3 h-3 inline-block ml-1"></span>
     </div>
