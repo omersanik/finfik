@@ -69,6 +69,7 @@ export default function DragDropEditor({ value, onChange }: DragDropEditorProps)
       };
       updateData(updatedData);
       setNewItem('');
+      setSelectedCategory(''); // Reset category selection after adding item
     }
   };
 
@@ -177,7 +178,12 @@ export default function DragDropEditor({ value, onChange }: DragDropEditorProps)
                 </option>
               ))}
             </select>
-            <Button onClick={addItem} size="sm" disabled={!newItem.trim() || !selectedCategory}>
+            <Button 
+              onClick={addItem} 
+              size="sm" 
+              disabled={!newItem.trim() || !selectedCategory || data.categories.length === 0}
+              title={data.categories.length === 0 ? "Add categories first" : ""}
+            >
               <Plus className="h-4 w-4" />
             </Button>
           </div>

@@ -69,7 +69,7 @@ export default function AddContentItems() {
   const [dragDropData, setDragDropData] = useState({
     title: "",
     instructions: "",
-    items: [] as Array<{ id: string; text: string; category: string }>,
+    items: [] as Array<{ text: string; correctCategory: string }>,
     categories: [] as string[]
   });
 
@@ -378,12 +378,13 @@ export default function AddContentItems() {
           </div>
         ) : form.watch("type") === "drag-drop" ? (
           <div>
+            <label className="block font-semibold mb-2">Drag & Drop Activity</label>
             <DragDropEditor
               value={dragDropData}
               onChange={(newData) => {
                 setDragDropData(newData);
                 // Convert to the format expected by the form
-                const itemsText = newData.items.map(item => `${item.text} → ${item.category}`).join('\n');
+                const itemsText = newData.items.map(item => `${item.text} → ${item.correctCategory}`).join('\n');
                 const categoriesText = newData.categories.join('\n');
                 
                 console.log('Setting form values:', {
