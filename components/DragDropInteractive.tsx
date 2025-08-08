@@ -7,20 +7,17 @@ import { CheckCircle, XCircle, RotateCcw, Sparkles, Target } from 'lucide-react'
 import {
   DndContext,
   DragEndEvent,
-  DragOverEvent,
-  DragOverlay,
   DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
   closestCenter,
   useDroppable,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -46,11 +43,12 @@ interface DragDropInteractiveProps {
   completedFromParent?: boolean;
 }
 
-// Sortable Item Component
-function SortableItem({ item, isChecking, shakingItems }: { 
+// Sortable Item Component with placeholder support
+function SortableItem({ item, isChecking, shakingItems, isPlaceholder }: { 
   item: DragItem; 
   isChecking: boolean;
   shakingItems: Set<string>;
+  isPlaceholder?: boolean;
 }) {
   const {
     attributes,
@@ -67,6 +65,17 @@ function SortableItem({ item, isChecking, shakingItems }: {
     minWidth: 'fit-content',
     width: 'auto',
   };
+
+  if (isPlaceholder) {
+    // Invisible placeholder to keep space during dragging
+    return (
+      <div
+        ref={setNodeRef}
+        style={{ minWidth: 'fit-content', width: 'auto', height: '30px', visibility: 'hidden' }}
+        {...attributes}
+      />
+    );
+  }
 
   return (
     <div
@@ -278,6 +287,8 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
     return items.filter(item => !item.currentCategory);
   };
 
+  const draggingId = activeItem?.id;
+
   return (
     <DndContext
       sensors={sensors}
@@ -310,7 +321,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               {getUnassignedItems().length} remaining
             </Badge>
           </div>
-          <div className="min-h-[60px] flex flex-wrap gap-1.5 p-2">
+          <div className="min-h-[80px] flex flex-wrap gap-1.5 p-2">
             <SortableContext items={getUnassignedItems().map(item => item.id)} strategy={verticalListSortingStrategy}>
               {getUnassignedItems().map((item) => (
                 <SortableItem 
@@ -318,6 +329,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                   item={item} 
                   isChecking={isChecking}
                   shakingItems={shakingItems}
+                  isPlaceholder={item.id === draggingId}
                 />
               ))}
             </SortableContext>
@@ -326,7 +338,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
 
         {/* Categories - Bottom */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <div key={category} className="space-y-2">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${
@@ -382,4 +394,4 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
       </DragOverlay>
     </DndContext>
   );
-} 
+}
