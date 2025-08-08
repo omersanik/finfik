@@ -59,17 +59,26 @@ export default function DragDropEditor({ value, onChange }: DragDropEditorProps)
   };
 
   const addItem = () => {
-    if (newItem.trim() && selectedCategory && !data.items.some(item => item.text === newItem.trim())) {
+    if (newItem.trim() && selectedCategory && selectedCategory.trim() && !data.items.some(item => item.text === newItem.trim())) {
       const updatedData = {
         ...data,
         items: [...data.items, {
           text: newItem.trim(),
-          correctCategory: selectedCategory
+          correctCategory: selectedCategory.trim()
         }]
       };
       updateData(updatedData);
       setNewItem('');
       setSelectedCategory(''); // Reset category selection after adding item
+    } else {
+      // Show validation feedback
+      if (!newItem.trim()) {
+        alert('Please enter an item text');
+      } else if (!selectedCategory || !selectedCategory.trim()) {
+        alert('Please select a category');
+      } else if (data.items.some(item => item.text === newItem.trim())) {
+        alert('This item already exists');
+      }
     }
   };
 

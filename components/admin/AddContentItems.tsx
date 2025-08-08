@@ -157,6 +157,39 @@ export default function AddContentItems() {
   async function onSubmit(values: ContentItemFormValues) {
     setMessage(null);
     console.log('Submitting form with values:', values);
+    
+    // Additional validation for drag-drop type
+    if (values.type === 'drag-drop') {
+      const items = values.drag_drop_items?.split('\n').filter(line => line.trim()) || [];
+      const categories = values.drag_drop_categories?.split('\n').filter(line => line.trim()) || [];
+      
+      // Check for items with undefined categories
+      const invalidItems = items.filter(item => {
+        const parts = item.split('→');
+        if (parts.length !== 2) return true;
+        const category = parts[1]?.trim();
+        return !category || category === 'undefined';
+      });
+      
+      if (invalidItems.length > 0) {
+        setMessage(`Error: ${invalidItems.length} item(s) have invalid categories. Please fix them before submitting.`);
+        console.error('Invalid items found:', invalidItems);
+        return;
+      }
+      
+      if (items.length === 0) {
+        setMessage('Error: Please add at least one item to the drag and drop activity.');
+        return;
+      }
+      
+      if (categories.length === 0) {
+        setMessage('Error: Please add at least one category to the drag and drop activity.');
+        return;
+      }
+      
+      console.log('Drag-drop validation passed:', { itemsCount: items.length, categoriesCount: categories.length });
+    }
+    
     try {
       const response = await fetch("/api/admin/content-items", {
         method: "POST",
@@ -383,21 +416,52 @@ export default function AddContentItems() {
               value={dragDropData}
               onChange={(newData) => {
                 setDragDropData(newData);
+                
+                // Validate the data before converting
+                const validItems = newData.items.filter(item => 
+                  item.text && item.text.trim() && 
+                  item.correctCategory && item.correctCategory.trim() && 
+                  item.correctCategory !== 'undefined'
+                );
+                
+                if (validItems.length !== newData.items.length) {
+                  console.warn('Some items were filtered out due to invalid data:', {
+                    total: newData.items.length,
+                    valid: validItems.length,
+                    invalid: newData.items.filter(item => 
+                      !item.text || !item.text.trim() || 
+                      !item.correctCategory || !item.correctCategory.trim() || 
+                      item.correctCategory === 'undefined'
+                    )
+                  });
+                }
+                
                 // Convert to the format expected by the form
-                const itemsText = newData.items.map(item => `${item.text} → ${item.correctCategory}`).join('\n');
-                const categoriesText = newData.categories.join('\n');
+                const itemsText = validItems.map(item => `${item.text.trim()} → ${item.correctCategory.trim()}`).join('\n');
+                const categoriesText = newData.categories.filter(cat => cat && cat.trim()).join('\n');
                 
                 console.log('Setting form values:', {
                   title: newData.title,
                   instructions: newData.instructions,
                   items: itemsText,
-                  categories: categoriesText
+                  categories: categoriesText,
+                  validItemsCount: validItems.length
                 });
                 
-                form.setValue("drag_drop_title", newData.title);
-                form.setValue("drag_drop_instructions", newData.instructions);
+                form.setValue("drag_drop_title", newData.title || '');
+                form.setValue("drag_drop_instructions", newData.instructions || '');
                 form.setValue("drag_drop_items", itemsText);
                 form.setValue("drag_drop_categories", categoriesText);
+                
+                // Debug: Log the actual form values after setting them
+                setTimeout(() => {
+                  console.log('Form values after setting:', {
+                    drag_drop_title: form.getValues("drag_drop_title"),
+                    drag_drop_instructions: form.getValues("drag_drop_instructions"),
+                    drag_drop_items: form.getValues("drag_drop_items"),
+                    drag_drop_categories: form.getValues("drag_drop_categories")
+                  });
+                }, 100);
               }}
             />
           </div>
