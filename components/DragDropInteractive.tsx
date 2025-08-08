@@ -224,6 +224,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                }`}
              >
                {item.text}
+               <span className="w-3 h-3 inline-block ml-1"></span>
             </div>
           ))}
         </div>
@@ -271,12 +272,14 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                      }`}
                    >
                      {item.text}
-                     {isChecking && (
+                     {isChecking ? (
                        item.isCorrect ? (
                          <CheckCircle className="h-3 w-3 text-green-600 inline ml-1" />
                        ) : (
                          <XCircle className="h-3 w-3 text-destructive inline ml-1" />
                        )
+                     ) : (
+                       <span className="w-3 h-3 inline-block ml-1"></span>
                      )}
                    </div>
                 ))}
