@@ -64,6 +64,8 @@ function SortableItem({ item, isChecking, shakingItems }: {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    minWidth: 'fit-content',
+    width: 'auto',
   };
 
   return (
@@ -122,7 +124,10 @@ function DroppableCategory({ category, children }: {
 // Drag Overlay Component
 function DragOverlayItem({ item }: { item: DragItem }) {
   return (
-    <div className="px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg">
+    <div 
+      className="px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg"
+      style={{ minWidth: 'fit-content', width: 'auto' }}
+    >
       {item.text}
       <span className="w-3 h-3 inline-block ml-1"></span>
     </div>
