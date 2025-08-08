@@ -50,17 +50,24 @@ const Navbar = () => {
     setMounted(true);
   }, []);
 
+  // Check premium status
   useEffect(() => {
     const checkPremiumStatus = async () => {
       if (!user) return;
 
       try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        setPremiumLoading(true);
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
         console.log("Base URL:", baseUrl); // Debug log
 
         const token = await getToken();
         console.log("Token received:", token ? "✓" : "✗"); // Debug log
+
+        if (!token) {
+          console.log("No token available, skipping premium check");
+          setIsPremiumUser(false);
+          return;
+        }
 
         const apiUrl = `${baseUrl}/api/users/premium-users`;
         console.log("API URL:", apiUrl); // Debug log
@@ -71,6 +78,7 @@ const Navbar = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+          cache: "no-store",
         });
 
         console.log("Response status:", res.status); // Debug log
@@ -107,11 +115,20 @@ const Navbar = () => {
       if (!user) return;
 
       try {
+        setStreakLoading(true);
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
         const token = await getToken();
 
+        if (!token) {
+          console.log("No token available, skipping streak check");
+          return;
+        }
+
         const res = await fetch(`${baseUrl}/api/streak`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
           cache: "no-store",
         });
 
@@ -121,6 +138,8 @@ const Navbar = () => {
             current_streak: streakData.current_streak,
             longest_streak: streakData.longest_streak
           });
+        } else {
+          console.error("Streak API error:", res.status, res.statusText);
         }
       } catch (error) {
         console.error("Error fetching streak:", error);
