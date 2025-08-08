@@ -245,7 +245,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               )}
             </div>
             <div
-              className={`min-h-[50px] p-3 rounded-lg transition-all duration-300 ${
+              className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
                 getItemsInCategory(category).length > 0 
                   ? 'bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200' 
                   : 'bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50'
@@ -260,14 +260,14 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                     draggable
                     onDragStart={(e) => handleDragFromDropZone(e, item)}
                     onDragEnd={handleDragEnd}
-                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-300 cursor-move shadow-sm ${
+                    className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium ${
                       shakingItems.has(item.id)
                         ? 'animate-shake bg-destructive/10 text-destructive'
                         : isChecking
                         ? item.isCorrect
-                          ? 'bg-green-100 text-green-800 border border-green-200'
-                          : 'bg-destructive/10 text-destructive border border-destructive/20'
-                        : 'bg-white text-foreground border border-slate-200 hover:border-slate-300 hover:shadow-md'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-destructive/10 text-destructive'
+                        : 'bg-accent text-foreground hover:bg-accent/80'
                     }`}
                   >
                     <div className="flex items-center gap-1">
@@ -288,8 +288,8 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
         ))}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-center gap-3">
+      {/* Reset Button Only */}
+      <div className="flex justify-center">
         <Button 
           onClick={handleReset}
           variant="outline"
@@ -298,14 +298,6 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
         >
           <RotateCcw className="w-3 h-3 mr-1" />
           Reset
-        </Button>
-        <Button 
-          onClick={checkAnswers}
-          disabled={!allItemsDropped || isChecking}
-          size="sm"
-          className="px-4"
-        >
-          {isChecking ? 'Checking...' : 'Check Answers'}
         </Button>
       </div>
     </div>
