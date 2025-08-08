@@ -77,7 +77,7 @@ function SortableItem({ item, isChecking, shakingItems, onDragStart }: {
       {...attributes}
       {...listeners}
       onMouseDown={handleMouseDown}
-      className={`px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap flex items-center justify-center ${
+      className={`px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium flex items-center justify-center ${
         isDragging ? 'opacity-0' : ''
       } ${
         shakingItems.has(item.id)
@@ -92,12 +92,12 @@ function SortableItem({ item, isChecking, shakingItems, onDragStart }: {
       {item.text}
       {isChecking ? (
         item.isCorrect ? (
-          <CheckCircle className="h-3 w-3 text-green-600 inline ml-1" />
+          <CheckCircle className="h-3 w-3 text-green-600 ml-1" />
         ) : (
-          <XCircle className="h-3 w-3 text-destructive inline ml-1" />
+          <XCircle className="h-3 w-3 text-destructive ml-1" />
         )
       ) : (
-        <span className="w-3 h-3 inline-block ml-1"></span>
+        <span className="w-3 h-3 ml-1"></span>
       )}
     </div>
   );
@@ -128,7 +128,7 @@ function DroppableCategory({ category, children }: {
 function DragOverlayItem({ item, dimensions }: { item: DragItem; dimensions?: { width: number; height: number } }) {
   return (
     <div 
-      className="px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg flex items-center justify-center"
+      className="px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium bg-white text-foreground border border-slate-200 shadow-lg flex items-center justify-center"
       style={{ 
         width: dimensions?.width ? `${dimensions.width}px` : 'auto',
         height: dimensions?.height ? `${dimensions.height}px` : 'auto',
@@ -137,7 +137,7 @@ function DragOverlayItem({ item, dimensions }: { item: DragItem; dimensions?: { 
       }}
     >
       {item.text}
-      <span className="w-3 h-3 inline-block ml-1"></span>
+      <span className="w-3 h-3 ml-1"></span>
     </div>
   );
 }
@@ -328,7 +328,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               {getUnassignedItems().length} remaining
             </Badge>
           </div>
-          <div className="min-h-[50px] flex flex-wrap gap-1.5 p-2 justify-center items-center">
+          <div className="min-h-[50px] flex flex-wrap gap-1.5 p-2 justify-center">
             <SortableContext items={getUnassignedItems().map(item => item.id)} strategy={verticalListSortingStrategy}>
               {getUnassignedItems().map((item) => (
                 <SortableItem 
@@ -337,6 +337,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                   isChecking={isChecking}
                   shakingItems={shakingItems}
                   onDragStart={handleItemDragStart}
+                  
                 />
               ))}
             </SortableContext>
