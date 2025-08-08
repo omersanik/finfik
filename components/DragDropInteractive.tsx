@@ -328,7 +328,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               {getUnassignedItems().length} remaining
             </Badge>
           </div>
-          <div className="min-h-[80px] flex flex-wrap gap-1.5 p-2">
+          <div className="min-h-[40px] flex flex-wrap gap-1.5 p-2">
             <SortableContext items={getUnassignedItems().map(item => item.id)} strategy={verticalListSortingStrategy}>
               {getUnassignedItems().map((item) => (
                 <SortableItem 
@@ -359,7 +359,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                 )}
               </div>
               <DroppableCategory category={category}>
-                <div className={`min-h-[50px] p-3 rounded-lg transition-all duration-300 ${
+                <div className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
                   getItemsInCategory(category).length > 0 
                     ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200' 
                     : 'bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300'
