@@ -220,7 +220,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium ${
                 shakingItems.has(item.id)
                   ? 'animate-shake bg-destructive/10 text-destructive'
-                  : 'bg-accent text-foreground hover:bg-accent/80'
+                  : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
               }`}
             >
               <span>{item.text}</span>
@@ -247,8 +247,8 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
             <div
               className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
                 getItemsInCategory(category).length > 0 
-                  ? 'bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200' 
-                  : 'bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50'
+                  ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200' 
+                  : 'bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300'
               }`}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, category)}
@@ -267,7 +267,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                         ? item.isCorrect
                           ? 'bg-green-100 text-green-800'
                           : 'bg-destructive/10 text-destructive'
-                        : 'bg-accent text-foreground hover:bg-accent/80'
+                        : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
                     }`}
                   >
                     <div className="flex items-center gap-1">
