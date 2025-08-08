@@ -14,11 +14,11 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
 } from '@dnd-kit/sortable';
 import {
   useSortable,
@@ -98,10 +98,31 @@ function SortableItem({ item, isChecking, shakingItems }: {
   );
 }
 
+// Droppable Category Component
+function DroppableCategory({ category, children }: { 
+  category: string; 
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: category,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
+        isOver ? 'bg-blue-100 border-blue-300' : ''
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
 // Drag Overlay Component
 function DragOverlayItem({ item }: { item: DragItem }) {
   return (
-    <div className="px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg">
+    <div className="px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg opacity-90">
       {item.text}
       <span className="w-3 h-3 inline-block ml-1"></span>
     </div>
@@ -142,28 +163,6 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
     const { active } = event;
     const draggedItem = items.find(item => item.id === active.id);
     setActiveItem(draggedItem || null);
-  };
-
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    
-    if (!over) return;
-
-    const activeItem = items.find(item => item.id === active.id);
-    if (!activeItem) return;
-
-    // Check if dropping on a category
-    if (categories.includes(over.id as string)) {
-      const category = over.id as string;
-      
-      setItems(prevItems => 
-        prevItems.map(item => 
-          item.id === active.id 
-            ? { ...item, currentCategory: category }
-            : item
-        )
-      );
-    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -279,7 +278,6 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="max-w-3xl mx-auto p-4">
@@ -336,27 +334,26 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                   </Badge>
                 )}
               </div>
-              <div
-                className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
+              <DroppableCategory category={category}>
+                <div className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
                   getItemsInCategory(category).length > 0 
                     ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200' 
                     : 'bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300'
-                }`}
-                data-category={category}
-              >
-                <SortableContext items={getItemsInCategory(category).map(item => item.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-1.5">
-                    {getItemsInCategory(category).map((item) => (
-                      <SortableItem 
-                        key={item.id} 
-                        item={item} 
-                        isChecking={isChecking}
-                        shakingItems={shakingItems}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </div>
+                }`}>
+                  <SortableContext items={getItemsInCategory(category).map(item => item.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-1.5">
+                      {getItemsInCategory(category).map((item) => (
+                        <SortableItem 
+                          key={item.id} 
+                          item={item} 
+                          isChecking={isChecking}
+                          shakingItems={shakingItems}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </div>
+              </DroppableCategory>
             </div>
           ))}
         </div>
