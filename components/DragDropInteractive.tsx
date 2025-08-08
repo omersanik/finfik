@@ -254,36 +254,36 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, category)}
             >
-              <div className="flex flex-wrap gap-1.5">
-                {getItemsInCategory(category).map((item) => (
-                  <div
-                    key={item.id}
-                    draggable
-                    onDragStart={(e) => handleDragFromDropZone(e, item)}
-                    onDragEnd={handleDragEnd}
-                                         className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
-                       shakingItems.has(item.id)
-                         ? 'animate-shake bg-destructive/10 text-destructive'
-                         : isChecking
-                         ? item.isCorrect
-                           ? 'bg-green-100 text-green-800'
-                           : 'bg-destructive/10 text-destructive'
-                         : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
-                     }`}
-                   >
-                     {item.text}
-                     {isChecking ? (
-                       item.isCorrect ? (
-                         <CheckCircle className="h-3 w-3 text-green-600 inline ml-1" />
-                       ) : (
-                         <XCircle className="h-3 w-3 text-destructive inline ml-1" />
-                       )
-                     ) : (
-                       <span className="w-3 h-3 inline-block ml-1"></span>
-                     )}
-                   </div>
-                ))}
-              </div>
+                             <div className="grid grid-cols-1 gap-1.5">
+                 {getItemsInCategory(category).map((item) => (
+                   <div
+                     key={item.id}
+                     draggable
+                     onDragStart={(e) => handleDragFromDropZone(e, item)}
+                     onDragEnd={handleDragEnd}
+                                          className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
+                        shakingItems.has(item.id)
+                          ? 'animate-shake bg-destructive/10 text-destructive'
+                          : isChecking
+                          ? item.isCorrect
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-destructive/10 text-destructive'
+                          : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      {item.text}
+                      {isChecking ? (
+                        item.isCorrect ? (
+                          <CheckCircle className="h-3 w-3 text-green-600 inline ml-1" />
+                        ) : (
+                          <XCircle className="h-3 w-3 text-destructive inline ml-1" />
+                        )
+                      ) : (
+                        <span className="w-3 h-3 inline-block ml-1"></span>
+                      )}
+                    </div>
+                 ))}
+               </div>
             </div>
           </div>
         ))}
