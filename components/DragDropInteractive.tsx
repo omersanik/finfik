@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { CheckCircle, XCircle, RotateCcw, Sparkles, Target, Trophy, ArrowRight } from 'lucide-react';
 
 interface DragItem {
@@ -38,7 +37,6 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
   const [draggedItem, setDraggedItem] = useState<DragItem | null>(null);
   const [shakingItems, setShakingItems] = useState<Set<string>>(new Set());
   const [showSuccess, setShowSuccess] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (items.length === 0 && !completedFromParent) {
@@ -51,13 +49,6 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
       setCategories(data.categories);
     }
   }, [data, completedFromParent]);
-
-  // Update progress based on items placed
-  useEffect(() => {
-    const placedItems = items.filter(item => item.currentCategory !== undefined).length;
-    const totalItems = items.length;
-    setProgress(totalItems > 0 ? (placedItems / totalItems) * 100 : 0);
-  }, [items]);
 
   const handleDragStart = (e: React.DragEvent, item: DragItem) => {
     setDraggedItem(item);
@@ -210,168 +201,156 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6">
       {/* Header Section */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         {data.title && (
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <Target className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <Target className="w-4 h-4 text-primary-foreground" />
             </div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h3 className="text-xl font-bold text-foreground">
               {data.title}
             </h3>
           </div>
         )}
         {data.instructions && (
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">{data.instructions}</p>
+          <p className="text-muted-foreground text-sm max-w-2xl mx-auto">{data.instructions}</p>
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Progress</span>
-          <span className="text-sm text-gray-500">{Math.round(progress)}% Complete</span>
-        </div>
-        <Progress value={progress} className="h-3" />
-      </div>
+      {/* Available Items - Top */}
+      <Card className="mb-6 border-2 border-dashed border-muted">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Sparkles className="w-4 h-4" />
+            Available Items
+            <Badge variant="secondary" className="ml-auto">
+              {getUnassignedItems().length} remaining
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div 
+            className="min-h-[80px] flex flex-wrap gap-2 p-3 rounded-lg bg-muted/30"
+            onDragOver={handleDragOver}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (draggedItem && draggedItem.currentCategory) {
+                const updatedItems = items.map(item => 
+                  item.id === draggedItem.id 
+                    ? { ...item, currentCategory: undefined }
+                    : item
+                );
+                setItems(updatedItems);
+                setDraggedItem(null);
+                const allDropped = updatedItems.every(item => item.currentCategory !== undefined);
+                setAllItemsDropped(allDropped);
+              }
+            }}
+          >
+            {getUnassignedItems().map((item) => (
+              <div
+                key={item.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, item)}
+                onDragEnd={handleDragEnd}
+                className={`px-3 py-1.5 rounded-md cursor-move transition-all duration-300 ease-in-out text-xs font-medium shadow-sm hover:shadow-md transform hover:scale-105 ${
+                  shakingItems.has(item.id)
+                    ? 'animate-shake bg-destructive/10 border border-destructive text-destructive'
+                    : 'bg-background border border-border text-foreground hover:border-primary hover:bg-accent'
+                }`}
+              >
+                <span>{item.text}</span>
+              </div>
+            ))}
+            {getUnassignedItems().length === 0 && (
+              <div className="w-full text-center text-muted-foreground py-4">
+                <ArrowRight className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs">All items have been placed!</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Main Layout */}
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
-        {/* Left Side - Available Items */}
-        <Card className="border-2 border-dashed border-gray-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-blue-800">
-              <Sparkles className="w-5 h-5" />
-              Available Items
-              <Badge variant="secondary" className="ml-auto">
-                {getUnassignedItems().length} remaining
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div 
-              className="min-h-[200px] flex flex-wrap gap-3 p-4 rounded-lg bg-white/50"
-              onDragOver={handleDragOver}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (draggedItem && draggedItem.currentCategory) {
-                  const updatedItems = items.map(item => 
-                    item.id === draggedItem.id 
-                      ? { ...item, currentCategory: undefined }
-                      : item
-                  );
-                  setItems(updatedItems);
-                  setDraggedItem(null);
-                  const allDropped = updatedItems.every(item => item.currentCategory !== undefined);
-                  setAllItemsDropped(allDropped);
-                }
-              }}
-            >
-              {getUnassignedItems().map((item) => (
-                <div
-                  key={item.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, item)}
-                  onDragEnd={handleDragEnd}
-                  className={`px-4 py-3 rounded-xl cursor-move transition-all duration-300 ease-in-out text-sm font-medium shadow-md hover:shadow-lg transform hover:scale-105 ${
-                    shakingItems.has(item.id)
-                      ? 'animate-shake bg-red-100 border-2 border-red-300 text-red-800'
-                      : 'bg-white border-2 border-blue-200 text-blue-800 hover:border-blue-400 hover:bg-blue-50'
-                  }`}
-                >
-                  <span>{item.text}</span>
-                </div>
-              ))}
-              {getUnassignedItems().length === 0 && (
-                <div className="w-full text-center text-gray-500 py-8">
-                  <ArrowRight className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p>All items have been placed!</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Right Side - Drop Zones */}
-        <div className="space-y-4">
-          {categories.map((category, index) => (
-            <Card 
-              key={category}
-              className={`border-2 transition-all duration-300 ${
-                getItemsInCategory(category).length > 0 
-                  ? 'border-green-200 bg-green-50' 
-                  : 'border-dashed border-gray-200 bg-gray-50'
-              }`}
-            >
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <div className={`w-3 h-3 rounded-full ${
-                    getItemsInCategory(category).length > 0 ? 'bg-green-500' : 'bg-gray-300'
-                  }`} />
-                  {category}
-                  {getItemsInCategory(category).length > 0 && (
-                    <Badge variant="outline" className="ml-auto text-green-700 border-green-300">
-                      {getItemsInCategory(category).length} item{getItemsInCategory(category).length !== 1 ? 's' : ''}
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div
-                  className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
-                    getItemsInCategory(category).length > 0 
-                      ? 'bg-white' 
-                      : 'bg-white/50 border-2 border-dashed border-gray-300'
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, category)}
-                >
-                  <div className="flex flex-wrap gap-2">
-                    {getItemsInCategory(category).map((item) => (
-                      <div
-                        key={item.id}
-                        draggable
-                        onDragStart={(e) => handleDragFromDropZone(e, item)}
-                        onDragEnd={handleDragEnd}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 cursor-move shadow-sm ${
-                          shakingItems.has(item.id)
-                            ? 'animate-shake bg-red-100 border-2 border-red-300 text-red-800'
-                            : isChecking
-                            ? item.isCorrect
-                              ? 'bg-green-100 border-2 border-green-300 text-green-800'
-                              : 'bg-red-100 border-2 border-red-300 text-red-800'
-                            : 'bg-blue-100 border-2 border-blue-300 text-blue-800 hover:bg-blue-200'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="truncate">{item.text}</span>
-                          {isChecking && (
-                            item.isCorrect ? (
-                              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
-                            )
-                          )}
-                        </div>
+      {/* Categories - Bottom */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        {categories.map((category, index) => (
+          <Card 
+            key={category}
+            className={`border-2 transition-all duration-300 ${
+              getItemsInCategory(category).length > 0 
+                ? 'border-primary/20 bg-primary/5' 
+                : 'border-dashed border-muted bg-muted/30'
+            }`}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <div className={`w-2 h-2 rounded-full ${
+                  getItemsInCategory(category).length > 0 ? 'bg-primary' : 'bg-muted-foreground'
+                }`} />
+                {category}
+                {getItemsInCategory(category).length > 0 && (
+                  <Badge variant="outline" className="ml-auto text-xs">
+                    {getItemsInCategory(category).length}
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div
+                className={`min-h-[60px] p-2 rounded-md transition-all duration-300 ${
+                  getItemsInCategory(category).length > 0 
+                    ? 'bg-background' 
+                    : 'bg-muted/20 border-2 border-dashed border-muted'
+                }`}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, category)}
+              >
+                <div className="flex flex-wrap gap-1.5">
+                  {getItemsInCategory(category).map((item) => (
+                    <div
+                      key={item.id}
+                      draggable
+                      onDragStart={(e) => handleDragFromDropZone(e, item)}
+                      onDragEnd={handleDragEnd}
+                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-300 cursor-move shadow-sm ${
+                        shakingItems.has(item.id)
+                          ? 'animate-shake bg-destructive/10 border border-destructive text-destructive'
+                          : isChecking
+                          ? item.isCorrect
+                            ? 'bg-green-100 border border-green-300 text-green-800'
+                            : 'bg-destructive/10 border border-destructive text-destructive'
+                          : 'bg-accent border border-border text-foreground hover:bg-accent/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="truncate">{item.text}</span>
+                        {isChecking && (
+                          item.isCorrect ? (
+                            <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="h-3 w-3 text-destructive flex-shrink-0" />
+                          )
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center gap-4 mt-8">
+      <div className="flex justify-center gap-4">
         <Button 
           onClick={handleReset}
           variant="outline"
-          size="lg"
-          className="px-6"
+          size="sm"
+          className="px-4"
         >
           <RotateCcw className="w-4 h-4 mr-2" />
           Reset
@@ -379,8 +358,8 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
         <Button 
           onClick={checkAnswers}
           disabled={!allItemsDropped || isChecking}
-          size="lg"
-          className="px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          size="sm"
+          className="px-6"
         >
           {isChecking ? 'Checking...' : 'Check Answers'}
         </Button>
