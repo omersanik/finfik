@@ -217,13 +217,14 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
               onDragEnd={handleDragEnd}
-                             className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium flex items-center justify-center ${
+                             className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium flex items-center justify-center w-fit ${
                  shakingItems.has(item.id)
                    ? 'animate-shake bg-destructive/10 text-destructive'
                    : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
                }`}
              >
                <span>{item.text}</span>
+               <div className="w-3 h-3 ml-1"></div>
             </div>
           ))}
         </div>
@@ -260,7 +261,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                     draggable
                     onDragStart={(e) => handleDragFromDropZone(e, item)}
                     onDragEnd={handleDragEnd}
-                                         className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium flex items-center justify-center ${
+                                         className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium flex items-center justify-center w-fit ${
                        shakingItems.has(item.id)
                          ? 'animate-shake bg-destructive/10 text-destructive'
                          : isChecking
@@ -271,12 +272,14 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                      }`}
                    >
                      <span>{item.text}</span>
-                     {isChecking && (
+                     {isChecking ? (
                        item.isCorrect ? (
                          <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0 ml-1" />
                        ) : (
                          <XCircle className="h-3 w-3 text-destructive flex-shrink-0 ml-1" />
                        )
+                     ) : (
+                       <div className="w-3 h-3 ml-1"></div>
                      )}
                    </div>
                 ))}
