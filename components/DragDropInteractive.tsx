@@ -43,12 +43,11 @@ interface DragDropInteractiveProps {
   completedFromParent?: boolean;
 }
 
-// Sortable Item Component with placeholder support
-function SortableItem({ item, isChecking, shakingItems, isPlaceholder }: { 
+// Sortable Item Component
+function SortableItem({ item, isChecking, shakingItems }: { 
   item: DragItem; 
   isChecking: boolean;
   shakingItems: Set<string>;
-  isPlaceholder?: boolean;
 }) {
   const {
     attributes,
@@ -62,20 +61,7 @@ function SortableItem({ item, isChecking, shakingItems, isPlaceholder }: {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    minWidth: 'fit-content',
-    width: 'auto',
   };
-
-  if (isPlaceholder) {
-    // Invisible placeholder to keep space during dragging
-    return (
-      <div
-        ref={setNodeRef}
-        style={{ minWidth: 'fit-content', width: 'auto', height: '30px', visibility: 'hidden' }}
-        {...attributes}
-      />
-    );
-  }
 
   return (
     <div
@@ -130,12 +116,17 @@ function DroppableCategory({ category, children }: {
   );
 }
 
-// Drag Overlay Component
+// Drag Overlay Component with exact same styling
 function DragOverlayItem({ item }: { item: DragItem }) {
   return (
     <div 
       className="px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg"
-      style={{ minWidth: 'fit-content', width: 'auto' }}
+      style={{ 
+        minWidth: 'fit-content', 
+        width: 'auto',
+        transform: 'rotate(5deg)',
+        zIndex: 9999
+      }}
     >
       {item.text}
       <span className="w-3 h-3 inline-block ml-1"></span>
@@ -287,8 +278,6 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
     return items.filter(item => !item.currentCategory);
   };
 
-  const draggingId = activeItem?.id;
-
   return (
     <DndContext
       sensors={sensors}
@@ -329,7 +318,6 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                   item={item} 
                   isChecking={isChecking}
                   shakingItems={shakingItems}
-                  isPlaceholder={item.id === draggingId}
                 />
               ))}
             </SortableContext>
