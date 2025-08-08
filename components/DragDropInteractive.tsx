@@ -217,7 +217,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
               onDragEnd={handleDragEnd}
-                             className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
+                             className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap w-fit ${
                  shakingItems.has(item.id)
                    ? 'animate-shake bg-destructive/10 text-destructive'
                    : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
@@ -254,14 +254,14 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, category)}
             >
-                             <div className="grid grid-cols-1 gap-1.5">
+                             <div className="space-y-1.5">
                  {getItemsInCategory(category).map((item) => (
                    <div
                      key={item.id}
                      draggable
                      onDragStart={(e) => handleDragFromDropZone(e, item)}
                      onDragEnd={handleDragEnd}
-                                          className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
+                                          className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap w-fit ${
                         shakingItems.has(item.id)
                           ? 'animate-shake bg-destructive/10 text-destructive'
                           : isChecking
