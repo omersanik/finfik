@@ -271,14 +271,14 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                      }`}
                    >
                      <span>{item.text}</span>
-                    {isChecking && (
-                      item.isCorrect ? (
-                        <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0 ml-1" />
-                      ) : (
-                        <XCircle className="h-3 w-3 text-destructive flex-shrink-0 ml-1" />
-                      )
-                    )}
-                  </div>
+                     {isChecking && (
+                       item.isCorrect ? (
+                         <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0 ml-1" />
+                       ) : (
+                         <XCircle className="h-3 w-3 text-destructive flex-shrink-0 ml-1" />
+                       )
+                     )}
+                   </div>
                 ))}
               </div>
             </div>
