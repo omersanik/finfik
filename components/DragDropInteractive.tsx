@@ -328,7 +328,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               {getUnassignedItems().length} remaining
             </Badge>
           </div>
-          <div className="min-h-[40px] flex flex-wrap gap-1.5 p-2">
+          <div className="min-h-[80px] flex flex-wrap gap-1.5 p-2">
             <SortableContext items={getUnassignedItems().map(item => item.id)} strategy={verticalListSortingStrategy}>
               {getUnassignedItems().map((item) => (
                 <SortableItem 
