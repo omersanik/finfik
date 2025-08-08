@@ -62,8 +62,6 @@ function SortableItem({ item, isChecking, shakingItems, onDragStart }: {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    minWidth: 'fit-content',
-    width: 'auto',
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -79,7 +77,7 @@ function SortableItem({ item, isChecking, shakingItems, onDragStart }: {
       {...attributes}
       {...listeners}
       onMouseDown={handleMouseDown}
-      className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
+      className={`px-1.5 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
         isDragging ? 'opacity-0' : ''
       } ${
         shakingItems.has(item.id)
@@ -130,11 +128,10 @@ function DroppableCategory({ category, children }: {
 function DragOverlayItem({ item, dimensions }: { item: DragItem; dimensions?: { width: number; height: number } }) {
   return (
     <div 
-      className="px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg"
+      className="px-1.5 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg"
       style={{ 
         width: dimensions?.width ? `${dimensions.width}px` : 'auto',
         height: dimensions?.height ? `${dimensions.height}px` : 'auto',
-        minWidth: 'fit-content',
         transform: 'rotate(5deg)',
         zIndex: 9999
       }}
