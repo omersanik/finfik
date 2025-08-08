@@ -217,11 +217,12 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
               onDragEnd={handleDragEnd}
-                             className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap w-fit ${
+                             className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
                  shakingItems.has(item.id)
                    ? 'animate-shake bg-destructive/10 text-destructive'
                    : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
                }`}
+               style={{ minWidth: 'fit-content', width: 'auto' }}
              >
                {item.text}
                <span className="w-3 h-3 inline-block ml-1"></span>
@@ -261,15 +262,16 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                      draggable
                      onDragStart={(e) => handleDragFromDropZone(e, item)}
                      onDragEnd={handleDragEnd}
-                                          className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap w-fit ${
-                        shakingItems.has(item.id)
-                          ? 'animate-shake bg-destructive/10 text-destructive'
-                          : isChecking
-                          ? item.isCorrect
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-destructive/10 text-destructive'
-                          : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
-                      }`}
+                                                               className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
+                       shakingItems.has(item.id)
+                         ? 'animate-shake bg-destructive/10 text-destructive'
+                         : isChecking
+                         ? item.isCorrect
+                           ? 'bg-green-100 text-green-800'
+                           : 'bg-destructive/10 text-destructive'
+                         : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
+                     }`}
+                     style={{ minWidth: 'fit-content', width: 'auto' }}
                     >
                       {item.text}
                       {isChecking ? (
