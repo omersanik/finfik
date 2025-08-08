@@ -77,7 +77,7 @@ function SortableItem({ item, isChecking, shakingItems, onDragStart }: {
       {...attributes}
       {...listeners}
       onMouseDown={handleMouseDown}
-      className={`px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
+      className={`px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap flex items-center justify-center ${
         isDragging ? 'opacity-0' : ''
       } ${
         shakingItems.has(item.id)
@@ -115,7 +115,7 @@ function DroppableCategory({ category, children }: {
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
+      className={`min-h-[50px] p-3 rounded-lg transition-all duration-300 ${
         isOver ? 'bg-blue-100 border-blue-300' : ''
       }`}
     >
@@ -128,7 +128,7 @@ function DroppableCategory({ category, children }: {
 function DragOverlayItem({ item, dimensions }: { item: DragItem; dimensions?: { width: number; height: number } }) {
   return (
     <div 
-      className="px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg"
+      className="px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg flex items-center justify-center"
       style={{ 
         width: dimensions?.width ? `${dimensions.width}px` : 'auto',
         height: dimensions?.height ? `${dimensions.height}px` : 'auto',
@@ -359,7 +359,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                 )}
               </div>
               <DroppableCategory category={category}>
-                <div className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
+                <div className={`min-h-[50px] p-3 rounded-lg transition-all duration-300 ${
                   getItemsInCategory(category).length > 0 
                     ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200' 
                     : 'bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300'
