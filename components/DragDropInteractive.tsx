@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, RotateCcw, Sparkles, Target } from 'lucide-react';
@@ -44,10 +44,11 @@ interface DragDropInteractiveProps {
 }
 
 // Sortable Item Component
-function SortableItem({ item, isChecking, shakingItems }: { 
+function SortableItem({ item, isChecking, shakingItems, onDragStart }: { 
   item: DragItem; 
   isChecking: boolean;
   shakingItems: Set<string>;
+  onDragStart?: (item: DragItem, element: HTMLElement) => void;
 }) {
   const {
     attributes,
@@ -63,12 +64,19 @@ function SortableItem({ item, isChecking, shakingItems }: {
     transition,
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (onDragStart && e.currentTarget) {
+      onDragStart(item, e.currentTarget as HTMLElement);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
+      onMouseDown={handleMouseDown}
       className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
         isDragging ? 'opacity-0' : ''
       } ${
@@ -117,13 +125,14 @@ function DroppableCategory({ category, children }: {
 }
 
 // Drag Overlay Component with exact same styling
-function DragOverlayItem({ item }: { item: DragItem }) {
+function DragOverlayItem({ item, dimensions }: { item: DragItem; dimensions?: { width: number; height: number } }) {
   return (
     <div 
       className="px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg"
       style={{ 
-        minWidth: 'fit-content', 
-        width: 'auto',
+        width: dimensions?.width ? `${dimensions.width}px` : 'auto',
+        height: dimensions?.height ? `${dimensions.height}px` : 'auto',
+        minWidth: 'fit-content',
         transform: 'rotate(5deg)',
         zIndex: 9999
       }}
@@ -143,6 +152,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
   const [allItemsDropped, setAllItemsDropped] = useState(false);
   const [activeItem, setActiveItem] = useState<DragItem | null>(null);
   const [shakingItems, setShakingItems] = useState<Set<string>>(new Set());
+  const [dragDimensions, setDragDimensions] = useState<{ width: number; height: number } | undefined>();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -170,10 +180,19 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
     setActiveItem(draggedItem || null);
   };
 
+  const handleItemDragStart = (item: DragItem, element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    setDragDimensions({
+      width: rect.width,
+      height: rect.height
+    });
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
     setActiveItem(null);
+    setDragDimensions(undefined);
 
     if (!over) return;
 
@@ -318,6 +337,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                   item={item} 
                   isChecking={isChecking}
                   shakingItems={shakingItems}
+                  onDragStart={handleItemDragStart}
                 />
               ))}
             </SortableContext>
@@ -353,6 +373,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                           item={item} 
                           isChecking={isChecking}
                           shakingItems={shakingItems}
+                          onDragStart={handleItemDragStart}
                         />
                       ))}
                     </div>
@@ -378,7 +399,7 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
       </div>
 
       <DragOverlay>
-        {activeItem ? <DragOverlayItem item={activeItem} /> : null}
+        {activeItem ? <DragOverlayItem item={activeItem} dimensions={dragDimensions} /> : null}
       </DragOverlay>
     </DndContext>
   );
