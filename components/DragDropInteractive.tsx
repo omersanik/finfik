@@ -217,13 +217,13 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
               onDragEnd={handleDragEnd}
-              className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium ${
-                shakingItems.has(item.id)
-                  ? 'animate-shake bg-destructive/10 text-destructive'
-                  : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <span>{item.text}</span>
+                             className={`px-2 py-1 rounded cursor-move transition-all duration-300 text-xs font-medium flex items-center justify-center ${
+                 shakingItems.has(item.id)
+                   ? 'animate-shake bg-destructive/10 text-destructive'
+                   : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
+               }`}
+             >
+               <span>{item.text}</span>
             </div>
           ))}
         </div>
@@ -270,16 +270,14 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                         : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
                     }`}
                   >
-                    <div className="flex items-center gap-1">
-                      <span className="truncate">{item.text}</span>
-                      {isChecking && (
-                        item.isCorrect ? (
-                          <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0" />
-                        ) : (
-                          <XCircle className="h-3 w-3 text-destructive flex-shrink-0" />
-                        )
-                      )}
-                    </div>
+                    <span className="truncate">{item.text}</span>
+                    {isChecking && (
+                      item.isCorrect ? (
+                        <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0 ml-1" />
+                      ) : (
+                        <XCircle className="h-3 w-3 text-destructive flex-shrink-0 ml-1" />
+                      )
+                    )}
                   </div>
                 ))}
               </div>
