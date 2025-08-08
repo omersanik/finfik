@@ -230,14 +230,14 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
       </div>
 
       {/* Categories - Bottom */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         {categories.map((category, index) => (
-          <div key={category} className="space-y-1">
+          <div key={category} className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className={`w-1.5 h-1.5 rounded-full ${
+              <div className={`w-2 h-2 rounded-full ${
                 getItemsInCategory(category).length > 0 ? 'bg-primary' : 'bg-muted-foreground'
               }`} />
-              <span className="text-xs font-medium text-foreground">{category}</span>
+              <span className="text-sm font-medium text-foreground">{category}</span>
               {getItemsInCategory(category).length > 0 && (
                 <Badge variant="outline" className="ml-auto text-xs">
                   {getItemsInCategory(category).length}
@@ -245,34 +245,38 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
               )}
             </div>
             <div
-              className="min-h-[40px] p-1.5"
+              className={`min-h-[50px] p-3 rounded-lg transition-all duration-300 ${
+                getItemsInCategory(category).length > 0 
+                  ? 'bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200' 
+                  : 'bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50'
+              }`}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, category)}
             >
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {getItemsInCategory(category).map((item) => (
                   <div
                     key={item.id}
                     draggable
                     onDragStart={(e) => handleDragFromDropZone(e, item)}
                     onDragEnd={handleDragEnd}
-                    className={`px-1.5 py-0.5 rounded text-xs font-medium transition-all duration-300 cursor-move ${
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-300 cursor-move shadow-sm ${
                       shakingItems.has(item.id)
                         ? 'animate-shake bg-destructive/10 text-destructive'
                         : isChecking
                         ? item.isCorrect
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-destructive/10 text-destructive'
-                        : 'bg-accent text-foreground hover:bg-accent/80'
+                          ? 'bg-green-100 text-green-800 border border-green-200'
+                          : 'bg-destructive/10 text-destructive border border-destructive/20'
+                        : 'bg-white text-foreground border border-slate-200 hover:border-slate-300 hover:shadow-md'
                     }`}
                   >
                     <div className="flex items-center gap-1">
                       <span className="truncate">{item.text}</span>
                       {isChecking && (
                         item.isCorrect ? (
-                          <CheckCircle className="h-2.5 w-2.5 text-green-600 flex-shrink-0" />
+                          <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0" />
                         ) : (
-                          <XCircle className="h-2.5 w-2.5 text-destructive flex-shrink-0" />
+                          <XCircle className="h-3 w-3 text-destructive flex-shrink-0" />
                         )
                       )}
                     </div>
