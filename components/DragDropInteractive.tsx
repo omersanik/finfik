@@ -77,7 +77,7 @@ function SortableItem({ item, isChecking, shakingItems, onDragStart }: {
       {...attributes}
       {...listeners}
       onMouseDown={handleMouseDown}
-      className={`px-1.5 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
+      className={`px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap ${
         isDragging ? 'opacity-0' : ''
       } ${
         shakingItems.has(item.id)
@@ -128,7 +128,7 @@ function DroppableCategory({ category, children }: {
 function DragOverlayItem({ item, dimensions }: { item: DragItem; dimensions?: { width: number; height: number } }) {
   return (
     <div 
-      className="px-1.5 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg"
+      className="px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium inline-block whitespace-nowrap bg-white text-foreground border border-slate-200 shadow-lg"
       style={{ 
         width: dimensions?.width ? `${dimensions.width}px` : 'auto',
         height: dimensions?.height ? `${dimensions.height}px` : 'auto',
