@@ -62,6 +62,8 @@ function SortableItem({ item, isChecking, shakingItems, onDragStart }: {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    minWidth: 'fit-content',
+    width: 'auto',
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
