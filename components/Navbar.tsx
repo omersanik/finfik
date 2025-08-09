@@ -57,7 +57,7 @@ const Navbar = () => {
 
       try {
         setPremiumLoading(true);
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        const baseUrl = "http://192.168.1.111:3000";
         console.log("Base URL:", baseUrl); // Debug log
 
         const token = await getToken();
@@ -116,7 +116,7 @@ const Navbar = () => {
 
       try {
         setStreakLoading(true);
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        const baseUrl = "http://192.168.1.111:3000";
         const token = await getToken();
 
         if (!token) {
@@ -198,7 +198,7 @@ const Navbar = () => {
         {/* Right: Premium Button/Badge, Theme Toggle, Avatar */}
         <div className="flex items-center justify-center gap-4">
           {/* Streak Counter - Always show */}
-          {!streakLoading && (
+          {!streakLoading && streak.current_streak > 0 && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold shadow-md">
               <Flame className="size-4 animate-pulse" />
               <span>{streak.current_streak}</span>

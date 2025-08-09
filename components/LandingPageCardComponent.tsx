@@ -10,12 +10,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { getThumbnailUrl } from "@/lib/thumbnail-utils";
 
-interface CoursesCardComponentProps {
+interface LandingPageCardComponentProps {
   title: string;
   description: string;
   thumbnail: string | StaticImageData;
@@ -26,7 +25,7 @@ interface CoursesCardComponentProps {
   courseLevel?: 'Easy' | 'Medium' | 'Hard';
 }
 
-const CoursesCardComponent = ({
+const LandingPageCardComponent = ({
   title,
   description,
   thumbnail,
@@ -35,45 +34,13 @@ const CoursesCardComponent = ({
   isPremium = false,
   comingSoon = false,
   courseLevel,
-}: CoursesCardComponentProps) => {
-  const router = useRouter();
+}: LandingPageCardComponentProps) => {
   const [loading, setLoading] = useState(false);
 
   const handleStart = async () => {
     setLoading(true);
-
-    // Premium check before starting the course
-    if (isPremium) {
-      try {
-        const res = await fetch("/api/users/premium-users");
-        if (res.ok) {
-          const data = await res.json();
-          if (!data.is_premium) {
-            window.location.href = "/subscription";
-            return;
-          }
-        }
-      } catch (err) {
-        // fallback: block access if check fails
-        window.location.href = "/subscription";
-        return;
-      }
-    }
-
-    const res = await fetch("/api/progress/start-course-and-paths", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ course_id: courseId }),
-    });
-
-    setLoading(false);
-
-    if (res.ok) {
-      router.push(`/courses/${slug}`);
-    } else {
-      const err = await res.text();
-      alert("Failed to start course: " + err);
-    }
+    // For landing page, redirect to sign up
+    window.location.href = "/sign-up";
   };
 
   const hasValidThumbnail =
@@ -153,4 +120,4 @@ const CoursesCardComponent = ({
   );
 };
 
-export default CoursesCardComponent;
+export default LandingPageCardComponent;

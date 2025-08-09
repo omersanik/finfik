@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Star, Users, TrendingUp, Shield, Zap, Target, Sparkles } from "lucide-react";
 import Image from "next/image";
-import CoursesCardComponent from "@/components/CoursesCardComponent";
+import LandingPageCardComponent from "@/components/LandingPageCardComponent";
 import finfikwhitelogo from "@/logo/finfikwhitelogo.svg";
 
 // Course type definition
@@ -370,7 +370,7 @@ const BeautifulLandingPage = () => {
                   whileHover={{ y: -10, scale: 1.02 }}
                   className="group"
                 >
-                  <CoursesCardComponent
+                  <LandingPageCardComponent
                     title={course.title}
                     description={course.description}
                     thumbnail={course.thumbnail_url}
