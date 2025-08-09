@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Star, Users, TrendingUp, Shield, Zap, Target, Sparkles } from "lucide-react";
 import Image from "next/image";
 import CoursesCardComponent from "@/components/CoursesCardComponent";
-import finfiklogo from "@/logo/finfiklogo.svg";
+import finfikwhitelogo from "@/logo/finfikwhitelogo.svg";
 
 // Course type definition
 type Course = {
@@ -21,6 +21,7 @@ type Course = {
   description: string;
   coming_soon?: boolean;
   is_premium?: boolean;
+  course_level?: any;
 };
 
 // Beta pricing - honest and low
@@ -121,15 +122,29 @@ const BeautifulLandingPage = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
+        setLoading(true);
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        console.log("Fetching courses from:", `${baseUrl}/api/courses`);
+        
         const res = await fetch(`${baseUrl}/api/courses`, {
           cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+          },
         });
-        if (!res.ok) throw new Error(`Failed to fetch courses: ${res.status}`);
+        
+        console.log("Response status:", res.status);
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch courses: ${res.status} ${res.statusText}`);
+        }
+        
         const coursesData = await res.json();
-        setCourses(coursesData);
+        console.log("Fetched courses:", coursesData);
+        setCourses(coursesData || []);
       } catch (err) {
         console.error("Error fetching courses:", err);
+        setCourses([]);
       } finally {
         setLoading(false);
       }
@@ -137,6 +152,10 @@ const BeautifulLandingPage = () => {
 
     fetchCourses();
   }, []);
+
+  // Calculate available and upcoming courses
+  const availableCourses = courses.filter(course => !course.coming_soon);
+  const upcomingCourses = courses.filter(course => course.coming_soon);
 
   return (
     <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
@@ -157,7 +176,7 @@ const BeautifulLandingPage = () => {
         <a href="/" className="flex items-center group">
           <div className="w-32 h-12 overflow-hidden flex items-center justify-center">
             <Image
-              src={finfiklogo}
+              src={finfikwhitelogo}
               alt="Finfik Logo"
               width={128}
               height={48}
@@ -282,12 +301,12 @@ const BeautifulLandingPage = () => {
             </div>
             <div className="flex items-center gap-2 bg-background/95 px-4 py-2 rounded-lg shadow-lg">
               <Target className="w-6 h-6 text-accent" />
-              <span className="text-2xl font-bold text-foreground">{courses.filter(c => !c.coming_soon).length}</span>
+              <span className="text-2xl font-bold text-foreground">{availableCourses.length}</span>
               <span className="text-muted-foreground">Courses Available</span>
             </div>
             <div className="flex items-center gap-2 bg-background/95 px-4 py-2 rounded-lg shadow-lg">
               <TrendingUp className="w-6 h-6 text-secondary" />
-              <span className="text-2xl font-bold text-foreground">{courses.filter(c => c.coming_soon).length}+ Coming</span>
+              <span className="text-2xl font-bold text-foreground">{upcomingCourses.length}+ Coming</span>
               <span className="text-muted-foreground">Premium Courses</span>
             </div>
           </motion.div>
@@ -322,6 +341,11 @@ const BeautifulLandingPage = () => {
           {loading ? (
             <div className="flex justify-center items-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : courses.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-xl text-muted-foreground mb-4">No courses available yet</p>
+              <p className="text-muted-foreground">Check back soon for our first courses!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -585,7 +609,7 @@ const BeautifulLandingPage = () => {
           <div className="flex items-center mb-6 md:mb-0">
             <div className="w-24 h-8 overflow-hidden flex items-center justify-center">
               <Image
-                src={finfiklogo}
+                src={finfikwhitelogo}
                 alt="Finfik Logo"
                 width={96}
                 height={32}
