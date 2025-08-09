@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, AlertTriangle, ChevronRight, ArrowLeft, Search, Folder, FileText, Layers } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, AlertTriangle, ChevronRight, Search, Folder, FileText, Layers } from "lucide-react";
 
 interface ContentItem {
   id: string;
@@ -42,12 +43,9 @@ interface Course {
   sections: Section[];
 }
 
-type ViewMode = 'courses' | 'sections' | 'blocks' | 'items';
-
 const AdminDeletePanel = () => {
   const [adminPassword, setAdminPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
@@ -55,30 +53,67 @@ const AdminDeletePanel = () => {
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   
-  // Navigation state
-  const [viewMode, setViewMode] = useState<ViewMode>('courses');
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [selectedSection, setSelectedSection] = useState<Section | null>(null);
-  const [selectedBlock, setSelectedBlock] = useState<ContentBlock | null>(null);
+  // Selection state
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
+  const [selectedBlockId, setSelectedBlockId] = useState<string>("");
 
   // Fetch all data
   useEffect(() => {
     if (isAuthenticated) {
-      fetchAllData();
+      fetchCourses();
     }
   }, [isAuthenticated]);
 
-  const fetchAllData = async () => {
+  // Fetch sections when course changes
+  useEffect(() => {
+    if (selectedCourseId) {
+      fetchSectionsForCourse(selectedCourseId);
+      setSelectedSectionId("");
+      setSelectedBlockId("");
+      setContentBlocks([]);
+      setContentItems([]);
+    } else {
+      setSections([]);
+      setSelectedSectionId("");
+      setSelectedBlockId("");
+      setContentBlocks([]);
+      setContentItems([]);
+    }
+  }, [selectedCourseId]);
+
+  // Fetch blocks when section changes
+  useEffect(() => {
+    if (selectedSectionId) {
+      fetchBlocksForSection(selectedSectionId);
+      setSelectedBlockId("");
+      setContentItems([]);
+    } else {
+      setContentBlocks([]);
+      setSelectedBlockId("");
+      setContentItems([]);
+    }
+  }, [selectedSectionId]);
+
+  // Fetch items when block changes
+  useEffect(() => {
+    if (selectedBlockId) {
+      fetchItemsForBlock(selectedBlockId);
+    } else {
+      setContentItems([]);
+    }
+  }, [selectedBlockId]);
+
+  const fetchCourses = async () => {
     setLoading(true);
     try {
-      // Fetch courses
       const coursesRes = await fetch("/api/courses");
       if (coursesRes.ok) {
         const coursesData = await coursesRes.json();
         setCourses(coursesData);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching courses:", error);
     } finally {
       setLoading(false);
     }
@@ -157,20 +192,24 @@ const AdminDeletePanel = () => {
 
       if (response.ok) {
         alert("Deleted successfully!");
-        fetchAllData(); // Refresh data
-        // Reset navigation if we deleted the current selection
-        if (type === "course" && selectedCourse?.id === id) {
-          setViewMode('courses');
-          setSelectedCourse(null);
-          setSelectedSection(null);
-          setSelectedBlock(null);
-        } else if (type === "section" && selectedSection?.id === id) {
-          setViewMode('sections');
-          setSelectedSection(null);
-          setSelectedBlock(null);
-        } else if (type === "contentBlock" && selectedBlock?.id === id) {
-          setViewMode('blocks');
-          setSelectedBlock(null);
+        // Refresh data based on what was deleted
+        if (type === "course") {
+          setSelectedCourseId("");
+          fetchCourses();
+        } else if (type === "section") {
+          setSelectedSectionId("");
+          if (selectedCourseId) {
+            fetchSectionsForCourse(selectedCourseId);
+          }
+        } else if (type === "contentBlock") {
+          setSelectedBlockId("");
+          if (selectedSectionId) {
+            fetchBlocksForSection(selectedSectionId);
+          }
+        } else if (type === "contentItem") {
+          if (selectedBlockId) {
+            fetchItemsForBlock(selectedBlockId);
+          }
         }
       } else {
         const error = await response.json();
@@ -183,193 +222,9 @@ const AdminDeletePanel = () => {
     }
   };
 
-  const filterData = (data: any[], searchTerm: string) => {
-    if (!searchTerm) return data;
-    return data.filter(item => 
-      item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.content_text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
-
-  const getFilteredData = () => {
-    switch (viewMode) {
-      case 'courses':
-        return filterData(courses, searchTerm);
-      case 'sections':
-        return filterData(sections, searchTerm);
-      case 'blocks':
-        return filterData(contentBlocks, searchTerm);
-      case 'items':
-        return filterData(contentItems, searchTerm);
-      default:
-        return [];
-    }
-  };
-
-  const navigateTo = async (mode: ViewMode, item?: any) => {
-    setViewMode(mode);
-    setSearchTerm("");
-    setLoading(true);
-    
-    try {
-      switch (mode) {
-        case 'courses':
-          setSelectedCourse(null);
-          setSelectedSection(null);
-          setSelectedBlock(null);
-          setSections([]);
-          setContentBlocks([]);
-          setContentItems([]);
-          break;
-        case 'sections':
-          setSelectedCourse(item);
-          setSelectedSection(null);
-          setSelectedBlock(null);
-          setContentBlocks([]);
-          setContentItems([]);
-          await fetchSectionsForCourse(item.id);
-          break;
-        case 'blocks':
-          setSelectedSection(item);
-          setSelectedBlock(null);
-          setContentItems([]);
-          await fetchBlocksForSection(item.id);
-          break;
-        case 'items':
-          setSelectedBlock(item);
-          await fetchItemsForBlock(item.id);
-          break;
-      }
-    } catch (error) {
-      console.error("Error navigating:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getBreadcrumb = () => {
-    const breadcrumbs = [
-      { name: 'Courses', onClick: () => navigateTo('courses') }
-    ];
-
-    if (selectedCourse) {
-      breadcrumbs.push({ name: selectedCourse.title, onClick: () => navigateTo('sections', selectedCourse) });
-    }
-    if (selectedSection) {
-      breadcrumbs.push({ name: selectedSection.title, onClick: () => navigateTo('blocks', selectedSection) });
-    }
-    if (selectedBlock) {
-      breadcrumbs.push({ name: selectedBlock.title, onClick: () => navigateTo('items', selectedBlock) });
-    }
-
-    return breadcrumbs;
-  };
-
-  const renderContent = () => {
-    const data = getFilteredData();
-    const breadcrumbs = getBreadcrumb();
-
-    return (
-      <div className="space-y-6">
-        {/* Breadcrumb Navigation */}
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          {breadcrumbs.map((crumb, index) => (
-            <div key={index} className="flex items-center">
-              <button
-                onClick={crumb.onClick}
-                className="hover:text-primary transition-colors"
-              >
-                {crumb.name}
-              </button>
-              {index < breadcrumbs.length - 1 && (
-                <ChevronRight className="h-4 w-4 mx-2" />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Search */}
-        <div className="flex items-center space-x-2">
-          <Search className="h-4 w-4 text-gray-500" />
-          <Input
-            placeholder={`Search ${viewMode}...`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-
-        {/* Content List */}
-        <div className="space-y-2">
-          {data.map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  {viewMode === 'courses' && <Folder className="h-5 w-5 text-blue-500" />}
-                  {viewMode === 'sections' && <Layers className="h-5 w-5 text-green-500" />}
-                  {viewMode === 'blocks' && <FileText className="h-5 w-5 text-purple-500" />}
-                  {viewMode === 'items' && <FileText className="h-5 w-5 text-orange-500" />}
-                  
-                  <div>
-                    <h3 className="font-medium">
-                      {item.title || item.content_text?.substring(0, 50) || "Untitled"}
-                      {item.content_text && item.content_text.length > 50 && "..."}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {viewMode === 'courses' && `${item.sections?.length || 0} sections`}
-                      {viewMode === 'sections' && `${item.content_blocks?.length || 0} blocks`}
-                      {viewMode === 'blocks' && `${item.content_items?.length || 0} items`}
-                      {viewMode === 'items' && `Type: ${item.type}`}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                {/* Navigate Button */}
-                {viewMode !== 'items' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (viewMode === 'courses') navigateTo('sections', item);
-                      else if (viewMode === 'sections') navigateTo('blocks', item);
-                      else if (viewMode === 'blocks') navigateTo('items', item);
-                    }}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                )}
-
-                {/* Delete Button */}
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    const type = viewMode === 'courses' ? 'course' : 
-                                viewMode === 'sections' ? 'section' : 
-                                viewMode === 'blocks' ? 'contentBlock' : 'contentItem';
-                    const name = item.title || item.content_text?.substring(0, 30) || "Item";
-                    handleDelete(type, item.id, name);
-                  }}
-                  disabled={deleteLoading === item.id}
-                >
-                  {deleteLoading === item.id ? "Deleting..." : <Trash2 className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {data.length === 0 && (
-          <div className="text-center py-10 text-gray-500">
-            {searchTerm ? "No items found matching your search." : "No items available."}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const getSelectedCourse = () => courses.find(c => c.id === selectedCourseId);
+  const getSelectedSection = () => sections.find(s => s.id === selectedSectionId);
+  const getSelectedBlock = () => contentBlocks.find(b => b.id === selectedBlockId);
 
   if (!isAuthenticated) {
     return (
@@ -427,7 +282,7 @@ const AdminDeletePanel = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Admin Delete Panel</h1>
-          <p className="text-gray-600">Navigate through courses, sections, blocks, and items to delete content</p>
+          <p className="text-gray-600">Select courses, sections, blocks, and items to delete content</p>
         </div>
         <Button
           variant="outline"
@@ -443,26 +298,202 @@ const AdminDeletePanel = () => {
           <p className="mt-2">Loading data...</p>
         </div>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-red-500" />
-              {viewMode === 'courses' && 'Select a Course'}
-              {viewMode === 'sections' && 'Select a Section'}
-              {viewMode === 'blocks' && 'Select a Content Block'}
-              {viewMode === 'items' && 'Content Items'}
-            </CardTitle>
-            <CardDescription>
-              {viewMode === 'courses' && 'Choose a course to view its sections'}
-              {viewMode === 'sections' && 'Choose a section to view its content blocks'}
-              {viewMode === 'blocks' && 'Choose a content block to view its items'}
-              {viewMode === 'items' && 'View and delete individual content items'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {renderContent()}
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          {/* Course Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Folder className="h-5 w-5 text-blue-500" />
+                Select Course
+              </CardTitle>
+              <CardDescription>
+                Choose a course to view its sections
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a course..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((course) => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Section Selection */}
+          {selectedCourseId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-green-500" />
+                  Select Section
+                </CardTitle>
+                <CardDescription>
+                  Choose a section to view its content blocks
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Select value={selectedSectionId} onValueChange={setSelectedSectionId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a section..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sections.map((section) => (
+                      <SelectItem key={section.id} value={section.id}>
+                        {section.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Content Block Selection */}
+          {selectedSectionId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-purple-500" />
+                  Select Content Block
+                </CardTitle>
+                <CardDescription>
+                  Choose a content block to view its items
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Select value={selectedBlockId} onValueChange={setSelectedBlockId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a content block..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contentBlocks.map((block) => (
+                      <SelectItem key={block.id} value={block.id}>
+                        {block.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Content Items */}
+          {selectedBlockId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-orange-500" />
+                  Content Items
+                </CardTitle>
+                <CardDescription>
+                  View and delete individual content items
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {contentItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">
+                            {item.content_text?.substring(0, 50) || "No content"}
+                            {item.content_text && item.content_text.length > 50 && "..."}
+                          </h3>
+                          <Badge variant="secondary">{item.type}</Badge>
+                        </div>
+                        <p className="text-sm text-gray-500">ID: {item.id}</p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete("contentItem", item.id, item.content_text?.substring(0, 30) || "Content Item")}
+                        disabled={deleteLoading === item.id}
+                      >
+                        {deleteLoading === item.id ? "Deleting..." : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  ))}
+                  {contentItems.length === 0 && (
+                    <div className="text-center py-4 text-gray-500">
+                      No content items found in this block.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Delete Buttons for Selected Items */}
+          {selectedCourseId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trash2 className="h-5 w-5 text-red-500" />
+                  Delete Options
+                </CardTitle>
+                <CardDescription>
+                  Delete the currently selected items
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {getSelectedCourse() && (
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <h3 className="font-medium">Delete Course: {getSelectedCourse()?.title}</h3>
+                      <p className="text-sm text-gray-500">This will delete the entire course and all its content</p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDelete("course", selectedCourseId, getSelectedCourse()?.title || "")}
+                      disabled={deleteLoading === selectedCourseId}
+                    >
+                      {deleteLoading === selectedCourseId ? "Deleting..." : "Delete Course"}
+                    </Button>
+                  </div>
+                )}
+
+                {getSelectedSection() && (
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <h3 className="font-medium">Delete Section: {getSelectedSection()?.title}</h3>
+                      <p className="text-sm text-gray-500">This will delete the section and all its content blocks</p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDelete("section", selectedSectionId, getSelectedSection()?.title || "")}
+                      disabled={deleteLoading === selectedSectionId}
+                    >
+                      {deleteLoading === selectedSectionId ? "Deleting..." : "Delete Section"}
+                    </Button>
+                  </div>
+                )}
+
+                {getSelectedBlock() && (
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <h3 className="font-medium">Delete Content Block: {getSelectedBlock()?.title}</h3>
+                      <p className="text-sm text-gray-500">This will delete the content block and all its items</p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDelete("contentBlock", selectedBlockId, getSelectedBlock()?.title || "")}
+                      disabled={deleteLoading === selectedBlockId}
+                    >
+                      {deleteLoading === selectedBlockId ? "Deleting..." : "Delete Block"}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
     </div>
   );

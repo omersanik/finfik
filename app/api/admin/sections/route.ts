@@ -40,10 +40,15 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (pathError || !coursePath) {
+        console.error("Course path not found for courseId:", courseId, "Error:", pathError);
         return NextResponse.json({ error: "Course not found" }, { status: 404 });
       }
 
+      console.log("Found course path:", coursePath.id, "for course:", courseId);
       query = query.eq("course_path_id", coursePath.id);
+    } else {
+      // If no courseId, return all sections (for debugging)
+      console.log("No courseId provided, returning all sections");
     }
 
     const { data: sections, error } = await query.order("order");
@@ -53,6 +58,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch sections" }, { status: 500 });
     }
 
+    console.log("Sections found:", sections?.length || 0, "for courseId:", courseId);
     return NextResponse.json(sections || []);
   } catch (error) {
     console.error("Error in sections API:", error);
