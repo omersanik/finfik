@@ -42,38 +42,8 @@ const CoursesCardComponent = ({
   const handleStart = async () => {
     setLoading(true);
 
-    // Premium check before starting the course
-    if (isPremium) {
-      try {
-        const res = await fetch("/api/users/premium-users");
-        if (res.ok) {
-          const data = await res.json();
-          if (!data.is_premium) {
-            window.location.href = "/subscription";
-            return;
-          }
-        }
-      } catch (err) {
-        // fallback: block access if check fails
-        window.location.href = "/subscription";
-        return;
-      }
-    }
-
-    const res = await fetch("/api/progress/start-course-and-paths", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ course_id: courseId }),
-    });
-
-    setLoading(false);
-
-    if (res.ok) {
-      router.push(`/courses/${slug}`);
-    } else {
-      const err = await res.text();
-      alert("Failed to start course: " + err);
-    }
+    // For landing page, redirect to sign up
+    window.location.href = "/sign-up";
   };
 
   const hasValidThumbnail =
