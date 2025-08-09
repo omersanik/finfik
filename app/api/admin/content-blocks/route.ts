@@ -18,13 +18,7 @@ export async function GET(request: NextRequest) {
         title,
         section_id,
         order_index,
-        created_at,
-        content_items (
-          id,
-          content_text,
-          type,
-          created_at
-        )
+        created_at
       `);
 
     // If sectionId is provided, filter blocks for that section
