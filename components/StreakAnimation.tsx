@@ -23,16 +23,16 @@ const StreakAnimation = ({ isVisible, streakCount, onAnimationComplete }: Streak
       return () => clearTimeout(timer);
     }
   }, [isVisible, onAnimationComplete]);
-
+  
   return (
     <AnimatePresence>
       {showAnimation && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
-        >
+                 <motion.div
+           initial={{ opacity: 0, scale: 0 }}
+           animate={{ opacity: 1, scale: 1 }}
+           exit={{ opacity: 0, scale: 0 }}
+           className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+         >
           {/* Background overlay */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -46,7 +46,7 @@ const StreakAnimation = ({ isVisible, streakCount, onAnimationComplete }: Streak
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
-            className="relative bg-gradient-to-br from-orange-500 via-red-500 to-yellow-500 p-8 rounded-2xl shadow-2xl text-white text-center max-w-sm mx-4"
+            className="relative bg-gradient-to-br from-orange-500 via-red-500 to-yellow-500 p-8 rounded-2xl shadow-2xl text-white text-center max-w-sm mx-4 border-4 border-white"
           >
             {/* Animated flame */}
             <motion.div

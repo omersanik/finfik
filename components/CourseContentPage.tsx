@@ -139,6 +139,10 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
       if (result.data?.streak?.increased) {
         setStreakCount(result.data.streak.current);
         setShowStreakAnimation(true);
+      } else if (result.data?.streak?.current) {
+        // Fallback: show animation for any streak, even if it didn't increase
+        setStreakCount(result.data.streak.current);
+        setShowStreakAnimation(true);
       }
 
       return result;
