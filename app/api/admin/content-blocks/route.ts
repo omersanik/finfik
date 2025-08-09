@@ -2,16 +2,19 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { CreateSupabaseClient } from "@/supabase-client";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const sectionId = searchParams.get('sectionId');
+
     const supabase = CreateSupabaseClient();
 
-    const { data: contentBlocks, error } = await supabase
+    let query = supabase
       .from("content_block")
       .select(`
         id,
@@ -25,8 +28,14 @@ export async function GET() {
           type,
           created_at
         )
-      `)
-      .order("order_index");
+      `);
+
+    // If sectionId is provided, filter blocks for that section
+    if (sectionId) {
+      query = query.eq("section_id", sectionId);
+    }
+
+    const { data: contentBlocks, error } = await query.order("order_index");
 
     if (error) {
       console.error("Error fetching content blocks:", error);

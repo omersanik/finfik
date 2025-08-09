@@ -119,16 +119,19 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const blockId = searchParams.get('blockId');
+
     const supabase = CreateSupabaseClient();
 
-    const { data: contentItems, error } = await supabase
+    let query = supabase
       .from("content_item")
       .select(`
         id,
@@ -140,8 +143,14 @@ export async function GET() {
         drag_drop_instructions,
         drag_drop_items,
         drag_drop_categories
-      `)
-      .order("created_at", { ascending: false });
+      `);
+
+    // If blockId is provided, filter items for that block
+    if (blockId) {
+      query = query.eq("block_id", blockId);
+    }
+
+    const { data: contentItems, error } = await query.order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching content items:", error);

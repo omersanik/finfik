@@ -1,31 +1,52 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { CreateSupabaseClient } from "@/supabase-client";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const courseId = searchParams.get('courseId');
+
     const supabase = CreateSupabaseClient();
 
-    const { data: sections, error } = await supabase
+    let query = supabase
       .from("course_path_sections")
       .select(`
         id,
         title,
         "order",
         created_at,
+        course_path_id,
         content_blocks (
           id,
           title,
           order_index,
           created_at
         )
-      `)
-      .order("order");
+      `);
+
+    // If courseId is provided, filter sections for that course
+    if (courseId) {
+      // First get the course_path_id for this course
+      const { data: coursePath, error: pathError } = await supabase
+        .from("course_path")
+        .select("id")
+        .eq("course_id", courseId)
+        .single();
+
+      if (pathError || !coursePath) {
+        return NextResponse.json({ error: "Course not found" }, { status: 404 });
+      }
+
+      query = query.eq("course_path_id", coursePath.id);
+    }
+
+    const { data: sections, error } = await query.order("order");
 
     if (error) {
       console.error("Error fetching sections:", error);

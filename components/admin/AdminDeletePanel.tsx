@@ -77,31 +77,46 @@ const AdminDeletePanel = () => {
         const coursesData = await coursesRes.json();
         setCourses(coursesData);
       }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // Fetch sections
-      const sectionsRes = await fetch("/api/admin/sections");
+  const fetchSectionsForCourse = async (courseId: string) => {
+    try {
+      const sectionsRes = await fetch(`/api/admin/sections?courseId=${courseId}`);
       if (sectionsRes.ok) {
         const sectionsData = await sectionsRes.json();
         setSections(sectionsData);
       }
+    } catch (error) {
+      console.error("Error fetching sections:", error);
+    }
+  };
 
-      // Fetch content blocks
-      const blocksRes = await fetch("/api/admin/content-blocks");
+  const fetchBlocksForSection = async (sectionId: string) => {
+    try {
+      const blocksRes = await fetch(`/api/admin/content-blocks?sectionId=${sectionId}`);
       if (blocksRes.ok) {
         const blocksData = await blocksRes.json();
         setContentBlocks(blocksData);
       }
+    } catch (error) {
+      console.error("Error fetching blocks:", error);
+    }
+  };
 
-      // Fetch content items
-      const itemsRes = await fetch("/api/admin/content-items");
+  const fetchItemsForBlock = async (blockId: string) => {
+    try {
+      const itemsRes = await fetch(`/api/admin/content-items?blockId=${blockId}`);
       if (itemsRes.ok) {
         const itemsData = await itemsRes.json();
         setContentItems(itemsData);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching items:", error);
     }
   };
 
@@ -182,38 +197,54 @@ const AdminDeletePanel = () => {
       case 'courses':
         return filterData(courses, searchTerm);
       case 'sections':
-        return filterData(sections.filter(s => !selectedCourse || s.course_path_id === selectedCourse.id), searchTerm);
+        return filterData(sections, searchTerm);
       case 'blocks':
-        return filterData(contentBlocks.filter(b => !selectedSection || b.section_id === selectedSection.id), searchTerm);
+        return filterData(contentBlocks, searchTerm);
       case 'items':
-        return filterData(contentItems.filter(i => !selectedBlock || i.block_id === selectedBlock.id), searchTerm);
+        return filterData(contentItems, searchTerm);
       default:
         return [];
     }
   };
 
-  const navigateTo = (mode: ViewMode, item?: any) => {
+  const navigateTo = async (mode: ViewMode, item?: any) => {
     setViewMode(mode);
     setSearchTerm("");
+    setLoading(true);
     
-    switch (mode) {
-      case 'courses':
-        setSelectedCourse(null);
-        setSelectedSection(null);
-        setSelectedBlock(null);
-        break;
-      case 'sections':
-        setSelectedCourse(item);
-        setSelectedSection(null);
-        setSelectedBlock(null);
-        break;
-      case 'blocks':
-        setSelectedSection(item);
-        setSelectedBlock(null);
-        break;
-      case 'items':
-        setSelectedBlock(item);
-        break;
+    try {
+      switch (mode) {
+        case 'courses':
+          setSelectedCourse(null);
+          setSelectedSection(null);
+          setSelectedBlock(null);
+          setSections([]);
+          setContentBlocks([]);
+          setContentItems([]);
+          break;
+        case 'sections':
+          setSelectedCourse(item);
+          setSelectedSection(null);
+          setSelectedBlock(null);
+          setContentBlocks([]);
+          setContentItems([]);
+          await fetchSectionsForCourse(item.id);
+          break;
+        case 'blocks':
+          setSelectedSection(item);
+          setSelectedBlock(null);
+          setContentItems([]);
+          await fetchBlocksForSection(item.id);
+          break;
+        case 'items':
+          setSelectedBlock(item);
+          await fetchItemsForBlock(item.id);
+          break;
+      }
+    } catch (error) {
+      console.error("Error navigating:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
