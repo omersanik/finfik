@@ -6,16 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, AlertTriangle, Eye, Search } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Trash2, AlertTriangle, ChevronRight, ArrowLeft, Search, Folder, FileText, Layers } from "lucide-react";
 
 interface ContentItem {
   id: string;
@@ -51,6 +42,8 @@ interface Course {
   sections: Section[];
 }
 
+type ViewMode = 'courses' | 'sections' | 'blocks' | 'items';
+
 const AdminDeletePanel = () => {
   const [adminPassword, setAdminPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -61,6 +54,12 @@ const AdminDeletePanel = () => {
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  
+  // Navigation state
+  const [viewMode, setViewMode] = useState<ViewMode>('courses');
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedSection, setSelectedSection] = useState<Section | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<ContentBlock | null>(null);
 
   // Fetch all data
   useEffect(() => {
@@ -144,6 +143,20 @@ const AdminDeletePanel = () => {
       if (response.ok) {
         alert("Deleted successfully!");
         fetchAllData(); // Refresh data
+        // Reset navigation if we deleted the current selection
+        if (type === "course" && selectedCourse?.id === id) {
+          setViewMode('courses');
+          setSelectedCourse(null);
+          setSelectedSection(null);
+          setSelectedBlock(null);
+        } else if (type === "section" && selectedSection?.id === id) {
+          setViewMode('sections');
+          setSelectedSection(null);
+          setSelectedBlock(null);
+        } else if (type === "contentBlock" && selectedBlock?.id === id) {
+          setViewMode('blocks');
+          setSelectedBlock(null);
+        }
       } else {
         const error = await response.json();
         alert(`Error: ${error.error}`);
@@ -161,6 +174,169 @@ const AdminDeletePanel = () => {
       item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.content_text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const getFilteredData = () => {
+    switch (viewMode) {
+      case 'courses':
+        return filterData(courses, searchTerm);
+      case 'sections':
+        return filterData(sections.filter(s => !selectedCourse || s.course_path_id === selectedCourse.id), searchTerm);
+      case 'blocks':
+        return filterData(contentBlocks.filter(b => !selectedSection || b.section_id === selectedSection.id), searchTerm);
+      case 'items':
+        return filterData(contentItems.filter(i => !selectedBlock || i.block_id === selectedBlock.id), searchTerm);
+      default:
+        return [];
+    }
+  };
+
+  const navigateTo = (mode: ViewMode, item?: any) => {
+    setViewMode(mode);
+    setSearchTerm("");
+    
+    switch (mode) {
+      case 'courses':
+        setSelectedCourse(null);
+        setSelectedSection(null);
+        setSelectedBlock(null);
+        break;
+      case 'sections':
+        setSelectedCourse(item);
+        setSelectedSection(null);
+        setSelectedBlock(null);
+        break;
+      case 'blocks':
+        setSelectedSection(item);
+        setSelectedBlock(null);
+        break;
+      case 'items':
+        setSelectedBlock(item);
+        break;
+    }
+  };
+
+  const getBreadcrumb = () => {
+    const breadcrumbs = [
+      { name: 'Courses', onClick: () => navigateTo('courses') }
+    ];
+
+    if (selectedCourse) {
+      breadcrumbs.push({ name: selectedCourse.title, onClick: () => navigateTo('sections', selectedCourse) });
+    }
+    if (selectedSection) {
+      breadcrumbs.push({ name: selectedSection.title, onClick: () => navigateTo('blocks', selectedSection) });
+    }
+    if (selectedBlock) {
+      breadcrumbs.push({ name: selectedBlock.title, onClick: () => navigateTo('items', selectedBlock) });
+    }
+
+    return breadcrumbs;
+  };
+
+  const renderContent = () => {
+    const data = getFilteredData();
+    const breadcrumbs = getBreadcrumb();
+
+    return (
+      <div className="space-y-6">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center space-x-2 text-sm text-gray-600">
+          {breadcrumbs.map((crumb, index) => (
+            <div key={index} className="flex items-center">
+              <button
+                onClick={crumb.onClick}
+                className="hover:text-primary transition-colors"
+              >
+                {crumb.name}
+              </button>
+              {index < breadcrumbs.length - 1 && (
+                <ChevronRight className="h-4 w-4 mx-2" />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="flex items-center space-x-2">
+          <Search className="h-4 w-4 text-gray-500" />
+          <Input
+            placeholder={`Search ${viewMode}...`}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+
+        {/* Content List */}
+        <div className="space-y-2">
+          {data.map((item) => (
+            <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  {viewMode === 'courses' && <Folder className="h-5 w-5 text-blue-500" />}
+                  {viewMode === 'sections' && <Layers className="h-5 w-5 text-green-500" />}
+                  {viewMode === 'blocks' && <FileText className="h-5 w-5 text-purple-500" />}
+                  {viewMode === 'items' && <FileText className="h-5 w-5 text-orange-500" />}
+                  
+                  <div>
+                    <h3 className="font-medium">
+                      {item.title || item.content_text?.substring(0, 50) || "Untitled"}
+                      {item.content_text && item.content_text.length > 50 && "..."}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {viewMode === 'courses' && `${item.sections?.length || 0} sections`}
+                      {viewMode === 'sections' && `${item.content_blocks?.length || 0} blocks`}
+                      {viewMode === 'blocks' && `${item.content_items?.length || 0} items`}
+                      {viewMode === 'items' && `Type: ${item.type}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                {/* Navigate Button */}
+                {viewMode !== 'items' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (viewMode === 'courses') navigateTo('sections', item);
+                      else if (viewMode === 'sections') navigateTo('blocks', item);
+                      else if (viewMode === 'blocks') navigateTo('items', item);
+                    }}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+
+                {/* Delete Button */}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    const type = viewMode === 'courses' ? 'course' : 
+                                viewMode === 'sections' ? 'section' : 
+                                viewMode === 'blocks' ? 'contentBlock' : 'contentItem';
+                    const name = item.title || item.content_text?.substring(0, 30) || "Item";
+                    handleDelete(type, item.id, name);
+                  }}
+                  disabled={deleteLoading === item.id}
+                >
+                  {deleteLoading === item.id ? "Deleting..." : <Trash2 className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {data.length === 0 && (
+          <div className="text-center py-10 text-gray-500">
+            {searchTerm ? "No items found matching your search." : "No items available."}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -215,15 +391,13 @@ const AdminDeletePanel = () => {
     );
   }
 
-  const filteredCourses = filterData(courses, searchTerm);
-  const filteredSections = filterData(sections, searchTerm);
-  const filteredContentBlocks = filterData(contentBlocks, searchTerm);
-  const filteredContentItems = filterData(contentItems, searchTerm);
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Admin Delete Panel</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Admin Delete Panel</h1>
+          <p className="text-gray-600">Navigate through courses, sections, blocks, and items to delete content</p>
+        </div>
         <Button
           variant="outline"
           onClick={() => setIsAuthenticated(false)}
@@ -232,161 +406,32 @@ const AdminDeletePanel = () => {
         </Button>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Search className="h-4 w-4 text-gray-500" />
-        <Input
-          placeholder="Search by title or content..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
-
       {loading ? (
         <div className="text-center py-10">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2">Loading data...</p>
         </div>
       ) : (
-        <div className="grid gap-6">
-          {/* Courses */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trash2 className="h-5 w-5 text-red-500" />
-                Courses ({filteredCourses.length})
-              </CardTitle>
-              <CardDescription>
-                Delete entire courses and all their content
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {filteredCourses.map((course) => (
-                  <div key={course.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <h3 className="font-medium">{course.title}</h3>
-                      <p className="text-sm text-gray-500">{course.sections?.length || 0} sections</p>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete("course", course.id, course.title)}
-                      disabled={deleteLoading === course.id}
-                    >
-                      {deleteLoading === course.id ? "Deleting..." : "Delete"}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Sections */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trash2 className="h-5 w-5 text-red-500" />
-                Sections ({filteredSections.length})
-              </CardTitle>
-              <CardDescription>
-                Delete sections and all their content blocks
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {filteredSections.map((section) => (
-                  <div key={section.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <h3 className="font-medium">{section.title}</h3>
-                      <p className="text-sm text-gray-500">{section.content_blocks?.length || 0} blocks</p>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete("section", section.id, section.title)}
-                      disabled={deleteLoading === section.id}
-                    >
-                      {deleteLoading === section.id ? "Deleting..." : "Delete"}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Content Blocks */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trash2 className="h-5 w-5 text-red-500" />
-                Content Blocks ({filteredContentBlocks.length})
-              </CardTitle>
-              <CardDescription>
-                Delete content blocks and all their items
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {filteredContentBlocks.map((block) => (
-                  <div key={block.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <h3 className="font-medium">{block.title}</h3>
-                      <p className="text-sm text-gray-500">{block.content_items?.length || 0} items</p>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete("contentBlock", block.id, block.title)}
-                      disabled={deleteLoading === block.id}
-                    >
-                      {deleteLoading === block.id ? "Deleting..." : "Delete"}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Content Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trash2 className="h-5 w-5 text-red-500" />
-                Content Items ({filteredContentItems.length})
-              </CardTitle>
-              <CardDescription>
-                Delete individual content items
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {filteredContentItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">
-                          {item.content_text?.substring(0, 50) || "No content"}
-                          {item.content_text && item.content_text.length > 50 && "..."}
-                        </h3>
-                        <Badge variant="secondary">{item.type}</Badge>
-                      </div>
-                      <p className="text-sm text-gray-500">ID: {item.id}</p>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete("contentItem", item.id, item.content_text?.substring(0, 30) || "Content Item")}
-                      disabled={deleteLoading === item.id}
-                    >
-                      {deleteLoading === item.id ? "Deleting..." : "Delete"}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-500" />
+              {viewMode === 'courses' && 'Select a Course'}
+              {viewMode === 'sections' && 'Select a Section'}
+              {viewMode === 'blocks' && 'Select a Content Block'}
+              {viewMode === 'items' && 'Content Items'}
+            </CardTitle>
+            <CardDescription>
+              {viewMode === 'courses' && 'Choose a course to view its sections'}
+              {viewMode === 'sections' && 'Choose a section to view its content blocks'}
+              {viewMode === 'blocks' && 'Choose a content block to view its items'}
+              {viewMode === 'items' && 'View and delete individual content items'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {renderContent()}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
