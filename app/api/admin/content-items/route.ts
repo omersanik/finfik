@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CreateSupabaseClient } from "@/supabase-client";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = CreateSupabaseClient();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
     const body = await req.json();
     
     // Debug logging
@@ -120,15 +122,13 @@ export async function POST(req: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const blockId = searchParams.get('blockId');
 
-    const supabase = CreateSupabaseClient();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
     let query = supabase
       .from("content_item")
