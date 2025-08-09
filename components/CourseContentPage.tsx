@@ -4,6 +4,7 @@ import Link from "next/link";
 import ContentBlockComponent from "./ContentBlock";
 import CourseIdNavbar from "./CourseIdNavbar";
 import LoadingAnimation from "./LoadingAnimation";
+import StreakAnimation from "./StreakAnimation";
 import { Button } from "./ui/button";
 
 interface ContentItem {
@@ -86,6 +87,8 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
   const [isUpdatingProgress, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showStreakAnimation, setShowStreakAnimation] = useState(false);
+  const [streakCount, setStreakCount] = useState(0);
 
   const currentSection = courseData.path.sections[currentSectionIndex];
   
@@ -130,7 +133,15 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
         throw new Error("Failed to complete section");
       }
 
-      return await response.json();
+      const result = await response.json();
+      
+      // Check if streak increased and show animation
+      if (result.data?.streak?.increased) {
+        setStreakCount(result.data.streak.current);
+        setShowStreakAnimation(true);
+      }
+
+      return result;
     } catch (error) {
       console.error("Error completing section:", error);
       throw error;
@@ -306,6 +317,13 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
 
   return (
     <>
+      {/* Streak Animation */}
+      <StreakAnimation
+        isVisible={showStreakAnimation}
+        streakCount={streakCount}
+        onAnimationComplete={() => setShowStreakAnimation(false)}
+      />
+      
       <CourseIdNavbar
         hrefX={`/courses/${courseData.course.slug}`}
         currentProgress={

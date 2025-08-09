@@ -142,8 +142,21 @@ export async function GET() {
     last_completed_date: streakData?.last_completed_date || null,
   });
 
+  // Calculate current streak based on consecutive days
+  let currentStreak = 0;
+  if (week.length > 0) {
+    // Count consecutive days from today backwards
+    for (let i = week.length - 1; i >= 0; i--) {
+      if (week[i]) {
+        currentStreak++;
+      } else {
+        break; // Stop counting when we hit a day without completion
+      }
+    }
+  }
+
   return NextResponse.json({
-    current_streak: streakData?.current_streak || 0,
+    current_streak: currentStreak,
     longest_streak: streakData?.longest_streak || 0,
     last_completed_date: streakData?.last_completed_date || null,
     week,

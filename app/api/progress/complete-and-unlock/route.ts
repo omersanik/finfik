@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
 
       let newStreak = 1;
       let newLongest = 1;
+      let streakIncreased = false;
       
       if (streakRow) {
         if (streakRow.last_completed_date === todayStr) {
@@ -120,15 +121,17 @@ export async function POST(request: NextRequest) {
           // Continue streak
           newStreak = streakRow.current_streak + 1;
           newLongest = Math.max(newStreak, streakRow.longest_streak);
+          streakIncreased = true;
           console.log('Streak Debug - Continuing streak:', { oldStreak: streakRow.current_streak, newStreak });
         } else {
-          // Reset streak
+          // Reset streak - user missed a day
           newStreak = 1;
           newLongest = Math.max(1, streakRow.longest_streak);
-          console.log('Streak Debug - Resetting streak to 1');
+          console.log('Streak Debug - Resetting streak to 1 (missed a day)');
         }
       } else {
         console.log('Streak Debug - No existing streak, starting at 1');
+        streakIncreased = true;
       }
 
       // 4. Always update streak row with current date
@@ -245,6 +248,11 @@ export async function POST(request: NextRequest) {
         currentSectionCompleted: true,
         nextSectionUnlocked,
         nextSectionId,
+        streak: {
+          current: newStreak,
+          longest: newLongest,
+          increased: streakIncreased,
+        },
       };
 
       console.log("Operation completed successfully:", result);
