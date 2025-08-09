@@ -116,7 +116,7 @@ const FloatingParticles = () => {
 // Animated gradient background
 const AnimatedGradient = () => {
   return (
-    <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/20 to-background z-0">
+    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/10 to-background z-0">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(102,187,106,0.3),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(102,187,106,0.2),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(102,187,106,0.2),transparent_50%)]" />
