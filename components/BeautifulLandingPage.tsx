@@ -75,8 +75,18 @@ const betaPlans = [
   }
 ];
 
-// Floating particles component
+// Floating particles component - Client only to prevent hydration errors
 const FloatingParticles = () => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
       {[...Array(20)].map((_, i) => (
@@ -123,7 +133,8 @@ const BeautifulLandingPage = () => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        // Use the correct server URL
+        const baseUrl = "http://192.168.1.111:3000";
         console.log("Fetching courses from:", `${baseUrl}/api/courses`);
         
         const res = await fetch(`${baseUrl}/api/courses`, {
