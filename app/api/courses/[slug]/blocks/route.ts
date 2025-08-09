@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { CreateSupabaseClient } from "@/supabase-client";
+import { createClient } from "@supabase/supabase-js";
 
 export async function GET(req: Request) {
   // 1. Authenticate user
@@ -16,7 +16,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing section_id" }, { status: 400 });
   }
 
-  const supabase = CreateSupabaseClient();
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   // 3. Fetch all content_blocks for the section
   const { data: blocks, error: blocksError } = await supabase
@@ -59,7 +62,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const supabase = CreateSupabaseClient();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
     const body = await req.json();
     const { section_id, title, order_index } = body;
     if (!section_id || order_index === undefined) {
