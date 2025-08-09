@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
           title,
           "order",
           created_at,
-          content_blocks (
+          content_block (
             id,
             title,
             order_index,
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
           title,
           "order",
           created_at,
-          content_blocks (
+          content_block (
             id,
             title,
             order_index,
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
           "order",
           created_at,
           course_path_id,
-          content_blocks (
+          content_block (
             id,
             title,
             order_index,
