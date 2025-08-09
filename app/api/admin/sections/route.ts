@@ -1,27 +1,42 @@
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { CreateSupabaseClient } from "@/supabase-client";
-import { NextRequest } from "next/server";
 
-export async function GET(req: NextRequest) {
-  const supabase = CreateSupabaseClient();
-  const { searchParams } = new URL(req.url);
-  const course_path_id = searchParams.get("course_path_id");
+export async function GET() {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  if (!course_path_id) {
-    return new Response("Missing course_path_id", { status: 400 });
+    const supabase = CreateSupabaseClient();
+
+    const { data: sections, error } = await supabase
+      .from("course_path_sections")
+      .select(`
+        id,
+        title,
+        "order",
+        created_at,
+        content_blocks (
+          id,
+          title,
+          order_index,
+          created_at
+        )
+      `)
+      .order("order");
+
+    if (error) {
+      console.error("Error fetching sections:", error);
+      return NextResponse.json({ error: "Failed to fetch sections" }, { status: 500 });
+    }
+
+    return NextResponse.json(sections || []);
+  } catch (error) {
+    console.error("Error in sections API:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  // Fetch sections for the given course_path_id
-  const { data, error } = await supabase
-    .from("course_path_sections")
-    .select("*")
-    .eq("course_path_id", course_path_id)
-    .order("order", { ascending: true });
-
-  if (error) {
-    return new Response(error.message, { status: 500 });
-  }
-
-  return new Response(JSON.stringify(data), { status: 200 });
 }
 
 export async function POST(req: NextRequest) {

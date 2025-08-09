@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { CreateSupabaseClient } from "@/supabase-client";
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -118,90 +120,37 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const supabase = CreateSupabaseClient();
-  
-  // First, let's see what types currently exist
-  const { data: existingTypes, error: typesError } = await supabase
-    .from("content_item")
-    .select("type")
-    .not("type", "is", null);
-    
-  if (!typesError && existingTypes) {
-    const uniqueTypes = [...new Set(existingTypes.map(item => item.type))];
-    console.log("Existing content item types in database:", uniqueTypes);
-  }
-  
-  // Get a valid block_id to use for testing
-  const { data: validBlock, error: blockError } = await supabase
-    .from("content_block")
-    .select("id")
-    .limit(1)
-    .single();
-    
-  if (blockError || !validBlock) {
-    console.log("No valid block found for testing");
-    return new Response(JSON.stringify({ 
-      error: "No valid block found for testing",
-      existingTypes: typesError ? null : [...new Set(existingTypes?.map(item => item.type) || [])]
-    }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-  
-  // Test just the basic types that we know should work
-  const testTypes = ["text", "image", "quiz", "animation", "calculator", "math", "chart"];
-  const testResults = [];
-  
-  for (const testType of testTypes) {
-    try {
-      const { error } = await supabase
-        .from("content_item")
-        .insert([{
-          block_id: validBlock.id, // Use valid UUID
-          type: testType,
-          content_text: "test",
-          order_index: 999
-        }]);
-      
-      testResults.push({
-        type: testType,
-        allowed: !error,
-        error: error?.message || null
-      });
-      
-      // Clean up test data
-      if (!error) {
-        await supabase
-          .from("content_item")
-          .delete()
-          .eq("block_id", validBlock.id)
-          .eq("order_index", 999);
-      }
-    } catch (err) {
-      testResults.push({
-        type: testType,
-        allowed: false,
-        error: err instanceof Error ? err.message : String(err)
-      });
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const supabase = CreateSupabaseClient();
+
+    const { data: contentItems, error } = await supabase
+      .from("content_item")
+      .select(`
+        id,
+        content_text,
+        type,
+        block_id,
+        created_at,
+        drag_drop_title,
+        drag_drop_instructions,
+        drag_drop_items,
+        drag_drop_categories
+      `)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching content items:", error);
+      return NextResponse.json({ error: "Failed to fetch content items" }, { status: 500 });
+    }
+
+    return NextResponse.json(contentItems || []);
+  } catch (error) {
+    console.error("Error in content items API:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-  
-  console.log("Database constraint test results:", testResults);
-  
-  const { data, error } = await supabase.from("content_item").select("*");
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-  return new Response(JSON.stringify({ 
-    data, 
-    testResults,
-    existingTypes: typesError ? null : [...new Set(existingTypes?.map(item => item.type) || [])]
-  }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
 } 
