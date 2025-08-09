@@ -11,13 +11,42 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get('courseId');
+    const coursePathId = searchParams.get('course_path_id');
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    if (courseId) {
+    if (coursePathId) {
+      // Direct course_path_id provided
+      console.log("Looking for sections with course_path_id:", coursePathId);
+      
+      const { data: sections, error: sectionsError } = await supabase
+        .from("course_path_sections")
+        .select(`
+          id,
+          title,
+          "order",
+          created_at,
+          content_blocks (
+            id,
+            title,
+            order_index,
+            created_at
+          )
+        `)
+        .eq("course_path_id", coursePathId)
+        .order("order");
+
+      if (sectionsError) {
+        console.error("Error fetching sections:", sectionsError);
+        return NextResponse.json({ error: "Failed to fetch sections" }, { status: 500 });
+      }
+
+      console.log("Sections found:", sections?.length || 0);
+      return NextResponse.json(sections || []);
+    } else if (courseId) {
       console.log("Looking for course path with courseId:", courseId);
       
       // First, let's check if the course exists
