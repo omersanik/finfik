@@ -138,7 +138,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = CreateSupabaseClient();
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   try {
     const { course_path, title, description, lessons, order, slug } =
