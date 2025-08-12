@@ -145,13 +145,14 @@ export default function ImageUpload({
     setUploadProgress(0);
     setError(null);
 
-    try {
-      // Generate a unique filename
-      const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `admin-upload-${timestamp}.${fileExtension}`;
-      
-             // Upload to the selected folder in Supabase Storage
+         try {
+       // Use the original filename, but add timestamp to avoid conflicts
+       const timestamp = Date.now();
+       const fileExtension = file.name.split('.').pop();
+       const fileNameWithoutExt = file.name.replace(`.${fileExtension}`, '');
+       const fileName = `${fileNameWithoutExt}-${timestamp}.${fileExtension}`;
+       
+       // Upload to the selected folder in Supabase Storage
        const filePath = `${selectedFolder}/${fileName}`;
        const { data, error: uploadError } = await supabase.storage
          .from('thumbnails')
@@ -389,7 +390,7 @@ export default function ImageUpload({
         />
                  <p className="text-xs text-gray-500">
            {selectedFolder 
-             ? `Format: ${selectedFolder}/filename.ext (e.g., ${selectedFolder}/admin-upload-1234567890.png)`
+             ? `Format: ${selectedFolder}/filename.ext (e.g., ${selectedFolder}/chart1-1234567890.png)`
              : 'Format: course-slug/filename.ext (e.g., finance-101/chart1.png)'
            }
          </p>
