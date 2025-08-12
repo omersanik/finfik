@@ -205,13 +205,19 @@ export default function ImageUpload({
         throw new Error(uploadError.message);
       }
 
-             // Get the public URL
+                    // Get the public URL
        const { data: { publicUrl } } = supabase.storage
          .from('thumbnails')
          .getPublicUrl(filePath);
 
-      // Call the callback with the new image URL
-      onImageUploaded(publicUrl);
+       // Extract just the path part for the database (folder/filename)
+       const pathForDatabase = `${selectedFolder}/${fileName}`;
+       
+       console.log('Full public URL:', publicUrl);
+       console.log('Path for database:', pathForDatabase);
+       
+       // Call the callback with the path for database (not the full URL)
+       onImageUploaded(pathForDatabase);
       setUploadProgress(100);
       
       // Reset progress after a short delay
@@ -417,12 +423,12 @@ export default function ImageUpload({
           defaultValue={currentImageUrl || ''}
           onChange={(e) => onImageUploaded(e.target.value)}
         />
-        <p className="text-xs text-gray-500">
-          {selectedFolder 
-            ? `Format: ${selectedFolder}/filename.ext (e.g., ${selectedFolder}/chart1.png)`
-            : 'Format: course-slug/filename.ext (e.g., finance-101/chart1.png)'
-          }
-        </p>
+                 <p className="text-xs text-gray-500">
+           {selectedFolder 
+             ? `Format: ${selectedFolder}/filename.ext (e.g., ${selectedFolder}/admin-upload-1234567890.png)`
+             : 'Format: course-slug/filename.ext (e.g., finance-101/chart1.png)'
+           }
+         </p>
       </div>
     </div>
   );
