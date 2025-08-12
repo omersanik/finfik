@@ -117,7 +117,7 @@ export default function ImageUpload({
     }
 
     await uploadImage(file);
-  }, []);
+  }, [selectedFolder]); // Add selectedFolder as dependency
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -126,11 +126,15 @@ export default function ImageUpload({
     const file = files[0];
     setError(null);
     await uploadImage(file);
-  }, []);
+  }, [selectedFolder]); // Add selectedFolder as dependency
 
   const uploadImage = async (file: File) => {
-    console.log('Upload attempt - selectedFolder:', selectedFolder);
-    console.log('Upload attempt - folders available:', folders);
+    console.log('=== UPLOAD ATTEMPT ===');
+    console.log('selectedFolder state:', selectedFolder);
+    console.log('folders state:', folders);
+    console.log('loadingFolders state:', loadingFolders);
+    console.log('current error state:', error);
+    console.log('=======================');
     
     if (!selectedFolder) {
       setError('Please select a folder first');
