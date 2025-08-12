@@ -43,8 +43,6 @@ interface ChartRendererProps {
 }
 
 export default function ChartRenderer({ chartData, className = "" }: ChartRendererProps) {
-  console.log('ChartRenderer received data:', chartData);
-  
   if (!chartData || chartData.trim() === '') {
     return (
       <div className={`p-4 text-center text-gray-500 bg-gray-50 rounded-lg ${className}`}>
@@ -55,7 +53,6 @@ export default function ChartRenderer({ chartData, className = "" }: ChartRender
 
   // Check if this looks like chart data (should start with { and contain chart-related fields)
   if (!chartData.trim().startsWith('{') || !chartData.includes('"type"')) {
-    console.log('Data does not appear to be chart data:', chartData);
     return (
       <div className={`p-4 text-center text-gray-500 bg-gray-50 rounded-lg ${className}`}>
         This content is not a chart. Please use the chart editor to create charts.
@@ -75,8 +72,6 @@ export default function ChartRenderer({ chartData, className = "" }: ChartRender
     
     // Check if this is actually a chart config or just some other content
     if (!config.type || !config.title || !config.description) {
-      console.log('Incomplete chart data received:', config);
-      // Don't throw error, just return a message that this isn't a chart
       return (
         <div className={`p-4 text-center text-gray-500 bg-gray-50 rounded-lg ${className}`}>
           Chart data is incomplete. Please use the chart editor to create a complete chart.
@@ -123,7 +118,6 @@ export default function ChartRenderer({ chartData, className = "" }: ChartRender
 
   // Validate chart data structure
   if (!config.data || !config.data.labels || !config.data.datasets) {
-    console.error('Invalid chart data structure:', config);
     return (
       <div className={`p-4 text-center text-red-500 bg-red-50 rounded-lg ${className}`}>
         Invalid chart data structure. Missing labels or datasets.

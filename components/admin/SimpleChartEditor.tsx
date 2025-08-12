@@ -140,7 +140,6 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
       data: chartData
     };
     
-    console.log('Saving chart config:', chartConfig);
     onChange(JSON.stringify(chartConfig, null, 2));
   };
 
