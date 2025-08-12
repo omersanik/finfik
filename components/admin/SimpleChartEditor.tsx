@@ -87,7 +87,7 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
   const [yAxisTitle, setYAxisTitle] = useState('');
   const [chartData, setChartData] = useState<ChartData>(defaultChartConfig.data);
   const [showPreview, setShowPreview] = useState(true);
-  const [initialized] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   // Initialize with existing data or defaults
   useEffect(() => {
