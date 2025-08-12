@@ -41,74 +41,17 @@ export default function ImageUpload({
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [loadingFolders, setLoadingFolders] = useState(true);
 
-  // Fetch available folders from the thumbnails bucket (only once)
+    // Fetch available folders from the thumbnails bucket (only once)
   useEffect(() => {
     const fetchFolders = async () => {
       try {
         setLoadingFolders(true);
         console.log('Fetching folders from thumbnail bucket...');
         
-        // Check authentication status
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        console.log('Auth status:', { user: user?.id, error: authError });
-        
-        // First, let's test if we can access the bucket at all
-        const { data: bucketTest, error: bucketError } = await supabase.storage
-          .listBuckets();
-        
-        if (bucketError) {
-          console.error('Bucket list error:', bucketError);
-          setError(`Bucket access error: ${bucketError.message}`);
-          return;
-        }
-        
-        console.log('Available buckets:', bucketTest);
-        
-        // Test direct bucket access
-        try {
-          console.log('Testing direct access to thumbnails bucket...');
-          const { data: directTest, error: directError } = await supabase.storage
-            .from('thumbnails')
-            .list('', { limit: 1 });
-          
-          console.log('Direct bucket test:', { data: directTest, error: directError });
-          
-          if (directError) {
-            console.error('Direct bucket access error:', directError);
-            setError(`Direct access error: ${directError.message}`);
-            return;
-          }
-        } catch (directErr) {
-          console.error('Direct bucket test failed:', directErr);
-        }
-        
-        // Test with different path formats
-        try {
-          console.log('Testing with root path "/"...');
-          const { data: rootTest, error: rootError } = await supabase.storage
-            .from('thumbnails')
-            .list('/', { limit: 1 });
-          
-          console.log('Root path test:', { data: rootTest, error: rootError });
-        } catch (rootErr) {
-          console.error('Root path test failed:', rootErr);
-        }
-        
-        // Test bucket info
-        try {
-          console.log('Getting bucket info...');
-          const { data: bucketInfo, error: bucketInfoError } = await supabase.storage
-            .getBucket('thumbnails');
-          
-          console.log('Bucket info:', { data: bucketInfo, error: bucketInfoError });
-        } catch (bucketErr) {
-          console.error('Bucket info test failed:', bucketErr);
-        }
-        
-                 // Now try to list the thumbnails bucket contents
-         const { data, error } = await supabase.storage
-           .from('thumbnails')
-           .list('', { limit: 1000 });
+        // Now try to list the thumbnails bucket contents
+        const { data, error } = await supabase.storage
+          .from('thumbnails')
+          .list('', { limit: 1000 });
 
         if (error) {
           console.error('Error fetching folders:', error);
@@ -119,20 +62,19 @@ export default function ImageUpload({
         console.log('Raw storage data:', data);
 
         // Extract folder names from the data
-        // Since these are folders, we can just map the names directly
         const folderNames = data.map(item => item.name);
         
         console.log('Found folders:', folderNames);
         setFolders(folderNames);
         
         // Set default folder if available
-        if (folderNames.length > 0 && !selectedFolder) {
+        if (folderNames.length > 0) {
           console.log('Setting default folder to:', folderNames[0]);
           setSelectedFolder(folderNames[0]);
         }
         
         console.log('Final state - folders:', folderNames);
-        console.log('Final state - selectedFolder:', selectedFolder);
+        console.log('Final state - selectedFolder will be set to:', folderNames[0] || 'none');
       } catch (err) {
         console.error('Error fetching folders:', err);
         setError(`Fetch error: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -143,6 +85,12 @@ export default function ImageUpload({
 
     fetchFolders();
   }, []); // Empty dependency array - only run once
+
+  // Monitor state changes
+  useEffect(() => {
+    console.log('State changed - selectedFolder:', selectedFolder);
+    console.log('State changed - folders:', folders);
+  }, [selectedFolder, folders]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -257,31 +205,33 @@ export default function ImageUpload({
              onClick={() => {
                setLoadingFolders(true);
                setError(null);
-               // Re-fetch folders
-               const fetchFolders = async () => {
-                 try {
-                                    const { data, error } = await supabase.storage
-                   .from('thumbnails')
-                   .list('', { limit: 1000 });
-                   
-                   if (error) {
-                     console.error('Refresh error:', error);
-                     setError(`Storage error: ${error.message}`);
-                     return;
-                   }
-                   
-                                       const folderNames = data.map(item => item.name);
+                               // Re-fetch folders
+                const fetchFolders = async () => {
+                  try {
+                    const { data, error } = await supabase.storage
+                      .from('thumbnails')
+                      .list('', { limit: 1000 });
+                    
+                    if (error) {
+                      console.error('Refresh error:', error);
+                      setError(`Storage error: ${error.message}`);
+                      return;
+                    }
+                    
+                    const folderNames = data.map(item => item.name);
+                    console.log('Refresh - found folders:', folderNames);
                     
                     setFolders(folderNames);
-                   if (folderNames.length > 0 && !selectedFolder) {
-                     setSelectedFolder(folderNames[0]);
-                   }
-                 } catch (err) {
-                   console.error('Refresh error:', err);
-                 } finally {
-                   setLoadingFolders(false);
-                 }
-               };
+                    if (folderNames.length > 0) {
+                      console.log('Refresh - setting selected folder to:', folderNames[0]);
+                      setSelectedFolder(folderNames[0]);
+                    }
+                  } catch (err) {
+                    console.error('Refresh error:', err);
+                  } finally {
+                    setLoadingFolders(false);
+                  }
+                };
                fetchFolders();
              }}
              disabled={loadingFolders}
