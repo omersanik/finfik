@@ -292,7 +292,7 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-chart-editor>
              {/* Header with Preview Toggle and Save Button */}
        <div className="flex items-center justify-between">
          <h3 className="text-lg font-semibold">Chart Editor</h3>
@@ -303,6 +303,7 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
               size="sm"
               onClick={saveChanges}
               disabled={!title.trim() || !description.trim()}
+              data-save-chart
             >
               {title.trim() && description.trim() ? 'Save Chart' : 'Fill Title & Description First'}
             </Button>

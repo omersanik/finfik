@@ -69,6 +69,7 @@ export default function AddContentItems() {
   const [errorBlocks, setErrorBlocks] = useState("");
   const [latestItemOrder, setLatestItemOrder] = useState<number | null>(null);
   const [nextItemOrder, setNextItemOrder] = useState<number>(0);
+  const [chartSaved, setChartSaved] = useState(false);
   const [dragDropData, setDragDropData] = useState({
     title: "",
     instructions: "",
@@ -320,7 +321,11 @@ export default function AddContentItems() {
         {/* Content Type Dropdown */}
         <div className="mb-4">
           <label className="block font-semibold mb-2">Content Type</label>
-          <Select onValueChange={(value) => form.setValue("type", value)} value={form.watch("type")}>
+          <Select onValueChange={(value) => {
+            form.setValue("type", value);
+            // Reset chart saved state when type changes
+            setChartSaved(false);
+          }} value={form.watch("type")}>
             <SelectTrigger>
               <SelectValue placeholder="Select content type" />
             </SelectTrigger>
@@ -390,12 +395,40 @@ export default function AddContentItems() {
             <label className="block font-semibold mb-2">Chart Configuration</label>
             <SimpleChartEditor
               value={form.watch("content_text") || ""}
-              onChange={(value: string) => form.setValue("content_text", value)}
+              onChange={(value: string) => {
+                form.setValue("content_text", value);
+                // If we get a valid chart JSON, mark it as saved
+                if (value && value.trim() !== '' && value.startsWith('{') && value.includes('"type"')) {
+                  setChartSaved(true);
+                }
+              }}
               placeholder="Configure your chart..."
             />
             {form.formState.errors.content_text && (
               <div className="text-red-500 text-sm mt-1">{form.formState.errors.content_text.message}</div>
             )}
+            <div className="mt-4 flex justify-center">
+              <Button
+                type="button"
+                variant={chartSaved ? "default" : "outline"}
+                size="lg"
+                onClick={() => {
+                  // Trigger the save chart functionality
+                  const chartEditor = document.querySelector('[data-chart-editor]');
+                  if (chartEditor) {
+                    // Find and click the save chart button in the editor
+                    const saveButton = chartEditor.querySelector('[data-save-chart]');
+                    if (saveButton) {
+                      (saveButton as HTMLButtonElement).click();
+                    }
+                  }
+                }}
+                className="px-8 py-3"
+                disabled={chartSaved}
+              >
+                {chartSaved ? '✓ Chart Saved' : 'Save Chart'}
+              </Button>
+            </div>
           </div>
         ) : form.watch("type") === "table" ? (
           <div>
@@ -495,9 +528,20 @@ export default function AddContentItems() {
             )}
           </div>
         )}
-        <Button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" disabled={form.formState.isSubmitting}>
+        <Button 
+          type="submit" 
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" 
+          disabled={form.formState.isSubmitting || (form.watch("type") === "chart" && !chartSaved)}
+        >
           {form.formState.isSubmitting ? "Saving..." : "Submit"}
         </Button>
+        
+        {/* Chart Save Status */}
+        {form.watch("type") === "chart" && !chartSaved && (
+          <div className="text-center text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
+            ⚠️ Please save your chart before submitting the form
+          </div>
+        )}
         {message && <div className="mt-2 text-sm text-center">{message}</div>}
       </form>
     </div>
