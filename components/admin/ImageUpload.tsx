@@ -60,10 +60,10 @@ export default function ImageUpload({
         
         console.log('Available buckets:', bucketTest);
         
-        // Now try to list the thumbnail bucket contents
-        const { data, error } = await supabase.storage
-          .from('thumbnail')
-          .list('', { limit: 1000 });
+                 // Now try to list the thumbnails bucket contents
+         const { data, error } = await supabase.storage
+           .from('thumbnails')
+           .list('', { limit: 1000 });
 
         if (error) {
           console.error('Error fetching folders:', error);
@@ -148,23 +148,23 @@ export default function ImageUpload({
       const fileExtension = file.name.split('.').pop();
       const fileName = `admin-upload-${timestamp}.${fileExtension}`;
       
-      // Upload to the selected folder in Supabase Storage
-      const filePath = `${selectedFolder}/${fileName}`;
-      const { data, error: uploadError } = await supabase.storage
-        .from('thumbnail')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+             // Upload to the selected folder in Supabase Storage
+       const filePath = `${selectedFolder}/${fileName}`;
+       const { data, error: uploadError } = await supabase.storage
+         .from('thumbnails')
+         .upload(filePath, file, {
+           cacheControl: '3600',
+           upsert: false
+         });
 
       if (uploadError) {
         throw new Error(uploadError.message);
       }
 
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('thumbnail')
-        .getPublicUrl(filePath);
+             // Get the public URL
+       const { data: { publicUrl } } = supabase.storage
+         .from('thumbnails')
+         .getPublicUrl(filePath);
 
       // Call the callback with the new image URL
       onImageUploaded(publicUrl);
@@ -203,9 +203,9 @@ export default function ImageUpload({
                // Re-fetch folders
                const fetchFolders = async () => {
                  try {
-                   const { data, error } = await supabase.storage
-                     .from('thumbnail')
-                     .list('', { limit: 1000 });
+                                    const { data, error } = await supabase.storage
+                   .from('thumbnails')
+                   .list('', { limit: 1000 });
                    
                    if (error) {
                      console.error('Refresh error:', error);
