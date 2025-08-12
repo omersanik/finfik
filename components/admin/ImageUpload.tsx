@@ -46,20 +46,39 @@ export default function ImageUpload({
     const fetchFolders = async () => {
       try {
         setLoadingFolders(true);
+        console.log('Fetching folders from thumbnail bucket...');
+        
+        // First, let's test if we can access the bucket at all
+        const { data: bucketTest, error: bucketError } = await supabase.storage
+          .listBuckets();
+        
+        if (bucketError) {
+          console.error('Bucket list error:', bucketError);
+          setError(`Bucket access error: ${bucketError.message}`);
+          return;
+        }
+        
+        console.log('Available buckets:', bucketTest);
+        
+        // Now try to list the thumbnail bucket contents
         const { data, error } = await supabase.storage
           .from('thumbnail')
           .list('', { limit: 1000 });
 
         if (error) {
           console.error('Error fetching folders:', error);
+          setError(`Storage error: ${error.message}`);
           return;
         }
+
+        console.log('Raw storage data:', data);
 
         // Extract folder names from the data
         const folderNames = data
           .filter(item => item.type === 'folder')
           .map(item => item.name);
         
+        console.log('Found folders:', folderNames);
         setFolders(folderNames);
         
         // Set default folder if available
@@ -68,6 +87,7 @@ export default function ImageUpload({
         }
       } catch (err) {
         console.error('Error fetching folders:', err);
+        setError(`Fetch error: ${err instanceof Error ? err.message : 'Unknown error'}`);
       } finally {
         setLoadingFolders(false);
       }
@@ -169,10 +189,53 @@ export default function ImageUpload({
     <div className={`space-y-4 ${className}`}>
       <Label>Image Upload</Label>
       
-      {/* Folder Selector */}
-      <div className="space-y-2">
-        <Label htmlFor="folder-select">Select Upload Folder:</Label>
-                 <Select value={selectedFolder} onValueChange={setSelectedFolder}>
+             {/* Folder Selector */}
+       <div className="space-y-2">
+         <div className="flex items-center justify-between">
+           <Label htmlFor="folder-select">Select Upload Folder:</Label>
+           <Button
+             type="button"
+             variant="outline"
+             size="sm"
+             onClick={() => {
+               setLoadingFolders(true);
+               setError(null);
+               // Re-fetch folders
+               const fetchFolders = async () => {
+                 try {
+                   const { data, error } = await supabase.storage
+                     .from('thumbnail')
+                     .list('', { limit: 1000 });
+                   
+                   if (error) {
+                     console.error('Refresh error:', error);
+                     setError(`Storage error: ${error.message}`);
+                     return;
+                   }
+                   
+                   const folderNames = data
+                     .filter(item => item.type === 'folder')
+                     .map(item => item.name);
+                   
+                   setFolders(folderNames);
+                   if (folderNames.length > 0 && !selectedFolder) {
+                     setSelectedFolder(folderNames[0]);
+                   }
+                 } catch (err) {
+                   console.error('Refresh error:', err);
+                 } finally {
+                   setLoadingFolders(false);
+                 }
+               };
+               fetchFolders();
+             }}
+             disabled={loadingFolders}
+           >
+             {loadingFolders ? 'Loading...' : 'Refresh'}
+           </Button>
+         </div>
+         
+         <Select value={selectedFolder} onValueChange={setSelectedFolder}>
            <SelectTrigger>
              <SelectValue placeholder={loadingFolders ? "Loading folders..." : "Select a folder"} />
            </SelectTrigger>
@@ -197,10 +260,18 @@ export default function ImageUpload({
              )}
            </SelectContent>
          </Select>
-        <p className="text-xs text-gray-500">
-          Choose which folder to upload the image to
-        </p>
-      </div>
+         
+         <p className="text-xs text-gray-500">
+           Choose which folder to upload the image to
+         </p>
+         
+         {/* Debug Info */}
+         <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">
+           <p>Debug: Found {folders.length} folders</p>
+           <p>Selected: {selectedFolder || 'None'}</p>
+           <p>Loading: {loadingFolders ? 'Yes' : 'No'}</p>
+         </div>
+       </div>
       
       {/* Current Image Display */}
       {currentImageUrl && (
