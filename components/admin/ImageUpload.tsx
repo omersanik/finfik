@@ -171,27 +171,31 @@ export default function ImageUpload({
       {/* Folder Selector */}
       <div className="space-y-2">
         <Label htmlFor="folder-select">Select Upload Folder:</Label>
-        <Select value={selectedFolder} onValueChange={setSelectedFolder}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a folder" />
-          </SelectTrigger>
-          <SelectContent>
-            {loadingFolders ? (
-              <SelectItem value="" disabled>Loading folders...</SelectItem>
-            ) : folders.length > 0 ? (
-              folders.map((folder) => (
-                <SelectItem key={folder} value={folder}>
-                  <div className="flex items-center gap-2">
-                    <FolderOpen className="w-4 h-4" />
-                    {folder}
-                  </div>
-                </SelectItem>
-              ))
-            ) : (
-              <SelectItem value="" disabled>No folders found</SelectItem>
-            )}
-          </SelectContent>
-        </Select>
+                 <Select value={selectedFolder} onValueChange={setSelectedFolder}>
+           <SelectTrigger>
+             <SelectValue placeholder={loadingFolders ? "Loading folders..." : "Select a folder"} />
+           </SelectTrigger>
+           <SelectContent>
+             {loadingFolders ? (
+               <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                 Loading folders...
+               </div>
+             ) : folders.length > 0 ? (
+               folders.map((folder) => (
+                 <SelectItem key={folder} value={folder}>
+                   <div className="flex items-center gap-2">
+                     <FolderOpen className="w-4 h-4" />
+                     {folder}
+                   </div>
+                 </SelectItem>
+               ))
+             ) : (
+               <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                 No folders found
+               </div>
+             )}
+           </SelectContent>
+         </Select>
         <p className="text-xs text-gray-500">
           Choose which folder to upload the image to
         </p>
