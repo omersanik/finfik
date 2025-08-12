@@ -14,6 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Create Supabase client outside component to avoid multiple instances
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 interface ImageUploadProps {
   onImageUploaded: (imageUrl: string) => void;
   currentImageUrl?: string;
@@ -35,12 +41,7 @@ export default function ImageUpload({
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [loadingFolders, setLoadingFolders] = useState(true);
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
-  // Fetch available folders from the thumbnails bucket
+  // Fetch available folders from the thumbnails bucket (only once)
   useEffect(() => {
     const fetchFolders = async () => {
       try {
@@ -73,7 +74,7 @@ export default function ImageUpload({
     };
 
     fetchFolders();
-  }, [supabase.storage, selectedFolder]);
+  }, []); // Empty dependency array - only run once
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
