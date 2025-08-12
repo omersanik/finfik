@@ -48,6 +48,10 @@ export default function ImageUpload({
         setLoadingFolders(true);
         console.log('Fetching folders from thumbnail bucket...');
         
+        // Check authentication status
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        console.log('Auth status:', { user: user?.id, error: authError });
+        
         // First, let's test if we can access the bucket at all
         const { data: bucketTest, error: bucketError } = await supabase.storage
           .listBuckets();
@@ -62,6 +66,7 @@ export default function ImageUpload({
         
         // Test direct bucket access
         try {
+          console.log('Testing direct access to thumbnails bucket...');
           const { data: directTest, error: directError } = await supabase.storage
             .from('thumbnails')
             .list('', { limit: 1 });
@@ -75,6 +80,29 @@ export default function ImageUpload({
           }
         } catch (directErr) {
           console.error('Direct bucket test failed:', directErr);
+        }
+        
+        // Test with different path formats
+        try {
+          console.log('Testing with root path "/"...');
+          const { data: rootTest, error: rootError } = await supabase.storage
+            .from('thumbnails')
+            .list('/', { limit: 1 });
+          
+          console.log('Root path test:', { data: rootTest, error: rootError });
+        } catch (rootErr) {
+          console.error('Root path test failed:', rootErr);
+        }
+        
+        // Test bucket info
+        try {
+          console.log('Getting bucket info...');
+          const { data: bucketInfo, error: bucketInfoError } = await supabase.storage
+            .getBucket('thumbnails');
+          
+          console.log('Bucket info:', { data: bucketInfo, error: bucketInfoError });
+        } catch (bucketErr) {
+          console.error('Bucket info test failed:', bucketErr);
         }
         
                  // Now try to list the thumbnails bucket contents
