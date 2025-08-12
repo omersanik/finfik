@@ -28,6 +28,9 @@ function Navbar() {
         <Link className="m-4" href="/admin/add-content-items">
           <Button>Add Content Items</Button>
         </Link>
+        <Link className="m-4" href="/admin/edit-content">
+          <Button variant="outline">Edit Content</Button>
+        </Link>
       </div>
     </nav>
   );

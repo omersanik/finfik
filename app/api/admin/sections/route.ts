@@ -12,6 +12,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get('courseId');
     const coursePathId = searchParams.get('course_path_id');
+    const allSections = searchParams.get('all');
+
+    // If requesting all sections for admin edit page
+    if (allSections === 'true') {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
+      const { data: sections, error } = await supabase
+        .from('sections')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching all sections:', error);
+        return NextResponse.json({ error: 'Failed to fetch sections' }, { status: 500 });
+      }
+
+      return NextResponse.json(sections || []);
+    }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

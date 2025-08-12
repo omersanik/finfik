@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: NextRequest) {
   try {
@@ -120,45 +121,32 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const blockId = searchParams.get('blockId');
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    let query = supabase
-      .from("content_item")
-      .select(`
-        id,
-        content_text,
-        type,
-        block_id,
-        created_at,
-        drag_drop_title,
-        drag_drop_instructions,
-        drag_drop_items,
-        drag_drop_categories
-      `);
-
-    // If blockId is provided, filter items for that block
-    if (blockId) {
-      query = query.eq("block_id", blockId);
-    }
-
-    const { data: contentItems, error } = await query.order("created_at", { ascending: false });
+    // Fetch all content items
+    const { data: items, error } = await supabase
+      .from('content_item')
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) {
-      console.error("Error fetching content items:", error);
-      return NextResponse.json({ error: "Failed to fetch content items" }, { status: 500 });
+      console.error('Error fetching content items:', error);
+      return NextResponse.json({ error: 'Failed to fetch content items' }, { status: 500 });
     }
 
-    return NextResponse.json(contentItems || []);
+    return NextResponse.json(items || []);
   } catch (error) {
-    console.error("Error in content items API:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error('Error in GET content items:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 
