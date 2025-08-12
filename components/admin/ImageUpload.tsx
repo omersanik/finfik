@@ -127,8 +127,12 @@ export default function ImageUpload({
         
         // Set default folder if available
         if (folderNames.length > 0 && !selectedFolder) {
+          console.log('Setting default folder to:', folderNames[0]);
           setSelectedFolder(folderNames[0]);
         }
+        
+        console.log('Final state - folders:', folderNames);
+        console.log('Final state - selectedFolder:', selectedFolder);
       } catch (err) {
         console.error('Error fetching folders:', err);
         setError(`Fetch error: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -177,6 +181,9 @@ export default function ImageUpload({
   }, []);
 
   const uploadImage = async (file: File) => {
+    console.log('Upload attempt - selectedFolder:', selectedFolder);
+    console.log('Upload attempt - folders available:', folders);
+    
     if (!selectedFolder) {
       setError('Please select a folder first');
       return;
@@ -283,7 +290,10 @@ export default function ImageUpload({
            </Button>
          </div>
          
-         <Select value={selectedFolder} onValueChange={setSelectedFolder}>
+                   <Select value={selectedFolder} onValueChange={(value) => {
+            console.log('Folder selected:', value);
+            setSelectedFolder(value);
+          }}>
            <SelectTrigger>
              <SelectValue placeholder={loadingFolders ? "Loading folders..." : "Select a folder"} />
            </SelectTrigger>
