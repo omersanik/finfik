@@ -1,6 +1,6 @@
 "use client";
 import EnhancedContentEditor from './EnhancedContentEditor';
-import ChartEditor from './ChartEditor';
+import SimpleChartEditor from './SimpleChartEditor';
 import TableEditor from './TableEditor';
 import DragDropEditor from './DragDropEditor';
 import ImageUpload from './ImageUpload';
@@ -388,9 +388,9 @@ export default function AddContentItems() {
         {form.watch("type") === "chart" ? (
           <div>
             <label className="block font-semibold mb-2">Chart Configuration</label>
-            <ChartEditor
+            <SimpleChartEditor
               value={form.watch("content_text") || ""}
-              onChange={(value) => form.setValue("content_text", value)}
+              onChange={(value: string) => form.setValue("content_text", value)}
               placeholder="Configure your chart..."
             />
             {form.formState.errors.content_text && (

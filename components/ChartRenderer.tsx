@@ -1,18 +1,7 @@
 "use client";
 
 import React from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 
 // Register Chart.js components
@@ -28,26 +17,22 @@ ChartJS.register(
   Legend
 );
 
+interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor?: string;
+    borderColor?: string;
+    borderWidth?: number;
+  }[];
+}
+
 interface ChartConfig {
   type: 'line' | 'bar' | 'pie';
   title: string;
   description: string;
-  data: {
-    labels: string[];
-    datasets: {
-      label: string;
-      data: number[];
-      backgroundColor?: string;
-      borderColor?: string;
-      borderWidth?: number;
-    }[];
-  };
-  yAxis?: {
-    title?: string;
-    min?: number;
-    max?: number;
-    stepSize?: number;
-  };
+  data: ChartData;
 }
 
 interface ChartRendererProps {
@@ -55,25 +40,24 @@ interface ChartRendererProps {
   className?: string;
 }
 
-export default function ChartRenderer({ chartData, className }: ChartRendererProps) {
-  let config: ChartConfig;
-  
-  // Handle empty or invalid chart data
+export default function ChartRenderer({ chartData, className = "" }: ChartRendererProps) {
   if (!chartData || chartData.trim() === '') {
     return (
-      <div className={`p-4 border border-yellow-200 bg-yellow-50 rounded-lg ${className}`}>
-        <p className="text-yellow-600">Chart configuration is empty. Please configure the chart in the admin panel.</p>
+      <div className={`p-4 text-center text-gray-500 bg-gray-50 rounded-lg ${className}`}>
+        No chart data available
       </div>
     );
   }
+
+  let config: ChartConfig;
   
   try {
     config = JSON.parse(chartData);
   } catch (error) {
     console.error('Failed to parse chart data:', error);
     return (
-      <div className={`p-4 border border-red-200 bg-red-50 rounded-lg ${className}`}>
-        <p className="text-red-600">Error: Invalid chart data format</p>
+      <div className={`p-4 text-center text-red-500 bg-red-50 rounded-lg ${className}`}>
+        Invalid chart data format
       </div>
     );
   }
@@ -86,57 +70,51 @@ export default function ChartRenderer({ chartData, className }: ChartRendererPro
         position: 'top' as const,
       },
       title: {
-        display: !!config.title,
-        text: config.title,
-      },
-    },
-    scales: config.type !== 'pie' ? {
-      y: {
-        beginAtZero: config.yAxis?.min === 0,
-        min: config.yAxis?.min,
-        max: config.yAxis?.max,
-        ticks: {
-          stepSize: config.yAxis?.stepSize,
-        },
-        title: {
-          display: !!config.yAxis?.title,
-          text: config.yAxis?.title,
-        },
-      },
-      x: {
-        title: {
-          display: false,
-        },
-      },
-    } : undefined,
+        display: config.title ? true : false,
+        text: config.title
+      }
+    }
+  };
+
+  const chartDataForDisplay = {
+    labels: config.data.labels,
+    datasets: config.data.datasets.map((dataset, index) => ({
+      ...dataset,
+      backgroundColor: config.type === 'pie' ? 
+        ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'] : 
+        dataset.backgroundColor,
+      borderColor: config.type === 'pie' ? 
+        ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'] : 
+        dataset.borderColor,
+    }))
   };
 
   const renderChart = () => {
     switch (config.type) {
       case 'line':
-        return <Line data={config.data} options={chartOptions} />;
+        return <Line data={chartDataForDisplay} options={chartOptions} height={300} />;
       case 'bar':
-        return <Bar data={config.data} options={chartOptions} />;
+        return <Bar data={chartDataForDisplay} options={chartOptions} height={300} />;
       case 'pie':
-        return <Pie data={config.data} options={chartOptions} />;
+        return <Pie data={chartDataForDisplay} options={chartOptions} height={300} />;
       default:
-        return (
-          <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
-            <p className="text-red-600">Unsupported chart type: {config.type}</p>
-            <p className="text-sm text-gray-600 mt-1">Supported types: line, bar, pie</p>
-          </div>
-        );
+        return <Line data={chartDataForDisplay} options={chartOptions} height={300} />;
     }
   };
 
   return (
-    <div className={`mb-6 ${className}`}>
-      {config.description && (
-        <p className="text-sm text-gray-600 mb-4">{config.description}</p>
-      )}
-      <div className="h-64 w-full">
+    <div className={`space-y-4 ${className}`}>
+      {/* Chart */}
+      <div className="border rounded-lg p-4 bg-white">
         {renderChart()}
       </div>
+      
+      {/* Description */}
+      {config.description && (
+        <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded-lg">
+          {config.description}
+        </p>
+      )}
     </div>
   );
 } 
