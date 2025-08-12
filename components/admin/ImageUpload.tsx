@@ -60,6 +60,23 @@ export default function ImageUpload({
         
         console.log('Available buckets:', bucketTest);
         
+        // Test direct bucket access
+        try {
+          const { data: directTest, error: directError } = await supabase.storage
+            .from('thumbnails')
+            .list('', { limit: 1 });
+          
+          console.log('Direct bucket test:', { data: directTest, error: directError });
+          
+          if (directError) {
+            console.error('Direct bucket access error:', directError);
+            setError(`Direct access error: ${directError.message}`);
+            return;
+          }
+        } catch (directErr) {
+          console.error('Direct bucket test failed:', directErr);
+        }
+        
                  // Now try to list the thumbnails bucket contents
          const { data, error } = await supabase.storage
            .from('thumbnails')
