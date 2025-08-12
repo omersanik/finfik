@@ -3,6 +3,7 @@ import EnhancedContentEditor from './EnhancedContentEditor';
 import ChartEditor from './ChartEditor';
 import TableEditor from './TableEditor';
 import DragDropEditor from './DragDropEditor';
+import ImageUpload from './ImageUpload';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -355,20 +356,12 @@ export default function AddContentItems() {
           </p>
           {form.formState.errors.order_index && <div className="text-red-500 text-sm mt-1">{form.formState.errors.order_index.message}</div>}
         </div>
-        {/* Image URL Input */}
-        <div>
-          <label className="block font-semibold mb-2">Image Path</label>
-          <input
-            type="text"
-            className="w-full border rounded p-2"
-            placeholder="course-slug/image-name.jpg (e.g., finance-101/chart1.png)"
-            value={form.watch("image_url") ?? ""}
-            onChange={e => form.setValue("image_url", e.target.value)}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Enter the path to the image in Supabase storage (format: course-slug/filename.ext)
-          </p>
-        </div>
+        {/* Image Upload */}
+        <ImageUpload
+          onImageUploaded={(imageUrl) => form.setValue("image_url", imageUrl)}
+          currentImageUrl={form.watch("image_url")}
+          placeholder="course-slug/image-name.jpg (e.g., finance-101/chart1.png)"
+        />
         {/* Quiz Data Input */}
         <div>
           <label className="block font-semibold mb-2">Quiz Data (JSON)</label>
