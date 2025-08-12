@@ -398,12 +398,12 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
             <CardContent className="space-y-4">
               {/* Labels */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Labels (X-axis)</Label>
-                  <Button size="sm" onClick={addLabel} variant="outline">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
+                                 <div className="flex items-center justify-between mb-2">
+                   <Label>Labels (X-axis)</Label>
+                   <Button type="button" size="sm" onClick={addLabel} variant="outline">
+                     <Plus className="w-4 h-4" />
+                   </Button>
+                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {chartData.labels.map((label, index) => (
                     <div key={index} className="flex gap-1">
@@ -413,16 +413,17 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
                         className="text-sm"
                         placeholder="Label"
                       />
-                      {chartData.labels.length > 1 && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => removeLabel(index)}
-                          className="px-2"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      )}
+                                               {chartData.labels.length > 1 && (
+                           <Button
+                             type="button"
+                             size="sm"
+                             variant="outline"
+                             onClick={() => removeLabel(index)}
+                             className="px-2"
+                           >
+                             <Trash2 className="w-3 h-3" />
+                           </Button>
+                         )}
                     </div>
                   ))}
                 </div>
@@ -430,12 +431,12 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
 
               {/* Datasets */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Datasets</Label>
-                  <Button size="sm" onClick={addDataset} variant="outline">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
+                                 <div className="flex items-center justify-between mb-2">
+                   <Label>Datasets</Label>
+                   <Button type="button" size="sm" onClick={addDataset} variant="outline">
+                     <Plus className="w-4 h-4" />
+                   </Button>
+                 </div>
                 <div className="space-y-3">
                   {chartData.datasets.map((dataset, datasetIndex) => (
                     <div key={datasetIndex} className="border rounded-lg p-3 bg-gray-50">
@@ -453,15 +454,16 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
                           className="w-8 h-8 rounded border cursor-pointer"
                           title="Choose color"
                         />
-                        {chartData.datasets.length > 1 && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => removeDataset(datasetIndex)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                                                 {chartData.datasets.length > 1 && (
+                           <Button
+                             type="button"
+                             size="sm"
+                             variant="outline"
+                             onClick={() => removeDataset(datasetIndex)}
+                           >
+                             <Trash2 className="w-4 h-4" />
+                           </Button>
+                         )}
                       </div>
                       
                       {/* Data values */}
