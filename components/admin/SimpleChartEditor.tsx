@@ -121,7 +121,7 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
     }
   }, [value, initialized]);
 
-  // Save changes to parent
+  // Save changes to parent (only when explicitly called)
   const saveChanges = () => {
     const chartConfig: ChartConfig = {
       type: chartType as 'line' | 'bar' | 'pie',
@@ -134,12 +134,12 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
     onChange(JSON.stringify(chartConfig, null, 2));
   };
 
-  // Save whenever any value changes
-  useEffect(() => {
-    if (initialized) {
-      saveChanges();
-    }
-  }, [chartType, title, description, xAxisTitle, yAxisTitle, chartData, initialized]);
+  // Only save when the form is submitted, not automatically
+  // useEffect(() => {
+  //   if (initialized) {
+  //     saveChanges();
+  //   }
+  // }, [chartType, title, description, xAxisTitle, yAxisTitle, chartData, initialized]);
 
   const addDataset = () => {
     const newDatasetIndex = chartData.datasets.length;
@@ -284,19 +284,29 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
 
   return (
     <div className="space-y-6">
-      {/* Header with Preview Toggle */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Chart Editor</h3>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setShowPreview(!showPreview)}
-        >
-          {showPreview ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-          {showPreview ? 'Hide Preview' : 'Show Preview'}
-        </Button>
-      </div>
+             {/* Header with Preview Toggle and Save Button */}
+       <div className="flex items-center justify-between">
+         <h3 className="text-lg font-semibold">Chart Editor</h3>
+         <div className="flex gap-2">
+           <Button
+             type="button"
+             variant="default"
+             size="sm"
+             onClick={saveChanges}
+           >
+             Save Chart
+           </Button>
+           <Button
+             type="button"
+             variant="outline"
+             size="sm"
+             onClick={() => setShowPreview(!showPreview)}
+           >
+             {showPreview ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+             {showPreview ? 'Hide Preview' : 'Show Preview'}
+           </Button>
+         </div>
+       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Chart Configuration */}
