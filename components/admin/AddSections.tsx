@@ -56,6 +56,8 @@ const AddSections = () => {
   const [selectedCoursePath, setSelectedCoursePath] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [latestOrder, setLatestOrder] = useState<number | null>(null);
+  const [nextOrder, setNextOrder] = useState<number>(0);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -91,12 +93,25 @@ const AddSections = () => {
   }, []);
 
   // Handle course path selection
-  const handleCoursePathSelect = (
+  const handleCoursePathSelect = async (
     coursePathId: string,
     coursePathName: string
   ) => {
     setSelectedCoursePath(coursePathName);
     form.setValue("course_path", coursePathId);
+    
+    // Fetch latest order for this course path
+    try {
+      const response = await fetch(`/api/admin/latest-indexes?course_path_id=${coursePathId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setLatestOrder(data.latestSectionOrder);
+        setNextOrder(data.nextSectionOrder);
+        form.setValue("order", data.nextSectionOrder);
+      }
+    } catch (error) {
+      console.error("Error fetching latest order:", error);
+    }
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -251,7 +266,12 @@ const AddSections = () => {
                   }
                 />
               </FormControl>
-              <FormDescription>Enter the order of the section.</FormDescription>
+              <FormDescription>
+                {latestOrder !== null 
+                  ? `Latest order: ${latestOrder} | Next available: ${nextOrder}`
+                  : "Enter the order number for this section."
+                }
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

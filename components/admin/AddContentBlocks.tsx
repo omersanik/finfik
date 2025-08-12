@@ -49,6 +49,8 @@ export default function AddContentBlocks() {
   const [errorPaths, setErrorPaths] = useState("");
   const [errorSections, setErrorSections] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [latestBlockOrder, setLatestBlockOrder] = useState<number | null>(null);
+  const [nextBlockOrder, setNextBlockOrder] = useState<number>(0);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -101,8 +103,21 @@ export default function AddContentBlocks() {
     setErrorSections("");
   }
   // Handle section select
-  function handleSectionSelect(section: Section) {
+  async function handleSectionSelect(section: Section) {
     setSelectedSection(section);
+    
+    // Fetch latest order for this section
+    try {
+      const response = await fetch(`/api/admin/latest-indexes?section_id=${section.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setLatestBlockOrder(data.latestBlockOrder);
+        setNextBlockOrder(data.nextBlockOrder);
+        form.setValue("order_index", data.nextBlockOrder);
+      }
+    } catch (error) {
+      console.error("Error fetching latest block order:", error);
+    }
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -230,7 +245,12 @@ export default function AddContentBlocks() {
                   onChange={e => field.onChange(e.target.value === "" ? undefined : parseInt(e.target.value))}
                 />
               </FormControl>
-              <FormDescription>The order in which this content block appears.</FormDescription>
+              <FormDescription>
+                {latestBlockOrder !== null 
+                  ? `Latest order: ${latestBlockOrder} | Next available: ${nextBlockOrder}`
+                  : "The order in which this content block appears."
+                }
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

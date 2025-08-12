@@ -66,6 +66,8 @@ export default function AddContentItems() {
   const [errorCourses, setErrorCourses] = useState("");
   const [errorSections, setErrorSections] = useState("");
   const [errorBlocks, setErrorBlocks] = useState("");
+  const [latestItemOrder, setLatestItemOrder] = useState<number | null>(null);
+  const [nextItemOrder, setNextItemOrder] = useState<number>(0);
   const [dragDropData, setDragDropData] = useState({
     title: "",
     instructions: "",
@@ -152,7 +154,23 @@ export default function AddContentItems() {
       });
   }, [form.watch("section_id")]);
 
-
+  // Handle block selection and fetch latest item order
+  const handleBlockSelect = async (blockId: string) => {
+    form.setValue("block_id", blockId);
+    
+    // Fetch latest order for this block
+    try {
+      const response = await fetch(`/api/admin/latest-indexes?block_id=${blockId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setLatestItemOrder(data.latestItemOrder);
+        setNextItemOrder(data.nextItemOrder);
+        form.setValue("order_index", data.nextItemOrder);
+      }
+    } catch (error) {
+      console.error("Error fetching latest item order:", error);
+    }
+  };
 
   async function onSubmit(values: ContentItemFormValues) {
     setMessage(null);
@@ -290,7 +308,7 @@ export default function AddContentItems() {
               <DropdownMenuLabel>Pick a content block</DropdownMenuLabel>
               {errorBlocks && <DropdownMenuItem disabled>{errorBlocks}</DropdownMenuItem>}
               {blocks.map(block => (
-                <DropdownMenuItem key={block.id} onClick={() => form.setValue("block_id", block.id)}>
+                <DropdownMenuItem key={block.id} onClick={() => handleBlockSelect(block.id)}>
                   {block.title}
                         </DropdownMenuItem>
               ))}
@@ -329,6 +347,12 @@ export default function AddContentItems() {
             onChange={e => form.setValue("order_index", e.target.value === "" ? 0 : parseInt(e.target.value))}
             min={0}
           />
+          <p className="text-xs text-gray-500 mt-1">
+            {latestItemOrder !== null 
+              ? `Latest order: ${latestItemOrder} | Next available: ${nextItemOrder}`
+              : "Enter the order index for this content item."
+            }
+          </p>
           {form.formState.errors.order_index && <div className="text-red-500 text-sm mt-1">{form.formState.errors.order_index.message}</div>}
         </div>
         {/* Image URL Input */}
