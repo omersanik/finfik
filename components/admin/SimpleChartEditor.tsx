@@ -111,10 +111,12 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
           setChartData(defaultChartConfig.data);
         }
       } else {
-        // No existing value, use defaults
+        // No existing value, start with empty form
         setChartType('line');
         setTitle('');
         setDescription('');
+        setXAxisTitle('');
+        setYAxisTitle('');
         setChartData(defaultChartConfig.data);
       }
       setInitialized(true);
@@ -123,14 +125,22 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
 
   // Save changes to parent (only when explicitly called)
   const saveChanges = () => {
+    // Only save if we have valid data
+    if (!title.trim() || !description.trim()) {
+      alert('Please fill in both title and description before saving the chart');
+      return;
+    }
+    
     const chartConfig: ChartConfig = {
       type: chartType as 'line' | 'bar' | 'pie',
-      title,
-      description,
-      xAxisTitle,
-      yAxisTitle,
+      title: title.trim(),
+      description: description.trim(),
+      xAxisTitle: xAxisTitle.trim(),
+      yAxisTitle: yAxisTitle.trim(),
       data: chartData
     };
+    
+    console.log('Saving chart config:', chartConfig);
     onChange(JSON.stringify(chartConfig, null, 2));
   };
 
@@ -288,14 +298,15 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
        <div className="flex items-center justify-between">
          <h3 className="text-lg font-semibold">Chart Editor</h3>
          <div className="flex gap-2">
-           <Button
-             type="button"
-             variant="default"
-             size="sm"
-             onClick={saveChanges}
-           >
-             Save Chart
-           </Button>
+                       <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={saveChanges}
+              disabled={!title.trim() || !description.trim()}
+            >
+              {title.trim() && description.trim() ? 'Save Chart' : 'Fill Title & Description First'}
+            </Button>
            <Button
              type="button"
              variant="outline"
