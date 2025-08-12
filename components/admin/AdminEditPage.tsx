@@ -60,7 +60,9 @@ interface ContentItem {
 }
 
 export default function AdminEditPage() {
-  const [activeTab, setActiveTab] = useState('courses');
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedSection, setSelectedSection] = useState<Section | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<ContentBlock | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
@@ -70,46 +72,90 @@ export default function AdminEditPage() {
   const [editForm, setEditForm] = useState<any>({});
   const [message, setMessage] = useState<string | null>(null);
 
-  // Fetch all data on component mount
+  // Fetch courses on component mount
   useEffect(() => {
-    fetchAllData();
+    fetchCourses();
   }, []);
 
-  const fetchAllData = async () => {
+  // Fetch sections when course changes
+  useEffect(() => {
+    if (selectedCourse) {
+      fetchSections(selectedCourse.id);
+      setSelectedSection(null);
+      setSelectedBlock(null);
+      setContentBlocks([]);
+      setContentItems([]);
+    }
+  }, [selectedCourse]);
+
+  // Fetch content blocks when section changes
+  useEffect(() => {
+    if (selectedSection) {
+      fetchContentBlocks(selectedSection.id);
+      setSelectedBlock(null);
+      setContentItems([]);
+    }
+  }, [selectedSection]);
+
+  // Fetch content items when block changes
+  useEffect(() => {
+    if (selectedBlock) {
+      fetchContentItems(selectedBlock.id);
+    }
+  }, [selectedBlock]);
+
+  const fetchCourses = async () => {
     setLoading(true);
     try {
-      // Fetch courses
-      const coursesResponse = await fetch('/api/courses');
-      if (coursesResponse.ok) {
-        const coursesData = await coursesResponse.json();
-        setCourses(coursesData);
-      }
-
-      // Fetch sections
-      const sectionsResponse = await fetch('/api/admin/sections?all=true');
-      if (sectionsResponse.ok) {
-        const sectionsData = await sectionsResponse.json();
-        setSections(sectionsData);
-      }
-
-      // Fetch content blocks
-      const blocksResponse = await fetch('/api/admin/blocks');
-      if (blocksResponse.ok) {
-        const blocksData = await blocksResponse.json();
-        setContentBlocks(blocksData);
-      }
-
-      // Fetch content items
-      const itemsResponse = await fetch('/api/admin/content-items');
-      if (itemsResponse.ok) {
-        const itemsData = await itemsResponse.json();
-        setContentItems(itemsData);
+      const response = await fetch('/api/courses');
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
-      setMessage('Error fetching data');
+      console.error('Error fetching courses:', error);
+      setMessage('Error fetching courses');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSections = async (courseId: string) => {
+    try {
+      const response = await fetch(`/api/admin/sections?courseId=${courseId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSections(data);
+      }
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+      setMessage('Error fetching sections');
+    }
+  };
+
+  const fetchContentBlocks = async (sectionId: string) => {
+    try {
+      const response = await fetch(`/api/admin/blocks?sectionId=${sectionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setContentBlocks(data);
+      }
+    } catch (error) {
+      console.error('Error fetching content blocks:', error);
+      setMessage('Error fetching content blocks');
+    }
+  };
+
+  const fetchContentItems = async (blockId: string) => {
+    try {
+      const response = await fetch(`/api/admin/content-items?blockId=${blockId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setContentItems(data);
+      }
+    } catch (error) {
+      console.error('Error fetching content items:', error);
+      setMessage('Error fetching content items');
     }
   };
 
@@ -231,442 +277,447 @@ export default function AdminEditPage() {
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="courses">Courses</TabsTrigger>
-          <TabsTrigger value="sections">Sections</TabsTrigger>
-          <TabsTrigger value="blocks">Content Blocks</TabsTrigger>
-          <TabsTrigger value="items">Content Items</TabsTrigger>
-        </TabsList>
+      {/* Hierarchical Navigation */}
+      <div className="mb-6 space-y-4">
+        {/* Course Selection */}
+        <div className="bg-white p-4 rounded-lg border">
+          <h2 className="text-lg font-semibold mb-3">1. Select Course</h2>
+          <Select onValueChange={(courseId) => {
+            const course = courses.find(c => c.id === courseId);
+            setSelectedCourse(course || null);
+          }} value={selectedCourse?.id || ''}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Choose a course to edit..." />
+            </SelectTrigger>
+            <SelectContent>
+              {courses.map((course) => (
+                <SelectItem key={course.id} value={course.id}>
+                  {course.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        {/* Courses Tab */}
-        <TabsContent value="courses" className="space-y-4">
-          <div className="grid gap-4">
-            {courses.map((course) => (
-              <Card key={course.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{course.name}</span>
-                    <div className="flex gap-2">
-                      {editingId === course.id ? (
-                        <>
-                          <Button size="sm" onClick={() => saveChanges('course')}>
-                            <Save className="w-4 h-4 mr-2" />
-                            Save
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={cancelEditing}>
-                            <X className="w-4 h-4 mr-2" />
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => startEditing(course, 'course')}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => deleteItem(course.id, 'course')}>
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {editingId === course.id ? (
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Name</Label>
-                        <Input
-                          value={editForm.name || ''}
-                          onChange={(e) => handleInputChange('name', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Description</Label>
-                        <Textarea
-                          value={editForm.description || ''}
-                          onChange={(e) => handleInputChange('description', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Slug</Label>
-                        <Input
-                          value={editForm.slug || ''}
-                          onChange={(e) => handleInputChange('slug', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Thumbnail URL</Label>
-                        <Input
-                          value={editForm.thumbnail_url || ''}
-                          onChange={(e) => handleInputChange('thumbnail_url', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Premium Course</Label>
-                        <Select
-                          value={editForm.is_premium?.toString() || 'false'}
-                          onValueChange={(value) => handleInputChange('is_premium', value === 'true')}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="false">No</SelectItem>
-                            <SelectItem value="true">Yes</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p><strong>Description:</strong> {course.description}</p>
-                      <p><strong>Slug:</strong> {course.slug}</p>
-                      <p><strong>Premium:</strong> {course.is_premium ? 'Yes' : 'No'}</p>
-                      <p><strong>Created:</strong> {new Date(course.created_at).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+        {/* Section Selection */}
+        {selectedCourse && (
+          <div className="bg-white p-4 rounded-lg border">
+            <h2 className="text-lg font-semibold mb-3">2. Select Section</h2>
+            <Select onValueChange={(sectionId) => {
+              const section = sections.find(s => s.id === sectionId);
+              setSelectedSection(section || null);
+            }} value={selectedSection?.id || ''}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a section to edit..." />
+              </SelectTrigger>
+              <SelectContent>
+                {sections.map((section) => (
+                  <SelectItem key={section.id} value={section.id}>
+                    {section.title} (Order: {section.order})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </TabsContent>
+        )}
 
-        {/* Sections Tab */}
-        <TabsContent value="sections" className="space-y-4">
-          <div className="grid gap-4">
-            {sections.map((section) => (
-              <Card key={section.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{section.title}</span>
-                    <div className="flex gap-2">
-                      {editingId === section.id ? (
-                        <>
-                          <Button size="sm" onClick={() => saveChanges('section')}>
-                            <Save className="w-4 h-4 mr-2" />
-                            Save
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={cancelEditing}>
-                            <X className="w-4 h-4 mr-2" />
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => startEditing(section, 'section')}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => deleteItem(section.id, 'section')}>
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {editingId === section.id ? (
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Title</Label>
-                        <Input
-                          value={editForm.title || ''}
-                          onChange={(e) => handleInputChange('title', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Description</Label>
-                        <Textarea
-                          value={editForm.description || ''}
-                          onChange={(e) => handleInputChange('description', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Slug</Label>
-                        <Input
-                          value={editForm.slug || ''}
-                          onChange={(e) => handleInputChange('slug', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Lessons</Label>
-                        <Input
-                          type="number"
-                          value={editForm.lessons || 0}
-                          onChange={(e) => handleInputChange('lessons', parseInt(e.target.value))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Order</Label>
-                        <Input
-                          type="number"
-                          value={editForm.order || 0}
-                          onChange={(e) => handleInputChange('order', parseInt(e.target.value))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Course Path</Label>
-                        <Input
-                          value={editForm.course_path || ''}
-                          onChange={(e) => handleInputChange('course_path', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p><strong>Description:</strong> {section.description}</p>
-                      <p><strong>Slug:</strong> {section.slug}</p>
-                      <p><strong>Lessons:</strong> {section.lessons}</p>
-                      <p><strong>Order:</strong> {section.order}</p>
-                      <p><strong>Course Path:</strong> {section.course_path}</p>
-                      <p><strong>Created:</strong> {new Date(section.created_at).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+        {/* Content Block Selection */}
+        {selectedSection && (
+          <div className="bg-white p-4 rounded-lg border">
+            <h2 className="text-lg font-semibold mb-3">3. Select Content Block</h2>
+            <Select onValueChange={(blockId) => {
+              const block = contentBlocks.find(b => b.id === blockId);
+              setSelectedBlock(block || null);
+            }} value={selectedBlock?.id || ''}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a content block to edit..." />
+              </SelectTrigger>
+              <SelectContent>
+                {contentBlocks.map((block) => (
+                  <SelectItem key={block.id} value={block.id}>
+                    {block.title} (Order: {block.order_index})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </TabsContent>
+        )}
+      </div>
 
-        {/* Content Blocks Tab */}
-        <TabsContent value="blocks" className="space-y-4">
-          <div className="grid gap-4">
-            {contentBlocks.map((block) => (
-              <Card key={block.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{block.title}</span>
-                    <div className="flex gap-2">
-                      {editingId === block.id ? (
-                        <>
-                          <Button size="sm" onClick={() => saveChanges('block')}>
-                            <Save className="w-4 h-4 mr-2" />
-                            Save
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={cancelEditing}>
-                            <X className="w-4 h-4 mr-2" />
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => startEditing(block, 'block')}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => deleteItem(block.id, 'block')}>
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {editingId === block.id ? (
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Title</Label>
-                        <Input
-                          value={editForm.title || ''}
-                          onChange={(e) => handleInputChange('title', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Description</Label>
-                        <Textarea
-                          value={editForm.description || ''}
-                          onChange={(e) => handleInputChange('description', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Order Index</Label>
-                        <Input
-                          type="number"
-                          value={editForm.order_index || 0}
-                          onChange={(e) => handleInputChange('order_index', parseInt(e.target.value))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Section ID</Label>
-                        <Input
-                          value={editForm.section_id || ''}
-                          onChange={(e) => handleInputChange('section_id', e.target.value)}
-                        />
-                      </div>
-                    </div>
+      {/* Content Display and Editing */}
+      {selectedCourse && (
+        <div className="space-y-6">
+          {/* Course Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Course: {selectedCourse.name}</span>
+                <div className="flex gap-2">
+                  {editingId === selectedCourse.id ? (
+                    <>
+                      <Button size="sm" onClick={() => saveChanges('course')}>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={cancelEditing}>
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </>
                   ) : (
-                    <div className="space-y-2">
-                      <p><strong>Description:</strong> {block.description}</p>
-                      <p><strong>Order Index:</strong> {block.order_index}</p>
-                      <p><strong>Section ID:</strong> {block.section_id}</p>
-                      <p><strong>Created:</strong> {new Date(block.created_at).toLocaleDateString()}</p>
-                    </div>
+                    <Button size="sm" variant="outline" onClick={() => startEditing(selectedCourse, 'course')}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Course
+                    </Button>
                   )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {editingId === selectedCourse.id ? (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Name</Label>
+                    <Input
+                      value={editForm.name || ''}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea
+                      value={editForm.description || ''}
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Slug</Label>
+                    <Input
+                      value={editForm.slug || ''}
+                      onChange={(e) => handleInputChange('slug', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Thumbnail URL</Label>
+                    <Input
+                      value={editForm.thumbnail_url || ''}
+                      onChange={(e) => handleInputChange('thumbnail_url', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Premium Course</Label>
+                    <Select
+                      value={editForm.is_premium?.toString() || 'false'}
+                      onValueChange={(value) => handleInputChange('is_premium', value === 'true')}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="false">No</SelectItem>
+                        <SelectItem value="true">Yes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p><strong>Description:</strong> {selectedCourse.description}</p>
+                  <p><strong>Slug:</strong> {selectedCourse.slug}</p>
+                  <p><strong>Premium:</strong> {selectedCourse.is_premium ? 'Yes' : 'No'}</p>
+                  <p><strong>Created:</strong> {new Date(selectedCourse.created_at).toLocaleDateString()}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Content Items Tab */}
-        <TabsContent value="items" className="space-y-4">
-          <div className="grid gap-4">
-            {contentItems.map((item) => (
-              <Card key={item.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{item.type} - {item.order_index}</span>
-                    <div className="flex gap-2">
+                  {/* Section Info */}
+          {selectedSection && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Section: {selectedSection.title}</span>
+                  <div className="flex gap-2">
+                    {editingId === selectedSection.id ? (
+                      <>
+                        <Button size="sm" onClick={() => saveChanges('section')}>
+                          <Save className="w-4 h-4 mr-2" />
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={cancelEditing}>
+                          <X className="w-4 h-4 mr-2" />
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => startEditing(selectedSection, 'section')}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Section
+                      </Button>
+                    )}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {editingId === selectedSection.id ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Title</Label>
+                      <Input
+                        value={editForm.title || ''}
+                        onChange={(e) => handleInputChange('title', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Description</Label>
+                      <Textarea
+                        value={editForm.description || ''}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Slug</Label>
+                      <Input
+                        value={editForm.slug || ''}
+                        onChange={(e) => handleInputChange('slug', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Lessons</Label>
+                      <Input
+                        type="number"
+                        value={editForm.lessons || 0}
+                        onChange={(e) => handleInputChange('lessons', parseInt(e.target.value))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Order</Label>
+                      <Input
+                        type="number"
+                        value={editForm.order || 0}
+                        onChange={(e) => handleInputChange('order', parseInt(e.target.value))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Course Path</Label>
+                      <Input
+                        value={editForm.course_path || ''}
+                        onChange={(e) => handleInputChange('course_path', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p><strong>Description:</strong> {selectedSection.description}</p>
+                    <p><strong>Slug:</strong> {selectedSection.slug}</p>
+                    <p><strong>Lessons:</strong> {selectedSection.lessons}</p>
+                    <p><strong>Order:</strong> {selectedSection.order}</p>
+                    <p><strong>Course Path:</strong> {selectedSection.course_path}</p>
+                    <p><strong>Created:</strong> {new Date(selectedSection.created_at).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Content Block Info */}
+          {selectedBlock && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Content Block: {selectedBlock.title}</span>
+                  <div className="flex gap-2">
+                    {editingId === selectedBlock.id ? (
+                      <>
+                        <Button size="sm" onClick={() => saveChanges('block')}>
+                          <Save className="w-4 h-4 mr-2" />
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={cancelEditing}>
+                          <X className="w-4 h-4 mr-2" />
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => startEditing(selectedBlock, 'block')}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Block
+                      </Button>
+                    )}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {editingId === selectedBlock.id ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Title</Label>
+                      <Input
+                        value={editForm.title || ''}
+                        onChange={(e) => handleInputChange('title', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Description</Label>
+                      <Textarea
+                        value={editForm.description || ''}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Order Index</Label>
+                      <Input
+                        type="number"
+                        value={editForm.order_index || 0}
+                        onChange={(e) => handleInputChange('order_index', parseInt(e.target.value))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Section ID</Label>
+                      <Input
+                        value={editForm.section_id || ''}
+                        onChange={(e) => handleInputChange('section_id', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p><strong>Description:</strong> {selectedBlock.description}</p>
+                    <p><strong>Order Index:</strong> {selectedBlock.order_index}</p>
+                    <p><strong>Section ID:</strong> {selectedBlock.section_id}</p>
+                    <p><strong>Created:</strong> {new Date(selectedBlock.created_at).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+                  {/* Content Items */}
+          {selectedBlock && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Content Items in this Block</h3>
+              <div className="grid gap-4">
+                {contentItems.map((item) => (
+                  <Card key={item.id}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{item.type} - {item.order_index}</span>
+                        <div className="flex gap-2">
+                          {editingId === item.id ? (
+                            <>
+                              <Button size="sm" onClick={() => saveChanges('item')}>
+                                <Save className="w-4 h-4 mr-2" />
+                                Save
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={cancelEditing}>
+                                <X className="w-4 h-4 mr-2" />
+                                Cancel
+                              </Button>
+                            </>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => startEditing(item, 'item')}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit Item
+                            </Button>
+                          )}
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       {editingId === item.id ? (
-                        <>
-                          <Button size="sm" onClick={() => saveChanges('item')}>
-                            <Save className="w-4 h-4 mr-2" />
-                            Save
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={cancelEditing}>
-                            <X className="w-4 h-4 mr-2" />
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => startEditing(item, 'item')}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => deleteItem(item.id, 'item')}>
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {editingId === item.id ? (
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Type</Label>
-                        <Select
-                          value={editForm.type || ''}
-                          onValueChange={(value) => handleInputChange('type', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="text">Text</SelectItem>
-                            <SelectItem value="image">Image</SelectItem>
-                            <SelectItem value="quiz">Quiz</SelectItem>
-                            <SelectItem value="chart">Chart</SelectItem>
-                            <SelectItem value="animation">Animation</SelectItem>
-                            <SelectItem value="calculator">Calculator</SelectItem>
-                            <SelectItem value="math">Math Formula</SelectItem>
-                            <SelectItem value="table">Table</SelectItem>
-                            <SelectItem value="drag-drop">Drag & Drop</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Content Text</Label>
-                        <Textarea
-                          value={editForm.content_text || ''}
-                          onChange={(e) => handleInputChange('content_text', e.target.value)}
-                          rows={4}
-                        />
-                      </div>
-                      <div>
-                        <Label>Order Index</Label>
-                        <Input
-                          type="number"
-                          value={editForm.order_index || 0}
-                          onChange={(e) => handleInputChange('order_index', parseInt(e.target.value))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Block ID</Label>
-                        <Input
-                          value={editForm.block_id || ''}
-                          onChange={(e) => handleInputChange('block_id', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Section ID</Label>
-                        <Input
-                          value={editForm.section_id || ''}
-                          onChange={(e) => handleInputChange('section_id', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Course ID</Label>
-                        <Input
-                          value={editForm.course_id || ''}
-                          onChange={(e) => handleInputChange('course_id', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Image URL</Label>
-                        <Input
-                          value={editForm.image_url || ''}
-                          onChange={(e) => handleInputChange('image_url', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Quiz Data</Label>
-                        <Textarea
-                          value={editForm.quiz_data || ''}
-                          onChange={(e) => handleInputChange('quiz_data', e.target.value)}
-                          rows={2}
-                        />
-                      </div>
-                      <div>
-                        <Label>Quiz Question</Label>
-                        <Input
-                          value={editForm.quiz_question || ''}
-                          onChange={(e) => handleInputChange('quiz_question', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Math Formula</Label>
-                        <Input
-                          value={editForm.math_formula || ''}
-                          onChange={(e) => handleInputChange('math_formula', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p><strong>Type:</strong> {item.type}</p>
-                      <p><strong>Order Index:</strong> {item.order_index}</p>
-                      <p><strong>Block ID:</strong> {item.block_id}</p>
-                      <p><strong>Section ID:</strong> {item.section_id}</p>
-                      <p><strong>Course ID:</strong> {item.course_id}</p>
-                      {item.content_text && (
-                        <div>
-                          <strong>Content Preview:</strong>
-                          <div className="mt-2 p-2 bg-gray-100 rounded text-sm max-h-20 overflow-y-auto">
-                            {item.content_text.substring(0, 200)}...
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Type</Label>
+                            <Select
+                              value={editForm.type || ''}
+                              onValueChange={(value) => handleInputChange('type', value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="text">Text</SelectItem>
+                                <SelectItem value="image">Image</SelectItem>
+                                <SelectItem value="quiz">Quiz</SelectItem>
+                                <SelectItem value="chart">Chart</SelectItem>
+                                <SelectItem value="animation">Animation</SelectItem>
+                                <SelectItem value="calculator">Calculator</SelectItem>
+                                <SelectItem value="math">Math Formula</SelectItem>
+                                <SelectItem value="table">Table</SelectItem>
+                                <SelectItem value="drag-drop">Drag & Drop</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Content Text</Label>
+                            <Textarea
+                              value={editForm.content_text || ''}
+                              onChange={(e) => handleInputChange('content_text', e.target.value)}
+                              rows={4}
+                            />
+                          </div>
+                          <div>
+                            <Label>Order Index</Label>
+                            <Input
+                              type="number"
+                              value={editForm.order_index || 0}
+                              onChange={(e) => handleInputChange('order_index', parseInt(e.target.value))}
+                            />
+                          </div>
+                          <div>
+                            <Label>Image URL</Label>
+                            <Input
+                              value={editForm.image_url || ''}
+                              onChange={(e) => handleInputChange('image_url', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Quiz Data</Label>
+                            <Textarea
+                              value={editForm.quiz_data || ''}
+                              onChange={(e) => handleInputChange('quiz_data', e.target.value)}
+                              rows={2}
+                            />
+                          </div>
+                          <div>
+                            <Label>Quiz Question</Label>
+                            <Input
+                              value={editForm.quiz_question || ''}
+                              onChange={(e) => handleInputChange('quiz_question', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Math Formula</Label>
+                            <Input
+                              value={editForm.math_formula || ''}
+                              onChange={(e) => handleInputChange('math_formula', e.target.value)}
+                            />
                           </div>
                         </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <p><strong>Type:</strong> {item.type}</p>
+                          <p><strong>Order Index:</strong> {item.order_index}</p>
+                          {item.content_text && (
+                            <div>
+                              <strong>Content Preview:</strong>
+                              <div className="mt-2 p-2 bg-gray-100 rounded text-sm max-h-20 overflow-y-auto">
+                                {item.content_text.substring(0, 200)}...
+                              </div>
+                            </div>
+                          )}
+                          <p><strong>Created:</strong> {new Date(item.created_at).toLocaleDateString()}</p>
+                        </div>
                       )}
-                      <p><strong>Created:</strong> {new Date(item.created_at).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
     </div>
   );
 }
