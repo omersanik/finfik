@@ -32,6 +32,8 @@ interface ChartConfig {
   type: 'line' | 'bar' | 'pie';
   title: string;
   description: string;
+  xAxisTitle?: string;
+  yAxisTitle?: string;
   data: ChartData;
 }
 
@@ -73,7 +75,21 @@ export default function ChartRenderer({ chartData, className = "" }: ChartRender
         display: config.title ? true : false,
         text: config.title
       }
-    }
+    },
+    scales: config.type !== 'pie' ? {
+      x: {
+        title: {
+          display: config.xAxisTitle ? true : false,
+          text: config.xAxisTitle
+        }
+      },
+      y: {
+        title: {
+          display: config.yAxisTitle ? true : false,
+          text: config.yAxisTitle
+        }
+      }
+    } : undefined
   };
 
   const chartDataForDisplay = {

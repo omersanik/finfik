@@ -40,6 +40,8 @@ interface ChartConfig {
   title: string;
   description: string;
   data: ChartData;
+  xAxisTitle?: string;
+  yAxisTitle?: string;
 }
 
 interface SimpleChartEditorProps {
@@ -63,6 +65,8 @@ const defaultChartConfig: ChartConfig = {
   type: 'line',
   title: 'Sample Chart',
   description: 'A sample chart for demonstration',
+  xAxisTitle: 'Time Period',
+  yAxisTitle: 'Value',
   data: {
     labels: ['Q1', 'Q2', 'Q3', 'Q4'],
     datasets: [{
@@ -79,9 +83,11 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
   const [chartType, setChartType] = useState('line');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [xAxisTitle, setXAxisTitle] = useState('');
+  const [yAxisTitle, setYAxisTitle] = useState('');
   const [chartData, setChartData] = useState<ChartData>(defaultChartConfig.data);
   const [showPreview, setShowPreview] = useState(true);
-  const [initialized, setInitialized] = useState(false);
+  const [initialized] = useState(false);
 
   // Initialize with existing data or defaults
   useEffect(() => {
@@ -92,12 +98,16 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
           setChartType(parsed.type || 'line');
           setTitle(parsed.title || '');
           setDescription(parsed.description || '');
+          setXAxisTitle(parsed.xAxisTitle || '');
+          setYAxisTitle(parsed.yAxisTitle || '');
           setChartData(parsed.data || defaultChartConfig.data);
         } catch (e) {
           console.log('Could not parse existing chart data, using defaults');
           setChartType('line');
           setTitle('');
           setDescription('');
+          setXAxisTitle('');
+          setYAxisTitle('');
           setChartData(defaultChartConfig.data);
         }
       } else {
@@ -117,6 +127,8 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
       type: chartType as 'line' | 'bar' | 'pie',
       title,
       description,
+      xAxisTitle,
+      yAxisTitle,
       data: chartData
     };
     onChange(JSON.stringify(chartConfig, null, 2));
@@ -127,7 +139,7 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
     if (initialized) {
       saveChanges();
     }
-  }, [chartType, title, description, chartData, initialized]);
+  }, [chartType, title, description, xAxisTitle, yAxisTitle, chartData, initialized]);
 
   const addDataset = () => {
     const newDatasetIndex = chartData.datasets.length;
@@ -217,19 +229,33 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
   };
 
   const renderChart = () => {
-    const chartOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'top' as const,
-        },
+      const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: title ? true : false,
+        text: title
+      }
+    },
+    scales: chartType !== 'pie' ? {
+      x: {
         title: {
-          display: title ? true : false,
-          text: title
+          display: xAxisTitle ? true : false,
+          text: xAxisTitle
+        }
+      },
+      y: {
+        title: {
+          display: yAxisTitle ? true : false,
+          text: yAxisTitle
         }
       }
-    };
+    } : undefined
+  };
 
     const chartDataForDisplay = {
       labels: chartData.labels,
@@ -312,15 +338,35 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
                 />
               </div>
 
-              <div>
-                <Label>Description</Label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Enter chart description"
-                  rows={2}
-                />
-              </div>
+                             <div>
+                 <Label>Description</Label>
+                 <Textarea
+                   value={description}
+                   onChange={(e) => setDescription(e.target.value)}
+                   placeholder="Enter chart description"
+                   rows={2}
+                 />
+               </div>
+
+               {/* Axis Titles */}
+               <div className="grid grid-cols-2 gap-4">
+                 <div>
+                   <Label>X-Axis Title</Label>
+                   <Input
+                     value={xAxisTitle}
+                     onChange={(e) => setXAxisTitle(e.target.value)}
+                     placeholder="e.g., Months, Quarters, Categories"
+                   />
+                 </div>
+                 <div>
+                   <Label>Y-Axis Title</Label>
+                   <Input
+                     value={yAxisTitle}
+                     onChange={(e) => setYAxisTitle(e.target.value)}
+                     placeholder="e.g., Sales, Revenue, Count"
+                   />
+                 </div>
+               </div>
             </CardContent>
           </Card>
 
@@ -450,45 +496,74 @@ export default function SimpleChartEditor({ value, onChange, placeholder }: Simp
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  onClick={() => {
-                    setChartData({
-                      labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                      datasets: [{
-                        label: 'Sample Data',
-                        data: [65, 59, 80, 81],
-                        backgroundColor: defaultColors[0],
-                        borderColor: defaultColors[0],
-                        borderWidth: 2
-                      }]
-                    });
-                    setTitle('Sample Chart');
-                    setDescription('A sample chart for demonstration');
-                  }}
+                                     onClick={() => {
+                     setChartData({
+                       labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                       datasets: [{
+                         label: 'Sample Data',
+                         data: [65, 59, 80, 81],
+                         backgroundColor: defaultColors[0],
+                         borderColor: defaultColors[0],
+                         borderWidth: 2
+                       }]
+                     });
+                     setTitle('Sample Chart');
+                     setDescription('A sample chart for demonstration');
+                     setXAxisTitle('Quarters');
+                     setYAxisTitle('Value');
+                   }}
                 >
                   Reset to Sample
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    setChartData({
-                      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                      datasets: [{
-                        label: 'Revenue',
-                        data: [12, 19, 3, 5, 2, 3],
-                        backgroundColor: defaultColors[1],
-                        borderColor: defaultColors[1],
-                        borderWidth: 2
-                      }]
-                    });
-                    setTitle('Revenue Chart');
-                    setDescription('Monthly revenue overview');
-                  }}
-                >
-                  Load Revenue Template
-                </Button>
+                                 <Button
+                   type="button"
+                   variant="outline"
+                   size="sm"
+                   className="w-full"
+                                      onClick={() => {
+                      setChartData({
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                          label: 'Revenue',
+                          data: [12, 19, 3, 5, 2, 3],
+                          backgroundColor: defaultColors[1],
+                          borderColor: defaultColors[1],
+                          borderWidth: 2
+                        }]
+                      });
+                      setTitle('Revenue Chart');
+                      setDescription('Monthly revenue overview');
+                      setXAxisTitle('Months');
+                      setYAxisTitle('Revenue ($)');
+                    }}
+                 >
+                   Load Revenue Template
+                 </Button>
+                 
+                 <Button
+                   type="button"
+                   variant="outline"
+                   size="sm"
+                   className="w-full"
+                   onClick={() => {
+                     setChartData({
+                       labels: ['8%', '10%', '12%', '14%', '16%', '18%', '20%'],
+                       datasets: [{
+                         label: 'Company Value',
+                         data: [120, 100, 85, 72, 62, 54, 47],
+                         backgroundColor: defaultColors[2],
+                         borderColor: defaultColors[2],
+                         borderWidth: 2
+                       }]
+                     });
+                     setTitle('Discount Rate vs Company Value');
+                     setDescription('Shows the inverse relationship between discount rates and company valuations');
+                     setXAxisTitle('Discount Rate');
+                     setYAxisTitle('Company Value ($B)');
+                   }}
+                 >
+                   Load Discount Rate Template
+                 </Button>
               </CardContent>
             </Card>
           </div>
