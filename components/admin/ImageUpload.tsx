@@ -119,9 +119,8 @@ export default function ImageUpload({
         console.log('Raw storage data:', data);
 
         // Extract folder names from the data
-        const folderNames = data
-          .filter(item => item.type === 'folder')
-          .map(item => item.name);
+        // Since these are folders, we can just map the names directly
+        const folderNames = data.map(item => item.name);
         
         console.log('Found folders:', folderNames);
         setFolders(folderNames);
@@ -258,11 +257,9 @@ export default function ImageUpload({
                      return;
                    }
                    
-                   const folderNames = data
-                     .filter(item => item.type === 'folder')
-                     .map(item => item.name);
-                   
-                   setFolders(folderNames);
+                                       const folderNames = data.map(item => item.name);
+                    
+                    setFolders(folderNames);
                    if (folderNames.length > 0 && !selectedFolder) {
                      setSelectedFolder(folderNames[0]);
                    }
