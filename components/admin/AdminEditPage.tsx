@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Save, X, Trash2, Plus, Eye } from 'lucide-react';
+import { Edit, Save, X, Trash2 } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -34,7 +33,6 @@ interface Section {
 interface ContentBlock {
   id: string;
   title: string;
-  description: string;
   order_index: number;
   section_id: string;
   created_at: string;
@@ -72,39 +70,7 @@ export default function AdminEditPage() {
   const [editForm, setEditForm] = useState<any>({});
   const [message, setMessage] = useState<string | null>(null);
 
-  // Fetch courses on component mount
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-
-  // Fetch sections when course changes
-  useEffect(() => {
-    if (selectedCourse) {
-      fetchSections(selectedCourse.id);
-      setSelectedSection(null);
-      setSelectedBlock(null);
-      setContentBlocks([]);
-      setContentItems([]);
-    }
-  }, [selectedCourse]);
-
-  // Fetch content blocks when section changes
-  useEffect(() => {
-    if (selectedSection) {
-      fetchContentBlocks(selectedSection.id);
-      setSelectedBlock(null);
-      setContentItems([]);
-    }
-  }, [selectedSection]);
-
-  // Fetch content items when block changes
-  useEffect(() => {
-    if (selectedBlock) {
-      fetchContentItems(selectedBlock.id);
-    }
-  }, [selectedBlock]);
-
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/courses');
@@ -118,9 +84,9 @@ export default function AdminEditPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchSections = async (courseId: string) => {
+  const fetchSections = useCallback(async (courseId: string) => {
     try {
       const response = await fetch(`/api/admin/sections?courseId=${courseId}`);
       if (response.ok) {
@@ -131,9 +97,9 @@ export default function AdminEditPage() {
       console.error('Error fetching sections:', error);
       setMessage('Error fetching sections');
     }
-  };
+  }, []);
 
-  const fetchContentBlocks = async (sectionId: string) => {
+  const fetchContentBlocks = useCallback(async (sectionId: string) => {
     try {
       const response = await fetch(`/api/admin/blocks?sectionId=${sectionId}`);
       if (response.ok) {
@@ -144,9 +110,9 @@ export default function AdminEditPage() {
       console.error('Error fetching content blocks:', error);
       setMessage('Error fetching content blocks');
     }
-  };
+  }, []);
 
-  const fetchContentItems = async (blockId: string) => {
+  const fetchContentItems = useCallback(async (blockId: string) => {
     try {
       const response = await fetch(`/api/admin/content-items?blockId=${blockId}`);
       if (response.ok) {
@@ -157,7 +123,39 @@ export default function AdminEditPage() {
       console.error('Error fetching content items:', error);
       setMessage('Error fetching content items');
     }
-  };
+  }, []);
+
+  // Fetch courses on component mount
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  // Fetch sections when course changes
+  useEffect(() => {
+    if (selectedCourse) {
+      fetchSections(selectedCourse.id);
+      setSelectedSection(null);
+      setSelectedBlock(null);
+      setContentBlocks([]);
+      setContentItems([]);
+    }
+  }, [selectedCourse, fetchSections]);
+
+  // Fetch content blocks when section changes
+  useEffect(() => {
+    if (selectedSection) {
+      fetchContentBlocks(selectedSection.id);
+      setSelectedBlock(null);
+      setContentItems([]);
+    }
+  }, [selectedSection, fetchContentBlocks]);
+
+  // Fetch content items when block changes
+  useEffect(() => {
+    if (selectedBlock) {
+      fetchContentItems(selectedBlock.id);
+    }
+  }, [selectedBlock, fetchContentItems]);
 
   const startEditing = (item: any, type: string) => {
     setEditingId(item.id);
@@ -170,7 +168,7 @@ export default function AdminEditPage() {
   };
 
   const handleInputChange = (field: string, value: any) => {
-    setEditForm(prev => ({ ...prev, [field]: value }));
+    setEditForm((prev: any) => ({ ...prev, [field]: value }));
   };
 
   const saveChanges = async (type: string) => {
@@ -205,7 +203,16 @@ export default function AdminEditPage() {
         setMessage(`${type} updated successfully!`);
         setEditingId(null);
         setEditForm({});
-        fetchAllData(); // Refresh data
+        // Refresh data based on what was updated
+        if (type === 'course') {
+          fetchCourses();
+        } else if (type === 'section' && selectedCourse) {
+          fetchSections(selectedCourse.id);
+        } else if (type === 'block' && selectedSection) {
+          fetchContentBlocks(selectedSection.id);
+        } else if (type === 'item' && selectedBlock) {
+          fetchContentItems(selectedBlock.id);
+        }
       } else {
         const errorData = await response.json();
         setMessage(`Error: ${errorData.error || 'Failed to update'}`);
@@ -246,7 +253,28 @@ export default function AdminEditPage() {
 
       if (response.ok) {
         setMessage(`${type} deleted successfully!`);
-        fetchAllData(); // Refresh data
+        // Refresh data based on what was deleted
+        if (type === 'course') {
+          setSelectedCourse(null);
+          setSelectedSection(null);
+          setSelectedBlock(null);
+          fetchCourses();
+        } else if (type === 'section') {
+          setSelectedSection(null);
+          setSelectedBlock(null);
+          if (selectedCourse) {
+            fetchSections(selectedCourse.id);
+          }
+        } else if (type === 'block') {
+          setSelectedBlock(null);
+          if (selectedSection) {
+            fetchContentBlocks(selectedSection.id);
+          }
+        } else if (type === 'item') {
+          if (selectedBlock) {
+            fetchContentItems(selectedBlock.id);
+          }
+        }
       } else {
         const errorData = await response.json();
         setMessage(`Error: ${errorData.error || 'Failed to delete'}`);
@@ -582,7 +610,6 @@ export default function AdminEditPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p><strong>Description:</strong> {selectedBlock.description}</p>
                     <p><strong>Order Index:</strong> {selectedBlock.order_index}</p>
                     <p><strong>Section ID:</strong> {selectedBlock.section_id}</p>
                     <p><strong>Created:</strong> {new Date(selectedBlock.created_at).toLocaleDateString()}</p>
@@ -717,7 +744,6 @@ export default function AdminEditPage() {
           )}
         </div>
       )}
-    </div>
     </div>
   );
 }

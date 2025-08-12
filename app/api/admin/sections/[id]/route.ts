@@ -28,6 +28,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Title, description, slug, and course_path are required' }, { status: 400 });
     }
 
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
     // Update section
     const { data, error } = await supabase
       .from('sections')
