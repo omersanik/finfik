@@ -43,6 +43,8 @@ interface ChartRendererProps {
 }
 
 export default function ChartRenderer({ chartData, className = "" }: ChartRendererProps) {
+  console.log('ChartRenderer received data:', chartData);
+  
   if (!chartData || chartData.trim() === '') {
     return (
       <div className={`p-4 text-center text-gray-500 bg-gray-50 rounded-lg ${className}`}>
@@ -55,11 +57,21 @@ export default function ChartRenderer({ chartData, className = "" }: ChartRender
   
   try {
     config = JSON.parse(chartData);
+    
+    // Validate the parsed config has required fields
+    if (!config || typeof config !== 'object') {
+      throw new Error('Config is not a valid object');
+    }
+    
+    if (!config.type || !config.title || !config.description) {
+      throw new Error('Missing required chart fields');
+    }
+    
   } catch (error) {
     console.error('Failed to parse chart data:', error);
     return (
       <div className={`p-4 text-center text-red-500 bg-red-50 rounded-lg ${className}`}>
-        Invalid chart data format
+        Invalid chart data format: {error instanceof Error ? error.message : 'Unknown error'}
       </div>
     );
   }
@@ -91,6 +103,16 @@ export default function ChartRenderer({ chartData, className = "" }: ChartRender
       }
     } : undefined
   };
+
+  // Validate chart data structure
+  if (!config.data || !config.data.labels || !config.data.datasets) {
+    console.error('Invalid chart data structure:', config);
+    return (
+      <div className={`p-4 text-center text-red-500 bg-red-50 rounded-lg ${className}`}>
+        Invalid chart data structure. Missing labels or datasets.
+      </div>
+    );
+  }
 
   const chartDataForDisplay = {
     labels: config.data.labels,
