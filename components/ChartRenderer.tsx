@@ -53,6 +53,16 @@ export default function ChartRenderer({ chartData, className = "" }: ChartRender
     );
   }
 
+  // Check if this looks like chart data (should start with { and contain chart-related fields)
+  if (!chartData.trim().startsWith('{') || !chartData.includes('"type"')) {
+    console.log('Data does not appear to be chart data:', chartData);
+    return (
+      <div className={`p-4 text-center text-gray-500 bg-gray-50 rounded-lg ${className}`}>
+        This content is not a chart. Please use the chart editor to create charts.
+      </div>
+    );
+  }
+
   let config: ChartConfig;
   
   try {
@@ -63,8 +73,15 @@ export default function ChartRenderer({ chartData, className = "" }: ChartRender
       throw new Error('Config is not a valid object');
     }
     
+    // Check if this is actually a chart config or just some other content
     if (!config.type || !config.title || !config.description) {
-      throw new Error('Missing required chart fields');
+      console.log('Incomplete chart data received:', config);
+      // Don't throw error, just return a message that this isn't a chart
+      return (
+        <div className={`p-4 text-center text-gray-500 bg-gray-50 rounded-lg ${className}`}>
+          Chart data is incomplete. Please use the chart editor to create a complete chart.
+        </div>
+      );
     }
     
   } catch (error) {
