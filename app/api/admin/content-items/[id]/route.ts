@@ -35,7 +35,15 @@ export async function PUT(
       drag_drop_title,
       drag_drop_instructions,
       drag_drop_items,
-      drag_drop_categories
+      drag_drop_categories,
+      component_key,
+      content_type,
+      styling_data,
+      interactive_data,
+      media_files,
+      font_settings,
+      layout_config,
+      animation_settings
     } = await req.json();
 
     // Validate required fields
@@ -66,6 +74,14 @@ export async function PUT(
         drag_drop_instructions: drag_drop_instructions || null,
         drag_drop_items: drag_drop_items || null,
         drag_drop_categories: drag_drop_categories || null,
+        component_key: component_key || null,
+        content_type: content_type || null,
+        styling_data: styling_data || null,
+        interactive_data: interactive_data || null,
+        media_files: media_files || null,
+        font_settings: font_settings || null,
+        layout_config: layout_config || null,
+        animation_settings: animation_settings || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', params.id)

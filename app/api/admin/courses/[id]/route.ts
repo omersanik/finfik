@@ -21,11 +21,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
-    const { name, description, slug, thumbnail_url, is_premium } = await req.json();
+    const { title, description, slug, thumbnail_url, is_premium, course_level } = await req.json();
 
     // Validate required fields
-    if (!name || !description || !slug) {
-      return NextResponse.json({ error: 'Name, description, and slug are required' }, { status: 400 });
+    if (!title || !description || !slug) {
+      return NextResponse.json({ error: 'Title, description, and slug are required' }, { status: 400 });
     }
 
     const supabase = createClient(
@@ -37,11 +37,12 @@ export async function PUT(
     const { data, error } = await supabase
       .from('courses')
       .update({
-        name,
+        title,
         description,
         slug,
         thumbnail_url: thumbnail_url || null,
         is_premium: is_premium || false,
+        course_level: course_level || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', params.id)

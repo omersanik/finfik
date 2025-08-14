@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const sectionId = searchParams.get('sectionId');
+    const sectionId = searchParams.get('section_id');
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

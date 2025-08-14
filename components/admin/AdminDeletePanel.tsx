@@ -133,7 +133,7 @@ const AdminDeletePanel = () => {
 
   const fetchBlocksForSection = async (sectionId: string) => {
     try {
-      const blocksRes = await fetch(`/api/admin/content-blocks?sectionId=${sectionId}`);
+      const blocksRes = await fetch(`/api/admin/content-blocks?section_id=${sectionId}`);
       if (blocksRes.ok) {
         const blocksData = await blocksRes.json();
         setContentBlocks(blocksData);

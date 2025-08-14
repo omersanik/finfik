@@ -9,16 +9,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const sectionId = searchParams.get('section_id');
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    // Fetch all content blocks
-    const { data: blocks, error } = await supabase
+    let query = supabase
       .from('content_block')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+
+    // If sectionId is provided, filter blocks for that section
+    if (sectionId) {
+      query = query.eq('section_id', sectionId);
+    }
+
+    const { data: blocks, error } = await query.order('order_index', { ascending: true });
 
     if (error) {
       console.error('Error fetching content blocks:', error);

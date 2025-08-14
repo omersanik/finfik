@@ -128,16 +128,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const blockId = searchParams.get('blockId');
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    // Fetch all content items
-    const { data: items, error } = await supabase
+    let query = supabase
       .from('content_item')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+
+    // If blockId is provided, filter content items for that block
+    if (blockId) {
+      query = query.eq('block_id', blockId);
+    }
+
+    const { data: items, error } = await query.order('order_index', { ascending: true });
 
     if (error) {
       console.error('Error fetching content items:', error);
