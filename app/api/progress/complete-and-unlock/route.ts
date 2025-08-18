@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       // 1. Get today's date in UTC (YYYY-MM-DD)
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
+      
       // 1. Mark the current section as completed
       console.log("Marking current section as completed...");
       // Always update completed_at to todayStr
@@ -82,73 +83,8 @@ export async function POST(request: NextRequest) {
 
       console.log("Section marked as completed successfully");
 
-      // === Streak logic ===
-      // 2. Get yesterday's date in UTC (YYYY-MM-DD)
-      const yesterday = new Date(today);
-      yesterday.setUTCDate(today.getUTCDate() - 1);
-      const yesterdayStr = yesterday.toISOString().slice(0, 10);
-
-      console.log('Streak Debug - Dates:', {
-        today: todayStr,
-        yesterday: yesterdayStr,
-        userId
-      });
-
-      // 3. Fetch current streak info
-      let streakRow = null;
-      {
-        const { data, error } = await supabase
-          .from("user_streaks")
-          .select("current_streak, last_completed_date, longest_streak")
-          .eq("clerk_id", userId)
-          .single();
-        if (!error && data) streakRow = data;
-      }
-
-      console.log('Streak Debug - Current streak data:', streakRow);
-
-      let newStreak = 1;
-      let newLongest = 1;
-      let streakIncreased = false;
-      
-      if (streakRow) {
-        if (streakRow.last_completed_date === todayStr) {
-          // Already completed something today, don't change streak count
-          newStreak = streakRow.current_streak;
-          newLongest = streakRow.longest_streak;
-          console.log('Streak Debug - Already completed today, no change to streak count');
-        } else if (streakRow.last_completed_date === yesterdayStr) {
-          // Continue streak
-          newStreak = streakRow.current_streak + 1;
-          newLongest = Math.max(newStreak, streakRow.longest_streak);
-          streakIncreased = true;
-          console.log('Streak Debug - Continuing streak:', { oldStreak: streakRow.current_streak, newStreak });
-        } else {
-          // Reset streak - user missed a day
-          newStreak = 1;
-          newLongest = Math.max(1, streakRow.longest_streak);
-          console.log('Streak Debug - Resetting streak to 1 (missed a day)');
-        }
-      } else {
-        console.log('Streak Debug - No existing streak, starting at 1');
-        streakIncreased = true;
-      }
-
-      // 4. Always update streak row with current date
-      const { error: streakError } = await supabase
-        .from("user_streaks")
-        .upsert({
-          clerk_id: userId,
-          current_streak: newStreak,
-          last_completed_date: todayStr,
-          longest_streak: newLongest,
-        }, { onConflict: "clerk_id" });
-      if (streakError) {
-        console.error("Error updating streak:", streakError);
-      } else {
-        console.log('Streak Debug - Updated streak successfully:', { newStreak, newLongest, lastCompletedDate: todayStr });
-      }
-      // === End streak logic ===
+      // Note: Streak calculation is now handled by the /api/streak route
+      // which looks at actual completion dates from course_path_section_progress
 
       // 2. Look up the current section to get order and course_path_id
       const { data: currentSection, error: currentSectionError } = await supabase
@@ -200,91 +136,88 @@ export async function POST(request: NextRequest) {
           // Update existing progress to unlock the next section
           const { error: unlockError } = await supabase
             .from("course_path_section_progress")
-            .update({
-              unlocked: true,
-              updated_at: new Date().toISOString(),
-            })
+            .update({ unlocked: true, updated_at: new Date().toISOString() })
             .eq("clerk_id", userId)
             .eq("course_path_section_id", nextSection.id);
-
-          console.log("Update result for next section unlock. Error:", unlockError);
 
           if (unlockError) {
             console.error("Error unlocking next section:", unlockError);
             throw unlockError;
           }
-
           nextSectionUnlocked = true;
+          console.log("Next section unlocked (updated existing progress)");
         } else {
           // Create new progress record for the next section
-          const { error: insertError } = await supabase
+          const { error: createError } = await supabase
             .from("course_path_section_progress")
             .insert([
               {
                 clerk_id: userId,
                 course_path_section_id: nextSection.id,
-                unlocked: true,
                 completed: false,
-                quiz_passed: false,
-                created_at: new Date().toISOString(),
+                unlocked: true,
                 updated_at: new Date().toISOString(),
               },
             ]);
 
-          console.log("Insert result for next section unlock. Error:", insertError);
-
-          if (insertError) {
-            console.error("Error creating next section progress:", insertError);
-            throw insertError;
+          if (createError) {
+            console.error("Error creating progress for next section:", createError);
+            throw createError;
           }
-
           nextSectionUnlocked = true;
+          console.log("Next section unlocked (created new progress)");
         }
       } else {
-        console.log("No next section found - course completed");
+        console.log("No next section found or error occurred");
       }
 
-      const result = {
-        currentSectionCompleted: true,
-        nextSectionUnlocked,
-        nextSectionId,
-        streak: {
-          current: newStreak,
-          longest: newLongest,
-          increased: streakIncreased,
-        },
-      };
+      // 5. Get the next section details for response
+      let nextSectionDetails = null;
+      if (nextSectionUnlocked && nextSectionId) {
+        const { data: nextSectionData, error: nextSectionDataError } = await supabase
+          .from("course_path_sections")
+          .select("id, title, order, course_path_id")
+          .eq("id", nextSectionId)
+          .single();
 
-      console.log("Operation completed successfully:", result);
+        if (!nextSectionDataError && nextSectionData) {
+          nextSectionDetails = nextSectionData;
+        }
+      }
 
+      // 6. Check if this was the last section in the course
+      const { data: totalSections, error: totalSectionsError } = await supabase
+        .from("course_path_sections")
+        .select("id")
+        .eq("course_path_id", currentSection.course_path_id);
+
+      if (totalSectionsError) {
+        console.error("Error fetching total sections:", totalSectionsError);
+      } else {
+        console.log("Total sections in course:", totalSections?.length);
+      }
+
+      const isLastSection = totalSections ? nextOrder > totalSections.length : false;
+
+      console.log("=== COMPLETE SECTION API SUCCESS ===");
       return NextResponse.json({
         success: true,
-        message: nextSectionUnlocked
-          ? "Section completed successfully and next section unlocked"
-          : "Section completed successfully - course finished",
-        data: result,
+        data: {
+          completed: true,
+          nextSection: nextSectionDetails,
+          isLastSection,
+          message: isLastSection ? "Course completed!" : "Section completed and next section unlocked!",
+        },
       });
-    } catch (dbError) {
-      console.error("Database operation error:", dbError);
-      throw dbError;
+    } catch (error) {
+      console.error("Error in transaction:", error);
+      throw error;
     }
-  } catch (err) {
-    console.error("Section completion error:", err);
-
-    // Provide more detailed error information
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    const errorDetails = err instanceof Error ? err.stack : undefined;
-
-    console.error("Error details:", errorDetails);
-
+  } catch (error) {
+    console.error("=== COMPLETE SECTION API ERROR ===", error);
     return NextResponse.json(
-      {
-        error: "Failed to complete section",
-        details: errorMessage,
-        timestamp: new Date().toISOString(),
-      },
+      { error: "Failed to complete section" },
       { status: 500 }
     );
   }
 }
-//   </div>

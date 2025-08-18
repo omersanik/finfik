@@ -227,13 +227,19 @@ export default function AdminEditPage() {
           throw new Error('Invalid type');
       }
 
+      console.log(`Saving ${type} changes:`, { endpoint, editForm, editingId });
+
       const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
       });
 
+      console.log(`Response status: ${response.status}`);
+
       if (response.ok) {
+        const responseData = await response.json();
+        console.log(`Success response:`, responseData);
         setMessage(`${type} updated successfully!`);
         setEditingId(null);
         setEditForm({});
@@ -249,6 +255,7 @@ export default function AdminEditPage() {
         }
       } else {
         const errorData = await response.json();
+        console.error(`Error response:`, errorData);
         setMessage(`Error: ${errorData.error || 'Failed to update'}`);
       }
     } catch (error) {
@@ -678,10 +685,11 @@ export default function AdminEditPage() {
       {/* Content Display and Editing */}
       {selectedCourse && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="course">Course Details</TabsTrigger>
             <TabsTrigger value="section">Section Details</TabsTrigger>
+            <TabsTrigger value="block">Content Block</TabsTrigger>
             <TabsTrigger value="content">Content Items</TabsTrigger>
           </TabsList>
 
@@ -993,6 +1001,86 @@ export default function AdminEditPage() {
                           <Label>Order</Label>
                           <p className="text-gray-700">{selectedSection.order}</p>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="block" className="space-y-6">
+            {selectedBlock && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Content Block: {selectedBlock.title}</span>
+                    <div className="flex gap-2">
+                      {editingId === selectedBlock.id ? (
+                        <>
+                          <Button size="sm" onClick={() => saveChanges('block')}>
+                            <Save className="w-4 h-4 mr-2" />
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={cancelEditing}>
+                            <X className="w-4 h-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <Button size="sm" variant="outline" onClick={() => startEditing(selectedBlock, 'block')}>
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Block
+                        </Button>
+                      )}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {editingId === selectedBlock.id ? (
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Title</Label>
+                        <Input
+                          value={editForm.title || ''}
+                          onChange={(e) => handleInputChange('title', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>Order Index</Label>
+                        <Input
+                          type="number"
+                          value={editForm.order_index || 0}
+                          onChange={(e) => handleInputChange('order_index', parseInt(e.target.value))}
+                        />
+                      </div>
+                      <div>
+                        <Label>Section ID</Label>
+                        <Input
+                          value={editForm.section_id || ''}
+                          onChange={(e) => handleInputChange('section_id', e.target.value)}
+                          disabled
+                        />
+                        <p className="text-xs text-gray-500 mt-1">This field cannot be changed as it's linked to the section</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Title</Label>
+                        <p className="text-gray-700">{selectedBlock.title}</p>
+                      </div>
+                      <div>
+                        <Label>Order Index</Label>
+                        <p className="text-gray-700">{selectedBlock.order_index}</p>
+                      </div>
+                      <div>
+                        <Label>Section ID</Label>
+                        <p className="text-gray-700">{selectedBlock.section_id}</p>
+                      </div>
+                      <div>
+                        <Label>Created</Label>
+                        <p className="text-gray-700">{new Date(selectedBlock.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                   )}

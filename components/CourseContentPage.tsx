@@ -135,15 +135,9 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
 
       const result = await response.json();
       
-      // Check if streak increased and show animation
-      if (result.data?.streak?.increased) {
-        setStreakCount(result.data.streak.current);
-        setShowStreakAnimation(true);
-      } else if (result.data?.streak?.current) {
-        // Fallback: show animation for any streak, even if it didn't increase
-        setStreakCount(result.data.streak.current);
-        setShowStreakAnimation(true);
-      }
+      // Streak is now calculated by the /api/streak route
+      // We'll fetch the updated streak data after completion
+      console.log("Section completed successfully:", result);
 
       return result;
     } catch (error) {
@@ -173,6 +167,20 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
 
             // Add a small delay to allow streak data to be processed
             await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Fetch updated streak data
+            try {
+              const streakResponse = await fetch("/api/streak");
+              if (streakResponse.ok) {
+                const streakData = await streakResponse.json();
+                if (streakData.current_streak > 0) {
+                  setStreakCount(streakData.current_streak);
+                  setShowStreakAnimation(true);
+                }
+              }
+            } catch (error) {
+              console.error("Error fetching streak data:", error);
+            }
 
             // Check if there's a next section and unlock it
             const nextSectionIndex = currentSectionIndex + 1;

@@ -34,6 +34,8 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+  const [hoveredStep, setHoveredStep] = useState<Lesson | null>(null);
+
   // Close popover when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -92,15 +94,18 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
             <div
               key={step.id}
               className={`absolute transform -translate-x-1/2 -translate-y-1/2 group ${
-                selectedStep?.id === step.id ? "z-50" : "z-20"
+                selectedStep?.id === step.id ? "z-50" : hoveredStep?.id === step.id ? "z-[9999]" : "z-20"
               }`}
               style={{ left: `${position.x}%`, top: `${position.y}%` }}
             >
               <div
-                onClick={() =>
-                  setSelectedStep(selectedStep?.id === step.id ? null : step)
-                }
-                className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-125 cursor-pointer
+                onClick={() => {
+                  setSelectedStep(selectedStep?.id === step.id ? null : step);
+                  setHoveredStep(null); // Hide tooltip when clicking
+                }}
+                onMouseEnter={() => setHoveredStep(step)}
+                onMouseLeave={() => setHoveredStep(null)}
+                className={`relative w-18 h-18 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-125 cursor-pointer
                   ${
                     step.completed
                       ? "bg-gradient-to-br from-emerald-400 to-emerald-600 border-4 border-white shadow-emerald-200"
@@ -110,11 +115,11 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
                   }`}
               >
                 {step.completed ? (
-                  <Check className="w-6 h-6 text-white drop-shadow-sm" />
+                  <Check className="w-7 h-7 text-white drop-shadow-sm" />
                 ) : step.unlocked ? (
-                  <BookOpen className="w-6 h-6 text-white drop-shadow-sm" />
+                  <BookOpen className="w-7 h-7 text-white drop-shadow-sm" />
                 ) : (
-                  <Lock className="w-6 h-6 text-gray-400" />
+                  <Lock className="w-7 h-7 text-gray-400" />
                 )}
 
                 {step.completed && (
@@ -124,20 +129,23 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
                 )}
               </div>
 
-              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                <div className="bg-gray-900 text-white px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg">
-                  {step.title}
-                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+              {/* Tooltip positioned under the circle */}
+              {hoveredStep?.id === step.id && (
+                <div className="absolute top-20 left-1/2 transform -translate-x-1/2 opacity-100 transition-opacity duration-200 pointer-events-none z-[9999]">
+                  <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-xs font-medium shadow-lg text-center min-w-32">
+                    <div className="break-words leading-relaxed">{step.title}</div>
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {selectedStep?.id === step.id && (
                 <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-80">
                   <Card className="shadow-2xl border-2">
                     <CardHeader className="pb-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start gap-3">
                         <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                             step.completed
                               ? "bg-gradient-to-br from-emerald-400 to-emerald-600"
                               : step.unlocked
@@ -153,7 +161,7 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
                             <Lock className="w-4 h-4 text-gray-400" />
                           )}
                         </div>
-                        <CardTitle className="text-lg">{step.title}</CardTitle>
+                        <CardTitle className="text-lg leading-tight break-words min-w-0 flex-1">{step.title}</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">

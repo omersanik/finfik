@@ -136,11 +136,6 @@ export async function GET() {
   }
 
   console.log("Final week array:", week);
-  console.log("Final streak data:", {
-    current_streak: streakData?.current_streak || 0,
-    longest_streak: streakData?.longest_streak || 0,
-    last_completed_date: streakData?.last_completed_date || null,
-  });
 
   // Calculate current streak based on consecutive days
   let currentStreak = 0;
@@ -155,10 +150,102 @@ export async function GET() {
     }
   }
 
+  // Get the most recent completion date
+  let lastCompletedDate = null;
+  if (completions && completions.length > 0) {
+    // Sort completions by date and get the most recent
+    const sortedCompletions = completions
+      .filter(c => c.completed_at)
+      .sort((a, b) => {
+        const dateA = a.completed_at.includes("T") ? a.completed_at.split("T")[0] : a.completed_at;
+        const dateB = b.completed_at.includes("T") ? b.completed_at.split("T")[0] : b.completed_at;
+        return dateB.localeCompare(dateA);
+      });
+    
+    if (sortedCompletions.length > 0) {
+      const mostRecent = sortedCompletions[0].completed_at;
+      lastCompletedDate = mostRecent.includes("T") ? mostRecent.split("T")[0] : mostRecent;
+    }
+  }
+
+  // Calculate longest streak by looking at all completion dates
+  const { data: allCompletions, error: allCompletionsError } = await supabase
+    .from("course_path_section_progress")
+    .select("completed_at")
+    .eq("clerk_id", userId)
+    .eq("completed", true)
+    .not("completed_at", "is", null);
+
+  let longestStreak = streakData?.longest_streak || 0;
+  
+  if (allCompletions && !allCompletionsError) {
+    // Get all unique completion dates
+    const allCompletionDates = new Set<string>();
+    allCompletions.forEach((row: { completed_at: string }) => {
+      if (row.completed_at) {
+        const dateStr = row.completed_at.includes("T") ? row.completed_at.split("T")[0] : row.completed_at;
+        allCompletionDates.add(dateStr);
+      }
+    });
+
+    // Convert to sorted array
+    const sortedDates = Array.from(allCompletionDates).sort();
+    
+    // Calculate longest consecutive streak
+    let maxStreak = 0;
+    let currentConsecutive = 0;
+    let prevDate = null;
+
+    for (const dateStr of sortedDates) {
+      const currentDate = new Date(dateStr);
+      
+      if (prevDate === null) {
+        currentConsecutive = 1;
+      } else {
+        const prevDateObj = new Date(prevDate);
+        const diffTime = currentDate.getTime() - prevDateObj.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          currentConsecutive++;
+        } else {
+          maxStreak = Math.max(maxStreak, currentConsecutive);
+          currentConsecutive = 1;
+        }
+      }
+      
+      prevDate = dateStr;
+    }
+    
+    // Check the last streak
+    maxStreak = Math.max(maxStreak, currentConsecutive);
+    longestStreak = Math.max(longestStreak, maxStreak);
+  }
+
+  // Update the user_streaks table with the calculated values
+  const { error: updateError } = await supabase
+    .from("user_streaks")
+    .upsert({
+      clerk_id: userId,
+      current_streak: currentStreak,
+      longest_streak: longestStreak,
+      last_completed_date: lastCompletedDate,
+    }, { onConflict: "clerk_id" });
+
+  if (updateError) {
+    console.error("Error updating user_streaks:", updateError);
+  }
+
+  console.log("Final streak data:", {
+    current_streak: currentStreak,
+    longest_streak: longestStreak,
+    last_completed_date: lastCompletedDate,
+  });
+
   return NextResponse.json({
     current_streak: currentStreak,
-    longest_streak: streakData?.longest_streak || 0,
-    last_completed_date: streakData?.last_completed_date || null,
+    longest_streak: longestStreak,
+    last_completed_date: lastCompletedDate,
     week,
   });
 }
