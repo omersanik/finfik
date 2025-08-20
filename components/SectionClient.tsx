@@ -175,7 +175,26 @@ export default function SectionClient({
       setDragDropReady(false);
       setAllowContinue(false);
       setTimeout(() => {
-        blockRefs.current[idx + 1]?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const nextBlockElement = blockRefs.current[idx + 1];
+        if (nextBlockElement) {
+          // Calculate the exact position to scroll to (top of the block)
+          const blockTop = nextBlockElement.offsetTop;
+          const navbarHeight = 96; // Account for fixed navbar (pt-24 = 96px)
+          const targetScrollPosition = Math.max(0, blockTop - navbarHeight - 20); // 20px extra padding, ensure not negative
+          
+          console.log('Scrolling to next block:', {
+            blockTop,
+            navbarHeight,
+            targetScrollPosition,
+            currentScroll: window.pageYOffset || document.documentElement.scrollTop
+          });
+          
+          // Direct smooth scroll to the exact position - no bouncing
+          window.scrollTo({
+            top: targetScrollPosition,
+            behavior: "smooth"
+          });
+        }
       }, 100);
     }
     setButtonLoading(false);

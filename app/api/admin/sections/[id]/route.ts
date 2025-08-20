@@ -14,7 +14,8 @@ export async function PUT(
     }
 
     // Check if user is admin using Clerk
-    const user = await clerkClient.users.getUser(userId);
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
     const role = user?.publicMetadata?.role;
     
     if (role !== 'admin') {

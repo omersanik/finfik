@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Get user from Clerk and check their role
-    const user = await clerkClient.users.getUser(userId);
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
     const role = user?.publicMetadata?.role;
     const isAdmin = role === 'admin';
 
