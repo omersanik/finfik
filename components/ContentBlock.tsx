@@ -705,7 +705,7 @@ const ContentBlockComponent = ({
       )}
       <div className={locked ? "pointer-events-none opacity-60" : ""}>
         <div className="max-w-2xl mx-auto mb-6 p-6">
-          <h2 className="text-sm font-semibold mb-4 text-gray-900 dark:text-neutral-200 font-lora">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-neutral-200 font-lora">
             {block.title}
           </h2>
 

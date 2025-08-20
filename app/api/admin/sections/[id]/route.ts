@@ -35,14 +35,14 @@ export async function PUT(
 
     // Update section
     const { data, error } = await supabase
-      .from('sections')
+      .from('course_path_sections')
       .update({
         title,
         description,
         slug,
         lessons: lessons || 0,
         order: order || 0,
-        course_path,
+        course_path_id: course_path,
         updated_at: new Date().toISOString()
       })
       .eq('id', params.id)

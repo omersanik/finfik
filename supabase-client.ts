@@ -28,7 +28,8 @@ export const createSupabaseServerClient = async (): Promise<SupabaseClient> => {
     );
   }
 
-  const token = await userAuth.getToken({ template: "supabase" });
+  // Remove the template parameter to avoid the problematic role claim
+  const token = await userAuth.getToken();
 
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

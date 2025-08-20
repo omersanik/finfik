@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       );
 
       const { data: sections, error } = await supabase
-        .from('sections')
+        .from('course_path_sections')
         .select('*')
         .order('created_at', { ascending: false });
 
