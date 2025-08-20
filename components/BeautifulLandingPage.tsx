@@ -149,7 +149,7 @@ const BeautifulLandingPage = () => {
         console.log("Fetching courses from:", `${baseUrl}/api/courses`);
 
         const res = await fetch(`${baseUrl}/api/courses`, {
-          cache: "no-store",
+          next: { revalidate: 300 }, // Cache for 5 minutes
           headers: {
             "Content-Type": "application/json",
           },

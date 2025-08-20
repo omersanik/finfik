@@ -12,9 +12,8 @@ const Page = async () => {
 
   const token = await getToken();
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "");
+  // For server-side rendering, use environment variable or fallback to relative URLs
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
 
   // Check if user has any enrolled courses
   let hasEnrolledCourses = false;
@@ -34,8 +33,10 @@ const Page = async () => {
     console.error("Error checking enrolled courses:", err);
   }
 
+
+
   const res = await fetch(`${baseUrl}/api/courses/available-for-user`, {
-    cache: "no-store",
+    next: { revalidate: 300 },
     headers: {
       Authorization: `Bearer ${token}`,
     },

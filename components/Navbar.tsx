@@ -35,6 +35,7 @@ import {
 import { useEffect, useState } from "react";
 import { useClerk, useUser, useAuth } from "@clerk/nextjs";
 import { Flame } from "lucide-react";
+import { usePremiumStatus, useStreak } from "@/lib/hooks/useApi";
 
 const Navbar = () => {
   const { signOut } = useClerk();
@@ -42,121 +43,47 @@ const Navbar = () => {
   const { setTheme, theme } = useTheme();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const [isPremiumUser, setIsPremiumUser] = useState(false);
-  const [premiumLoading, setPremiumLoading] = useState(true);
   const [streak, setStreak] = useState({
     current_streak: 0,
     longest_streak: 0,
   });
-  const [streakLoading, setStreakLoading] = useState(true);
   const { user } = useUser();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Check premium status
+  // Use React Query for premium status
+  const [token, setToken] = useState<string | null>(null);
+  
   useEffect(() => {
-    const checkPremiumStatus = async () => {
-      if (!user) return;
-
-      try {
-        setPremiumLoading(true);
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!;
-        console.log("Base URL:", baseUrl); // Debug log
-
-        const token = await getToken();
-        console.log("Token received:", token ? "✓" : "✗"); // Debug log
-
-        if (!token) {
-          console.log("No token available, skipping premium check");
-          setIsPremiumUser(false);
-          return;
+    const fetchToken = async () => {
+      if (user) {
+        try {
+          const userToken = await getToken();
+          setToken(userToken);
+        } catch (error) {
+          console.error('Failed to get token:', error);
         }
-
-        const apiUrl = `${baseUrl}/api/users/premium-users`;
-        console.log("API URL:", apiUrl); // Debug log
-
-        const res = await fetch(apiUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
-        });
-
-        console.log("Response status:", res.status); // Debug log
-        console.log("Response ok:", res.ok); // Debug log
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error("API Error:", errorText);
-          throw new Error(
-            `Failed to fetch user premium status: ${res.status} ${errorText}`
-          );
-        }
-
-        const data = await res.json();
-        console.log("Premium data:", data); // Debug log
-        setIsPremiumUser(data.is_premium);
-      } catch (error) {
-        console.error("Error fetching the premium status", error);
-        // For now, let's not show premium badge on error
-        setIsPremiumUser(false);
-      } finally {
-        setPremiumLoading(false);
       }
     };
+    fetchToken();
+  }, [user, getToken]);
+  
+  const { data: premiumData, isLoading: premiumLoading } = usePremiumStatus(user?.id, token || undefined);
+  const isPremiumUser = premiumData?.is_premium || false;
 
-    if (mounted && user) {
-      checkPremiumStatus();
-    }
-  }, [mounted, user, getToken]);
-
-  // Fetch streak data
+  // Use React Query for streak data
+  const { data: streakData, isLoading: streakLoading } = useStreak(user?.id, token || undefined);
+  
   useEffect(() => {
-    const fetchStreak = async () => {
-      if (!user) return;
-
-      try {
-        setStreakLoading(true);
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!;
-        const token = await getToken();
-
-        if (!token) {
-          console.log("No token available, skipping streak check");
-          return;
-        }
-
-        const res = await fetch(`${baseUrl}/api/streak`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
-        });
-
-        if (res.ok) {
-          const streakData = await res.json();
-          setStreak({
-            current_streak: streakData.current_streak,
-            longest_streak: streakData.longest_streak,
-          });
-        } else {
-          console.error("Streak API error:", res.status, res.statusText);
-        }
-      } catch (error) {
-        console.error("Error fetching streak:", error);
-      } finally {
-        setStreakLoading(false);
-      }
-    };
-
-    if (mounted && user) {
-      fetchStreak();
+    if (streakData) {
+      setStreak({
+        current_streak: streakData.current_streak,
+        longest_streak: streakData.longest_streak,
+      });
     }
-  }, [mounted, user, getToken]);
+  }, [streakData]);
 
   // Show skeleton while mounting or if user data is still loading
   if (!mounted || !user || streakLoading || premiumLoading) {

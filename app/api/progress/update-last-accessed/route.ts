@@ -34,5 +34,10 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return new Response("last_accessed updated", { status: 200 });
+  return new Response(JSON.stringify({ message: "last_accessed updated" }), { 
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
 }

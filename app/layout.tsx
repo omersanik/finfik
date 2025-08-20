@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import PageLoading from "@/components/PageLoading";
+import Providers from "./providers";
+import PerformanceMonitor from "@/components/PerformanceMonitor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,16 +36,19 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}
         >
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <PageLoading />
-            <LayoutWrapper>{children}</LayoutWrapper>
-            <Toaster 
-              position="bottom-center"
-              richColors
-              closeButton
-              duration={3000}
-            />
-          </ThemeProvider>
+          <Providers>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <PageLoading />
+              <LayoutWrapper>{children}</LayoutWrapper>
+              <Toaster 
+                position="bottom-center"
+                richColors
+                closeButton
+                duration={3000}
+              />
+            </ThemeProvider>
+            <PerformanceMonitor />
+          </Providers>
         </body>
       </html>
     </ClerkProvider>

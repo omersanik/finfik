@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
+import { useEnrollmentStatus, useCourseProgress, useStartCourse, useUpdateLastAccessed } from "@/lib/hooks/useApi";
 import {
   Card,
   CardContent,
@@ -17,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { getThumbnailUrl } from "@/lib/thumbnail-utils";
+import MainCardSkeleton from "./skeletons/MainCardSkeleton";
 
 interface MainCardComponentProps {
   title: string;
@@ -40,9 +42,8 @@ const MainCardComponent = ({
   courseLevel,
 }: MainCardComponentProps) => {
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [progressLoading, setProgressLoading] = useState(true);
+  const [buttonLoading, setButtonLoading] = useState(false);
   const router = useRouter();
   const { getToken } = useAuth();
 
@@ -62,19 +63,34 @@ const MainCardComponent = ({
     }
   };
 
+  // Temporarily use the old approach to test if React Query is the issue
+  const [enrollmentLoading, setEnrollmentLoading] = useState(true);
+  
   // Check if user is enrolled and get progress
   useEffect(() => {
     const checkEnrollmentAndProgress = async () => {
       try {
-        const res = await fetch(`/api/progress/check-enrollment?slug=${slug}`);
+        const token = await getToken();
+        console.log('MainCardComponent - Token for API call:', token ? 'Yes' : 'No');
+        
+        const res = await fetch(`/api/progress/check-enrollment?slug=${slug}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
         const isEnrolled = res.status === 200;
+        console.log('MainCardComponent - Enrollment check result:', isEnrolled);
         setEnrolled(isEnrolled);
         
         if (isEnrolled) {
           // Get progress for enrolled course
           const progressRes = await fetch("/api/progress/course-progress", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify({ courseId }),
           });
           
@@ -86,77 +102,78 @@ const MainCardComponent = ({
       } catch (err) {
         console.error("Failed to check enrollment or progress", err);
       } finally {
-        setProgressLoading(false);
+        setEnrollmentLoading(false);
       }
     };
 
     checkEnrollmentAndProgress();
-  }, [courseId, slug]);
+  }, [courseId, slug, getToken]);
+  
+  // Progress loading is now handled by local state
+  const progressLoading = enrollmentLoading;
+
+  // Use React Query mutations
+  const startCourseMutation = useStartCourse();
+  const updateLastAccessedMutation = useUpdateLastAccessed();
 
   // If not enrolled, start the course
   const handleStart = async () => {
-    setLoading(true);
-
+    setButtonLoading(true);
+    
     try {
-      const res = await fetch("/api/progress/start-course", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ course_id: courseId }),
-      });
-
-      if (res.ok) {
-        // Keep loading until navigation starts
-        router.push(`/courses/${slug}`);
-        // Don't set loading to false here - let it continue until page changes
-      } else {
-        const errText = await res.text();
-        alert("Failed to start course: " + errText);
-        setLoading(false);
+      const token = await getToken();
+      if (!token) {
+        alert("No auth token found. Please sign in again.");
+        setButtonLoading(false);
+        return;
       }
+      
+      // Start course in background (fire and forget)
+      startCourseMutation.mutate({ courseId, token });
+      
+      // Small delay to show button loading state briefly
+      setTimeout(() => {
+        // Navigate to course page
+        router.push(`/courses/${slug}`);
+      }, 200);
+      
+      // Don't set loading to false - let navigation handle it
     } catch (err) {
       console.error("Failed to start course", err);
       alert("Error starting course: " + err);
-      setLoading(false);
+      setButtonLoading(false);
     }
   };
 
   // If enrolled, update last_accessed and continue
   const handleContinue = async () => {
-    setLoading(true);
+    setButtonLoading(true);
+    
+    // Small delay to show button loading state briefly
+    setTimeout(() => {
+      // Navigate to course page
+      router.push(`/courses/${slug}`);
+    }, 200);
+    
+    // Update last_accessed in the background (fire and forget)
     try {
       const token = await getToken();
-      console.log("Token:", token);
-      console.log("Course ID:", courseId);
-      if (!token) {
-        alert("No auth token found. Please sign in again.");
-        setLoading(false);
-        return;
-      }
-      const res = await fetch("/api/progress/update-last-accessed", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ course_id: courseId }),
-      });
-      const text = await res.text();
-      console.log("update-last-accessed response:", res.status, text);
-      if (!res.ok) {
-        alert("Failed to update last accessed: " + text);
-        setLoading(false);
-        return;
+      if (token) {
+        // Don't await - let it run in background
+        updateLastAccessedMutation.mutate({ courseId, token });
       }
     } catch (err) {
-      console.error("Failed to update last_accessed", err);
-      alert("Error updating last accessed: " + err);
-      setLoading(false);
-      return;
+      // Silently fail in background - user is already navigating
+      console.error("Background update failed:", err);
     }
-      // Keep loading until navigation starts
-      router.push(`/courses/${slug}`);
-      // Don't set loading to false here - let it continue until page changes
+    
+    // Don't set loading to false - let navigation handle it
   };
+
+  // Show skeleton while loading enrollment status
+  if (enrollmentLoading) {
+    return <MainCardSkeleton />;
+  }
 
   return (
     <main className="flex">
@@ -229,8 +246,8 @@ const MainCardComponent = ({
               Loading...
             </Button>
           ) : enrolled ? (
-            <Button className="w-full" onClick={handleContinue} disabled={loading}>
-              {loading ? (
+            <Button className="w-full" onClick={handleContinue} disabled={buttonLoading}>
+              {buttonLoading ? (
                 <span className="flex items-center gap-2 justify-center">
                   <Loader2 className="animate-spin h-4 w-4" />
                   Continuing...
@@ -240,8 +257,8 @@ const MainCardComponent = ({
               )}
             </Button>
           ) : (
-            <Button className="w-full" onClick={handleStart} disabled={loading}>
-              {loading ? (
+            <Button className="w-full" onClick={handleStart} disabled={buttonLoading}>
+              {buttonLoading ? (
                 <span className="flex items-center gap-2 justify-center">
                   <Loader2 className="animate-spin h-4 w-4" />
                   Starting...

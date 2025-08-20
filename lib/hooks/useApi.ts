@@ -1,0 +1,162 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+// Base API configuration - use relative URLs for client-side requests
+const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000');
+
+// Generic fetch function with proper caching
+const apiFetch = async (endpoint: string, options?: RequestInit, token?: string) => {
+  const url = `${API_BASE}${endpoint}`;
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...options?.headers,
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+  }
+
+  // Check if response is JSON or text
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  } else {
+    // For text responses, return the text
+    return response.text();
+  }
+};
+
+// Custom hook for courses data
+export const useCourses = () => {
+  return useQuery({
+    queryKey: ['courses'],
+    queryFn: () => apiFetch('/api/courses'),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  });
+};
+
+// Custom hook for user premium status
+export const usePremiumStatus = (userId?: string, token?: string) => {
+  return useQuery({
+    queryKey: ['premium-status', userId],
+    queryFn: async () => {
+      if (!userId) return { is_premium: false };
+      return apiFetch('/api/users/premium-users', undefined, token);
+    },
+    enabled: !!userId && !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+  });
+};
+
+// Custom hook for user streak
+export const useStreak = (userId?: string, token?: string) => {
+  return useQuery({
+    queryKey: ['streak', userId],
+    queryFn: async () => {
+      if (!userId) return { current_streak: 0, longest_streak: 0 };
+      return apiFetch('/api/streak', undefined, token);
+    },
+    enabled: !!userId && !!token,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+// Custom hook for course enrollment status
+export const useEnrollmentStatus = (slug: string, token?: string) => {
+  return useQuery({
+    queryKey: ['enrollment', slug],
+    queryFn: () => apiFetch(`/api/progress/check-enrollment?slug=${slug}`, undefined, token),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+  });
+};
+
+// Custom hook for course progress
+export const useCourseProgress = (courseId: string, enabled: boolean = true, token?: string) => {
+  return useQuery({
+    queryKey: ['course-progress', courseId],
+    queryFn: () => apiFetch('/api/progress/course-progress', {
+      method: 'POST',
+      body: JSON.stringify({ courseId }),
+    }, token),
+    enabled,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+// Custom hook for enrolled courses
+export const useEnrolledCourses = (userId?: string, token?: string) => {
+  return useQuery({
+    queryKey: ['enrolled-courses', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      return apiFetch('/api/progress/enrolled-courses', {
+        method: 'POST',
+      }, token);
+    },
+    enabled: !!userId && !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+  });
+};
+
+// Custom hook for recent course
+export const useRecentCourse = (userId?: string, token?: string) => {
+  return useQuery({
+    queryKey: ['recent-course', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      return apiFetch('/api/progress/recent-course', {
+        method: 'POST',
+      }, token);
+    },
+    enabled: !!userId && !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+  });
+};
+
+// Mutation hooks
+export const useStartCourse = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ courseId, token }: { courseId: string; token: string }) => 
+      apiFetch('/api/progress/start-course', {
+        method: 'POST',
+        body: JSON.stringify({ course_id: courseId }),
+      }, token),
+    onSuccess: () => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['enrolled-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['enrollment'] });
+    },
+  });
+};
+
+export const useUpdateLastAccessed = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ courseId, token }: { courseId: string; token: string }) => 
+      apiFetch('/api/progress/update-last-accessed', {
+        method: 'POST',
+        body: JSON.stringify({ course_id: courseId }),
+      }, token),
+    onSuccess: () => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['recent-course'] });
+      queryClient.invalidateQueries({ queryKey: ['course-progress'] });
+    },
+  });
+};

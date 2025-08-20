@@ -1,8 +1,6 @@
-import MainCardComponent from "@/components/MainCardComponent";
-import SectionCardComponent from "@/components/SectionCardComponent";
 import { auth } from "@clerk/nextjs/server";
 import BeautifulLandingPage from "@/components/BeautifulLandingPage";
-import StreakCounter from "@/components/StreakCounter";
+import MainPageWrapper from "@/components/MainPageWrapper";
 import { redirect } from "next/navigation";
 
 const Page = async () => {
@@ -32,7 +30,8 @@ const Page = async () => {
     week: boolean[];
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  // For server-side rendering, use environment variable or fallback to relative URLs
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
 
   let allCourses: Course[] = [];
   let enrolledCourses: Course[] = [];
@@ -41,7 +40,7 @@ const Page = async () => {
   // Fetch all courses
   try {
     const res = await fetch(`${baseUrl}/api/courses`, {
-      cache: "no-store",
+      next: { revalidate: 300 }, // Cache for 5 minutes
     });
     if (!res.ok) throw new Error(`Failed to fetch courses: ${res.status}`);
     allCourses = await res.json();
@@ -57,6 +56,7 @@ const Page = async () => {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
+      next: { revalidate: 60 }, // Cache for 1 minute
     });
 
     if (!res.ok) throw new Error(`Failed to fetch enrolled: ${res.status}`);
@@ -73,6 +73,7 @@ const Page = async () => {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
+      next: { revalidate: 60 }, // Cache for 1 minute
     });
     if (!res.ok)
       throw new Error(`Failed to fetch last taken course: ${res.status}`);
@@ -93,6 +94,7 @@ const Page = async () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ courseIds }),
+        next: { revalidate: 60 }, // Cache for 1 minute
       });
       
       if (progressRes.ok) {
@@ -108,7 +110,7 @@ const Page = async () => {
   try {
     const res = await fetch(`${baseUrl}/api/streak`, {
       headers: { Authorization: `Bearer ${await getToken()}` },
-      cache: "no-store",
+      next: { revalidate: 60 }, // Cache for 1 minute
     });
     if (res.ok) {
       streak = await res.json();
@@ -117,91 +119,24 @@ const Page = async () => {
     console.error("Error fetching streak:", err);
   }
 
-  // Filter out coming soon courses from enrolled courses
-  const visibleEnrolledCourses = enrolledCourses.filter((course) => !course.coming_soon);
+
 
   // If user has no enrolled courses, redirect to courses page
   if (enrolledCourses.length === 0) {
     return redirect('/courses');
   }
 
+  // Pass data to the client-side wrapper
   return (
-    <main className="bg-background text-foreground min-h-screen">
-      <h1 className="text-3xl font-semibold my-10 mx-10 font-serif">
-        Keep going where you left off
-      </h1>
-      <div className="mx-10 mb-8 flex flex-col md:flex-row md:items-start justify-center gap-2">
-        {lastTakenCourse ? (
-          <>
-            <div className="flex-1 max-w-xl flex md:block items-start">
-              <MainCardComponent
-                title={lastTakenCourse.title}
-                thumbnail={lastTakenCourse.thumbnail_url}
-                description={lastTakenCourse.description}
-                slug={lastTakenCourse.slug}
-                courseId={lastTakenCourse.id}
-                comingSoon={!!lastTakenCourse.coming_soon}
-                courseLevel={lastTakenCourse.course_level}
-              />
-            </div>
-            <div className="flex-shrink-0 flex md:block items-start">
-              <StreakCounter
-                currentStreak={streak.current_streak}
-                longestStreak={streak.longest_streak}
-                lastCompletedDate={streak.last_completed_date}
-                week={streak.week}
-              />
-            </div>
-          </>
-        ) : (
-          <div className="w-full flex flex-col items-center">
-            <p className="text-gray-500 mt-6">
-              No recent course found. Start a new one below!
-            </p>
-          </div>
-        )}
-      </div>
-
-      <p className="text-3xl font-bold pt-6 my-6 mx-10">Your Courses</p>
-
-      {visibleEnrolledCourses.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-12 mb-6">
-            {visibleEnrolledCourses.map((course: Course) => (
-              <SectionCardComponent
-                key={course.id}
-                title={course.title}
-                thumbnail={course.thumbnail_url}
-                slug={course.slug}
-                courseId={course.id}
-                initialProgress={courseProgress[course.id]?.progress || 0}
-                comingSoon={!!course.coming_soon}
-                courseLevel={course.course_level}
-              />
-            ))}
-          </div>
-          <div className="text-center py-4 px-12">
-            <p className="text-muted-foreground text-sm">
-              Want to explore more courses? 
-              <a href="/courses" className="text-primary hover:underline ml-1">
-                Browse all available courses
-              </a>
-            </p>
-          </div>
-        </>
-      ) : (
-        <div className="text-center py-8 px-12">
-          <p className="text-muted-foreground text-lg">
-            You haven't enrolled in any courses yet. 
-            <a href="/courses" className="text-primary hover:underline ml-1">
-              Browse available courses
-            </a>
-          </p>
-        </div>
-      )}
-
-
-    </main>
+    <MainPageWrapper
+      initialData={{
+        allCourses,
+        enrolledCourses,
+        lastTakenCourse,
+        courseProgress,
+        streak,
+      }}
+    />
   );
 };
 

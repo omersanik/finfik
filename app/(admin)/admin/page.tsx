@@ -6,8 +6,8 @@ import { Book, Layers, Blocks, FileText, Trash2 } from "lucide-react";
 async function getStats() {
   // Fetch real data from APIs
   const [coursesRes, itemsRes] = await Promise.all([
-    fetch(process.env.NEXT_PUBLIC_SITE_URL + "/api/courses", { cache: "no-store" }),
-    fetch(process.env.NEXT_PUBLIC_SITE_URL + "/api/admin/content-items", { cache: "no-store" }),
+    fetch(process.env.NEXT_PUBLIC_SITE_URL + "/api/courses", { next: { revalidate: 300 } }),
+    fetch(process.env.NEXT_PUBLIC_SITE_URL + "/api/admin/content-items", { next: { revalidate: 60 } }),
   ]);
   const courses = await coursesRes.json();
   const items = await itemsRes.json();
@@ -16,7 +16,7 @@ async function getStats() {
   let sections = 0;
   let blocks = 0;
   try {
-    const sectionsRes = await fetch(process.env.NEXT_PUBLIC_SITE_URL + "/api/admin/sections?course_path_id=all", { cache: "no-store" });
+    const sectionsRes = await fetch(process.env.NEXT_PUBLIC_SITE_URL + "/api/admin/sections?course_path_id=all", { next: { revalidate: 60 } });
     const allSections = await sectionsRes.json();
     sections = Array.isArray(allSections) ? allSections.length : 0;
   } catch {}
