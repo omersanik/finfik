@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
+import NavbarSkeleton from "./skeletons/NavbarSkeleton";
 import { SignedIn } from "@clerk/nextjs";
 
 export default function LayoutWrapper({

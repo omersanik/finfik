@@ -21,6 +21,7 @@ import {
 import Image from "next/image";
 import LandingPageCardComponent from "@/components/LandingPageCardComponent";
 import finfikwhitelogo from "@/logo/finfikwhitelogo.svg";
+import CourseCardSkeleton from "./skeletons/CourseCardSkeleton";
 
 // Course type definition
 type Course = {
@@ -367,8 +368,10 @@ const BeautifulLandingPage = () => {
           </motion.div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <CourseCardSkeleton key={i} />
+              ))}
             </div>
           ) : courses.length === 0 ? (
             <div className="text-center py-20">

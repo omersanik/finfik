@@ -22,6 +22,7 @@ import finfikwhitelogo from "@/logo/finfikwhitelogo.svg";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -200,17 +201,28 @@ const Navbar = () => {
 
         {/* Right: Premium Button/Badge, Theme Toggle, Avatar */}
         <div className="flex items-center justify-center gap-4">
-          {/* Streak Counter - Always show */}
-          {!streakLoading && streak.current_streak >= 0 && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold shadow-md">
-              <Flame className="size-4 animate-pulse" />
-              <span>{streak.current_streak}</span>
+          {/* Streak Counter */}
+          {streakLoading ? (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/30 dark:to-green-900/30 rounded-full text-sm font-semibold shadow-md">
+              <Skeleton variant="circular" className="w-4 h-4" />
+              <Skeleton variant="text" className="w-6 h-4" />
             </div>
+          ) : (
+            streak.current_streak >= 0 && (
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-sm font-semibold shadow-md">
+                <Flame className="size-4 animate-pulse" />
+                <span>{streak.current_streak}</span>
+              </div>
+            )
           )}
 
           {/* Premium Status */}
-          {!premiumLoading &&
-            (isPremiumUser ? (
+          {premiumLoading ? (
+            <div className="hidden sm:flex">
+              <Skeleton className="w-28 h-8 rounded-full" />
+            </div>
+          ) : (
+            isPremiumUser ? (
               <Badge
                 variant="default"
                 className="hidden sm:flex items-center gap-1 px-4 py-2 text-sm font-medium"
@@ -222,7 +234,8 @@ const Navbar = () => {
               <Button className="rounded-3xl px-6 text-base hidden sm:block hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg">
                 <Link href="/subscription">Go Premium</Link>
               </Button>
-            ))}
+            )
+          )}
 
           {/* Theme Toggle */}
           <DropdownMenu>
