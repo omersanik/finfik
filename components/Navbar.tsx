@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import NavbarSkeleton from "./skeletons/NavbarSkeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -157,46 +158,66 @@ const Navbar = () => {
     }
   }, [mounted, user, getToken]);
 
-  if (!mounted) return null;
+  // Show skeleton while mounting or if user data is still loading
+  if (!mounted || !user || streakLoading || premiumLoading) {
+    return <NavbarSkeleton />;
+  }
 
   return (
     <header className="w-full border-b shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-1 flex items-center justify-between">
         {/* Left: Logo */}
         <Link href="/">
-          {mounted && (
+          {mounted ? (
             <Image
               src={theme === "light" ? finfiklogo : finfikwhitelogo}
               alt="Finfik Logo"
               width={100}
               height={50}
             />
+          ) : (
+            <Skeleton className="w-[140px] h-[70px] rounded-lg" />
           )}
         </Link>
 
         {/* Center: Navigation Links */}
         <nav className="hidden sm:flex gap-8 items-center">
-          <Link
-            href="/"
-            className={cn(
-              "flex items-center gap-2 text-lg transition hover:opacity-80",
-              pathname === "/" && "underline underline-offset-4"
-            )}
-          >
-            <House className="size-5" />
-            Home
-          </Link>
+          {mounted ? (
+            <>
+              <Link
+                href="/"
+                className={cn(
+                  "flex items-center gap-2 text-lg transition hover:opacity-80",
+                  pathname === "/" && "underline underline-offset-4"
+                )}
+              >
+                <House className="size-5" />
+                Home
+              </Link>
 
-          <Link
-            href="/courses"
-            className={cn(
-              "flex items-center gap-2 text-lg transition hover:opacity-80",
-              pathname === "/courses" && "underline underline-offset-4"
-            )}
-          >
-            <Landmark className="size-5" />
-            Courses
-          </Link>
+              <Link
+                href="/courses"
+                className={cn(
+                  "flex items-center gap-2 text-lg transition hover:opacity-80",
+                  pathname === "/courses" && "underline underline-offset-4"
+                )}
+              >
+                <Landmark className="size-5" />
+                Courses
+              </Link>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <Skeleton className="w-4 h-4 rounded" />
+                <Skeleton className="w-14 h-5 rounded" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="w-4 h-4 rounded" />
+                <Skeleton className="w-20 h-5 rounded" />
+              </div>
+            </>
+          )}
         </nav>
 
         {/* Right: Premium Button/Badge, Theme Toggle, Avatar */}
@@ -238,56 +259,64 @@ const Navbar = () => {
           )}
 
           {/* Theme Toggle */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="relative">
-                <Sun className="absolute h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-                <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-                <span className="sr-only">Toggle theme</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setTheme("light")}>
-                Light
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")}>
-                Dark
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {mounted ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="relative">
+                  <Sun className="absolute h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+                  <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+                  <span className="sr-only">Toggle theme</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setTheme("light")}>
+                  Light
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                  Dark
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Skeleton className="w-9 h-9 rounded-lg" />
+          )}
 
           {/* Avatar */}
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Avatar className="hidden sm:block">
-                <AvatarImage src={user?.imageUrl} />
-                <AvatarFallback>FF</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <Link href="/profile">
-                <DropdownMenuLabel className="flex items-start gap-1">
-                  <User className="size-4" />
-                  Profile
-                </DropdownMenuLabel>
-              </Link>
-              <DropdownMenuSeparator />
-              <Link href="/subscription">
-                {" "}
-                <DropdownMenuItem className="flex items-start gap-1">
-                  <Wallet className="size-4" />
-                  Billing
+          {mounted ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Avatar className="hidden sm:block">
+                  <AvatarImage src={user?.imageUrl} />
+                  <AvatarFallback>FF</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <Link href="/profile">
+                  <DropdownMenuLabel className="flex items-start gap-1">
+                    <User className="size-4" />
+                    Profile
+                  </DropdownMenuLabel>
+                </Link>
+                <DropdownMenuSeparator />
+                <Link href="/subscription">
+                  {" "}
+                  <DropdownMenuItem className="flex items-start gap-1">
+                    <Wallet className="size-4" />
+                    Billing
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuItem
+                  className="flex items-start gap-1 text-red-700"
+                  onClick={() => signOut()}
+                >
+                  <LogOut className="size-4 text-red-700" />
+                  Sign out
                 </DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem
-                className="flex items-start gap-1 text-red-700"
-                onClick={() => signOut()}
-              >
-                <LogOut className="size-4 text-red-700" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Skeleton className="w-9 h-9 rounded-full" />
+          )}
         </div>
       </div>
     </header>

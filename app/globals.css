@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Facebook-style shimmer animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -469,3 +479,4 @@ body {
   font-style: italic;
   color: #6b7280;
 }
+ 

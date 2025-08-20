@@ -191,9 +191,9 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
                         onClick={async () => {
                           if (step.unlocked && !comingSoon) {
                             setLoadingIndex(index);
-                            setTimeout(() => {
-                              router.push(`/courses/${step.courseSlug}/${step.sectionSlug.trim()}`);
-                            }, 200);
+                            // Keep loading until navigation starts
+                            router.push(`/courses/${step.courseSlug}/${step.sectionSlug.trim()}`);
+                            // Don't reset loadingIndex here - let it continue until page changes
                           }
                         }}
                       >

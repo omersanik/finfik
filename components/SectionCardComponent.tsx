@@ -117,8 +117,9 @@ const SectionCardComponent = ({
       setLoading(false);
       return;
     }
-    setLoading(false);
-    router.push(`/courses/${slug}`);
+      // Keep loading until navigation starts
+      router.push(`/courses/${slug}`);
+      // Don't set loading to false here - let it continue until page changes
   };
 
   return (

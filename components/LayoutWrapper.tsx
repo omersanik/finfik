@@ -3,7 +3,8 @@
 import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
 import NavbarSkeleton from "./skeletons/NavbarSkeleton";
-import { SignedIn } from "@clerk/nextjs";
+import { SignedIn, useAuth } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
 
 export default function LayoutWrapper({
   children,
@@ -11,17 +12,33 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { isLoaded, isSignedIn } = useAuth();
+  const [showNavbar, setShowNavbar] = useState(false);
+  
   const hideNavbar =
     pathname === "/sign-in" ||
     pathname === "/sign-up" ||
     /^\/courses\/[^\/]+\/[^\/]+$/.test(pathname);
 
+  // Show navbar skeleton immediately, then real navbar when auth is loaded
+  useEffect(() => {
+    if (isLoaded) {
+      setShowNavbar(true);
+    }
+  }, [isLoaded]);
+
   return (
     <>
       {!hideNavbar && (
-        <SignedIn>
-          <Navbar />
-        </SignedIn>
+        <>
+          {!showNavbar ? (
+            <NavbarSkeleton />
+          ) : (
+            <SignedIn>
+              <Navbar />
+            </SignedIn>
+          )}
+        </>
       )}
       {children}
     </>

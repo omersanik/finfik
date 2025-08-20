@@ -97,19 +97,26 @@ const MainCardComponent = ({
   const handleStart = async () => {
     setLoading(true);
 
-    const res = await fetch("/api/progress/start-course", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ course_id: courseId }),
-    });
+    try {
+      const res = await fetch("/api/progress/start-course", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ course_id: courseId }),
+      });
 
-    setLoading(false);
-
-    if (res.ok) {
-      router.push(`/courses/${slug}`);
-    } else {
-      const errText = await res.text();
-      alert("Failed to start course: " + errText);
+      if (res.ok) {
+        // Keep loading until navigation starts
+        router.push(`/courses/${slug}`);
+        // Don't set loading to false here - let it continue until page changes
+      } else {
+        const errText = await res.text();
+        alert("Failed to start course: " + errText);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Failed to start course", err);
+      alert("Error starting course: " + err);
+      setLoading(false);
     }
   };
 
@@ -146,8 +153,9 @@ const MainCardComponent = ({
       setLoading(false);
       return;
     }
-    setLoading(false);
-    router.push(`/courses/${slug}`);
+      // Keep loading until navigation starts
+      router.push(`/courses/${slug}`);
+      // Don't set loading to false here - let it continue until page changes
   };
 
   return (

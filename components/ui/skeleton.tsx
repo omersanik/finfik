@@ -5,7 +5,7 @@ interface SkeletonProps extends React.ComponentProps<"div"> {
 }
 
 function Skeleton({ className, variant = "default", ...props }: SkeletonProps) {
-  const baseClasses = "animate-pulse bg-emerald-200 dark:bg-emerald-800"
+  const baseClasses = "relative overflow-hidden bg-gray-200 dark:bg-gray-700"
   
   const variantClasses = {
     default: "rounded-md",
@@ -18,7 +18,10 @@ function Skeleton({ className, variant = "default", ...props }: SkeletonProps) {
       data-slot="skeleton"
       className={cn(baseClasses, variantClasses[variant], className)}
       {...props}
-    />
+    >
+      {/* Facebook-style shimmer effect */}
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_1s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" style={{ width: '200%' }} />
+    </div>
   )
 }
 
