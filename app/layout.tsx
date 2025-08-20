@@ -9,6 +9,8 @@ import LayoutWrapper from "@/components/LayoutWrapper";
 import PageLoading from "@/components/PageLoading";
 import Providers from "./providers";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
+import ImagePerformanceMonitor from "@/components/ImagePerformanceMonitor";
+import ImagePerformanceTracker from "@/components/ImagePerformanceTracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,7 +49,9 @@ export default function RootLayout({
                 duration={3000}
               />
             </ThemeProvider>
-            <PerformanceMonitor />
+                    <PerformanceMonitor />
+        <ImagePerformanceMonitor />
+        <ImagePerformanceTracker />
           </Providers>
         </body>
       </html>

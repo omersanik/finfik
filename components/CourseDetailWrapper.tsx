@@ -29,10 +29,10 @@ export default function CourseDetailWrapper({ initialData }: CourseDetailWrapper
   const [data, setData] = useState(initialData);
 
   useEffect(() => {
-    // Show skeleton briefly for better UX
+    // Show skeleton for a very brief moment for smooth transition
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 300);
+    }, 50); // Super fast - only 50ms delay!
 
     return () => clearTimeout(timer);
   }, []);

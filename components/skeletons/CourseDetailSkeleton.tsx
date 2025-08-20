@@ -12,37 +12,9 @@ export default function CourseDetailSkeleton() {
             </div>
           </div>
 
-          {/* Learning Path - Right Side */}
+          {/* Learning Path - Right Side - NO SKELETON */}
           <div className="flex-1 min-w-0">
-            {/* Header */}
-            <div className="mb-6">
-              <Skeleton className="w-64 h-8 rounded mb-4" />
-              <Skeleton className="w-full h-4 rounded mb-2" />
-              <Skeleton className="w-3/4 h-4 rounded" />
-            </div>
-
-            {/* Learning Path Steps */}
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-start gap-4 p-4 border rounded-lg">
-                  {/* Step Number */}
-                  <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
-                  
-                  {/* Step Content */}
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="w-48 h-5 rounded" />
-                    <Skeleton className="w-full h-4 rounded" />
-                    <div className="flex gap-2">
-                      <Skeleton className="w-20 h-6 rounded-full" />
-                      <Skeleton className="w-24 h-6 rounded-full" />
-                    </div>
-                  </div>
-                  
-                  {/* Status */}
-                  <Skeleton className="w-16 h-6 rounded-full" />
-                </div>
-              ))}
-            </div>
+            {/* Empty space - no skeleton here for instant loading */}
           </div>
         </div>
       </div>

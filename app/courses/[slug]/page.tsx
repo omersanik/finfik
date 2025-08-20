@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import CourseDetailWrapper from "@/components/CourseDetailWrapper";
+import FastCourseLoader from "@/components/FastCourseLoader";
 
 interface CoursePageProps {
   params: Promise<{ slug: string }>;
@@ -49,14 +50,19 @@ export default async function CoursePage({ params }: CoursePageProps) {
 
   console.log("Slug received:", slug);
 
-  // Pass data to the client-side wrapper
+  // Pass data to the client-side wrapper with instant loading
   return (
-    <CourseDetailWrapper
-      initialData={{
-        path,
-        courseInfo,
-        slug,
-      }}
-    />
+    <>
+      {/* Show skeleton immediately for instant loading feel */}
+      <FastCourseLoader />
+      
+      <CourseDetailWrapper
+        initialData={{
+          path,
+          courseInfo,
+          slug,
+        }}
+      />
+    </>
   );
 }

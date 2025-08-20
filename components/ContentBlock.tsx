@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, Suspense } from "react";
-import Image from "next/image";
+import UltraFastImage from "./optimized/UltraFastImage";
 import LoadingAnimation from "./LoadingAnimation";
 import MathFormulaRenderer from "./MathFormulaRenderer";
 import ChartRenderer from "./ChartRenderer";
@@ -423,22 +423,21 @@ const ContentBlockComponent = ({
         return (
           <div key={item.id} className="mb-1">
             <div className="relative w-full max-w-sm mx-auto">
-              <Image
-                src={imageUrl}
-                alt="Course content"
-                width={350}
-                height={250}
-                className="w-full"
-                style={{ width: "100%", height: "auto" }}
-                priority={false}
-                onError={(e) => {
-                  console.log("IMAGE ERROR:", {
-                    failedUrl: e.currentTarget.src,
-                    itemId: item.id
-                  });
-                  e.currentTarget.src = "/placeholder-image.jpg";
-                }}
-              />
+                          <UltraFastImage
+              src={imageUrl}
+              alt="Course content image"
+              width={350}
+              height={250}
+              className="w-full object-cover rounded-lg"
+              priority={false}
+              sizes="(max-width: 768px) 100vw, 350px"
+              onError={() => {
+                console.log("IMAGE ERROR:", {
+                  failedUrl: imageUrl,
+                  itemId: item.id
+                });
+              }}
+            />
             </div>
           </div>
         );

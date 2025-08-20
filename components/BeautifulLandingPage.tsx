@@ -204,6 +204,7 @@ const BeautifulLandingPage = () => {
               alt="Finfik Logo"
               width={128}
               height={48}
+              priority={true}
               className="object-contain transition-transform group-hover:scale-110"
             />
           </div>
@@ -671,6 +672,8 @@ const BeautifulLandingPage = () => {
                 alt="Finfik Logo"
                 width={96}
                 height={32}
+                priority={false}
+                loading="lazy"
                 className="object-contain"
               />
             </div>

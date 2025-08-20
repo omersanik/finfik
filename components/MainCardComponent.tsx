@@ -149,13 +149,10 @@ const MainCardComponent = ({
   const handleContinue = async () => {
     setButtonLoading(true);
     
-    // Small delay to show button loading state briefly
-    setTimeout(() => {
-      // Navigate to course page
-      router.push(`/courses/${slug}`);
-    }, 200);
+    // Navigate IMMEDIATELY for instant response
+    router.push(`/courses/${slug}`);
     
-    // Update last_accessed in the background (fire and forget)
+    // Update last_accessed in background (fire and forget)
     try {
       const token = await getToken();
       if (token) {
@@ -177,6 +174,14 @@ const MainCardComponent = ({
 
   return (
     <main className="flex">
+      {/* Hidden preload link for instant course page loading */}
+      <Link 
+        href={`/courses/${slug}`} 
+        prefetch={true}
+        className="hidden"
+        aria-hidden="true"
+      />
+      
       <Card className="w-full max-w-lg shadow-2xl relative">
         {courseLevel && (
           <div className="absolute top-4 right-4 z-10">
@@ -204,12 +209,16 @@ const MainCardComponent = ({
         </CardHeader>
         <div className="flex justify-center">
           <Image
-                            src={thumbnail && typeof thumbnail === "string" && thumbnail.trim() !== "" ? getThumbnailUrl(thumbnail) : "/fallback-image.png"}
-            alt="thumbnailimage"
+            src={thumbnail && typeof thumbnail === "string" && thumbnail.trim() !== "" ? getThumbnailUrl(thumbnail) : "/fallback-image.png"}
+            alt={`${title} course thumbnail`}
             width={250}
             height={250}
-            style={{ width: 250, height: 250, objectFit: "cover" }}
-            className="rounded-lg"
+            priority={false}
+            loading="lazy"
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+            sizes="(max-width: 768px) 100vw, 250px"
+            className="rounded-lg object-cover"
           />
         </div>
         <CardContent>
@@ -246,7 +255,18 @@ const MainCardComponent = ({
               Loading...
             </Button>
           ) : enrolled ? (
-            <Button className="w-full" onClick={handleContinue} disabled={buttonLoading}>
+            <Button 
+              className="w-full" 
+              onClick={handleContinue} 
+              disabled={buttonLoading}
+              onMouseEnter={() => {
+                // Preload course data on hover for instant loading
+                if (!buttonLoading) {
+                  fetch(`/api/courses/${slug}`, { method: 'HEAD' });
+                  fetch(`/api/courses/${slug}/path`, { method: 'HEAD' });
+                }
+              }}
+            >
               {buttonLoading ? (
                 <span className="flex items-center gap-2 justify-center">
                   <Loader2 className="animate-spin h-4 w-4" />
