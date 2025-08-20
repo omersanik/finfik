@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { CreateSupabaseClient } from "@/supabase-client";
+import { createSupabaseServerClient } from "@/supabase-client";
 
 function getLast7Days() {
   const today = new Date();
@@ -8,7 +8,7 @@ function getLast7Days() {
 
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
-    date.setUTCDate(today.getUTCDate() - i);
+    date.setDate(today.getDate() - i); // Use local date instead of UTC
     last7Days.push(date);
   }
 
@@ -20,7 +20,7 @@ export async function GET() {
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const supabase = CreateSupabaseClient();
+  const supabase = await createSupabaseServerClient();
 
   // Get streak info
   const { data: streakData, error: streakError } = await supabase
@@ -140,15 +140,38 @@ export async function GET() {
   // Calculate current streak based on consecutive days
   let currentStreak = 0;
   if (week.length > 0) {
-    // Count consecutive days from today backwards
+    // Find the most recent completion and count backwards
+    let lastCompletionIndex = -1;
+    
+    // Find the last day with completion
     for (let i = week.length - 1; i >= 0; i--) {
       if (week[i]) {
-        currentStreak++;
-      } else {
-        break; // Stop counting when we hit a day without completion
+        lastCompletionIndex = i;
+        break;
+      }
+    }
+    
+    console.log("Last completion index:", lastCompletionIndex);
+    console.log("Week array with day labels:", week.map((completed, index) => {
+      const dayNames = ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'];
+      return `${dayNames[index]}: ${completed ? '✅' : '❌'}`;
+    }));
+    
+    if (lastCompletionIndex !== -1) {
+      // Count consecutive days from the last completion backwards
+      for (let i = lastCompletionIndex; i >= 0; i--) {
+        if (week[i]) {
+          currentStreak++;
+          console.log(`Day ${i} completed, streak now: ${currentStreak}`);
+        } else {
+          console.log(`Day ${i} missed, breaking streak`);
+          break; // Stop counting when we hit a day without completion
+        }
       }
     }
   }
+  
+  console.log("Final current streak:", currentStreak);
 
   // Get the most recent completion date
   let lastCompletedDate = null;

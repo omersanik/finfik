@@ -1,4 +1,4 @@
-import { CreateSupabaseClient } from "@/supabase-client";
+import { createSupabaseServerClient } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -9,7 +9,7 @@ export async function GET() {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
-  const supabase = CreateSupabaseClient();
+  const supabase = await createSupabaseServerClient();
   const { data: user, error } = await supabase
     .from("users")
     .select("is_premium, subscription_plan")
@@ -49,7 +49,7 @@ export async function PATCH(req: Request) {
   if (!userId) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
-  const supabase = CreateSupabaseClient();
+  const supabase = await createSupabaseServerClient();
   const body = await req.json();
   const { is_premium } = body;
   if (is_premium === false) {

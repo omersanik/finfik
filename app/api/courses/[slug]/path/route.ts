@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { CreateSupabaseClient } from "@/supabase-client";
+import { createSupabaseServerClient } from "@/supabase-client";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  console.log("[API] Course path route called with params:", params);
+  
   // Await params first
   const { slug } = await params;
+  
+  console.log("[API] Slug:", slug);
 
   // 1. Authenticate user
   const { userId } = await auth();
@@ -16,7 +20,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized: No userId" }, { status: 401 });
   }
 
-  const supabase = CreateSupabaseClient();
+  const supabase = await createSupabaseServerClient();
 
   // 2. Get user info from your DB to retrieve clerk_id and verify user exists
   const { data: user, error: userError } = await supabase
@@ -53,7 +57,7 @@ export async function GET(
     );
   }
 
-  // 5. Fetch course_path with sections and progress filtered by user
+  // 5. Fetch course_path with sections and progress using proper join syntax
   const { data: coursePath, error: coursePathError } = await supabase
     .from("course_path")
     .select(
@@ -96,7 +100,7 @@ export async function GET(
         description: section.description,
         slug: section.slug,
         completed: progress?.completed || false,
-        unlocked: progress?.unlocked || false,
+        unlocked: progress?.unlocked || true,
       };
     })
     .sort((a, b) => a.order - b.order);
