@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import Stripe from "stripe";
-import { CreateSupabaseClient } from "@/supabase-client";
+import { createSupabaseServerClient } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    const supabase = CreateSupabaseClient();
+    const supabase = await createSupabaseServerClient();
     
     // Get user's subscription ID
     const { data: user, error: fetchError } = await supabase
@@ -25,29 +25,52 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: "No active subscription found" }), { status: 400 });
     }
 
+    console.log('Creating customer portal for user:', userId, 'subscription:', user.subscription_id);
+
     // Get the subscription to find the customer ID
     const subscription = await stripe.subscriptions.retrieve(user.subscription_id);
     const customerId = subscription.customer as string;
+    
+    console.log('Found customer ID:', customerId);
+
+    // Check if we have the required environment variables
+    const returnUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    console.log('Return URL:', returnUrl);
 
     // Create a customer portal session
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/subscription?portal=1`,
+      return_url: `${returnUrl}/subscription?portal=1`,
     });
 
+    console.log('Customer portal session created successfully');
     return new Response(JSON.stringify({ url: session.url }), { status: 200 });
+    
   } catch (error: any) {
     console.error("Customer portal error:", error);
     
-    // Check if it's a configuration error
-    if (error.type === 'StripeInvalidRequestError' && error.message.includes('configuration')) {
+    // Check for specific Stripe errors
+    if (error.type === 'StripeInvalidRequestError') {
+      if (error.message.includes('configuration')) {
+        return new Response(JSON.stringify({ 
+          error: "Customer portal not configured in Stripe. Please contact support to set up subscription management." 
+        }), { status: 500 });
+      }
+      if (error.message.includes('customer')) {
+        return new Response(JSON.stringify({ 
+          error: "Invalid customer ID. Please contact support." 
+        }), { status: 500 });
+      }
+    }
+    
+    if (error.type === 'StripeAuthenticationError') {
       return new Response(JSON.stringify({ 
-        error: "Customer portal not configured. Please contact support to set up subscription management." 
+        error: "Stripe authentication failed. Please check your API keys." 
       }), { status: 500 });
     }
     
     return new Response(JSON.stringify({ 
-      error: "Failed to open customer portal. Please try again or contact support." 
+      error: `Failed to open customer portal: ${error.message || 'Unknown error'}` 
     }), { status: 500 });
   }
 } 

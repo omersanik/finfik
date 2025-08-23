@@ -139,34 +139,20 @@ export async function GET() {
 
   // Calculate current streak based on consecutive days
   let currentStreak = 0;
+  
+  // The streak should count consecutive days from today backwards
+  // until we hit a day without completion
   if (week.length > 0) {
-    // Find the most recent completion and count backwards
-    let lastCompletionIndex = -1;
-    
-    // Find the last day with completion
+    // Start from today (last day in the array) and count backwards
     for (let i = week.length - 1; i >= 0; i--) {
       if (week[i]) {
-        lastCompletionIndex = i;
+        // This day has a completion, increment streak
+        currentStreak++;
+        console.log(`Day ${i} completed, streak now: ${currentStreak}`);
+      } else {
+        // This day has no completion, streak breaks here
+        console.log(`Day ${i} missed, streak breaks at ${currentStreak}`);
         break;
-      }
-    }
-    
-    console.log("Last completion index:", lastCompletionIndex);
-    console.log("Week array with day labels:", week.map((completed, index) => {
-      const dayNames = ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'];
-      return `${dayNames[index]}: ${completed ? '✅' : '❌'}`;
-    }));
-    
-    if (lastCompletionIndex !== -1) {
-      // Count consecutive days from the last completion backwards
-      for (let i = lastCompletionIndex; i >= 0; i--) {
-        if (week[i]) {
-          currentStreak++;
-          console.log(`Day ${i} completed, streak now: ${currentStreak}`);
-        } else {
-          console.log(`Day ${i} missed, breaking streak`);
-          break; // Stop counting when we hit a day without completion
-        }
       }
     }
   }

@@ -59,6 +59,7 @@
     "@tiptap/extension-underline": "^3.0.7",
     "@tiptap/react": "^3.0.7",
     "@tiptap/starter-kit": "^3.0.7",
+    "browser-image-compression": "^2.0.2",
     "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -61,30 +61,16 @@ export default async function SectionPage({
   }
 
   // If course is premium, check if user is premium
-  let debugInfo = null;
   if (course.is_premium_course) {
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("is_premium")
       .eq("clerk_id", userId)
       .single();
+    
     if (userError || !user || !user.is_premium) {
-      debugInfo = (
-        <Alert variant="destructive" className="max-w-xl mx-auto mt-8">
-          <AlertTitle>Premium Access Restriction</AlertTitle>
-          <AlertDescription>
-            <div className="space-y-1">
-              <div><b>course.is_premium_course:</b> {String(course.is_premium_course)}</div>
-              <div><b>userId (clerk_id):</b> {userId}</div>
-              <div><b>user:</b> {user ? JSON.stringify(user) : 'null'}</div>
-              <div><b>userError:</b> {userError ? userError.message : 'none'}</div>
-              <div className="text-xs text-muted-foreground mt-2">If you see this, you should be redirected to <span className="font-mono">/subscription</span>. If not, check your Supabase users table for a row with this clerk_id and is_premium=false.</div>
-            </div>
-          </AlertDescription>
-        </Alert>
-      );
-      // Comment out the redirect for debugging
-      // redirect("/subscription");
+      // User is not premium, redirect to subscription page
+      redirect("/subscription");
     }
   }
 
@@ -192,7 +178,6 @@ export default async function SectionPage({
 
   return (
     <>
-      {debugInfo}
       <SectionClient
         section={section}
         coursePathId={section.course_path_id}

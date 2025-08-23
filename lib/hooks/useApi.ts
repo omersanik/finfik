@@ -24,6 +24,7 @@ const apiFetch = async (endpoint: string, options?: RequestInit, token?: string)
 
   // Check if response is JSON or text
   const contentType = response.headers.get('content-type');
+  
   if (contentType && contentType.includes('application/json')) {
     return response.json();
   } else {
@@ -45,14 +46,19 @@ export const useCourses = () => {
 // Custom hook for user premium status
 export const usePremiumStatus = (userId?: string, token?: string) => {
   return useQuery({
-    queryKey: ['premium-status', userId],
+    queryKey: ['premium-status', userId, token], // Include token in query key for better cache invalidation
     queryFn: async () => {
-      if (!userId) return { is_premium: false };
-      return apiFetch('/api/users/premium-users', undefined, token);
+      if (!userId) {
+        return { is_premium: false };
+      }
+      const result = await apiFetch('/api/users/premium-users', undefined, token);
+      return result;
     },
     enabled: !!userId && !!token,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 };
 

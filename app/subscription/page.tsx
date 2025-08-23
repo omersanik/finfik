@@ -187,7 +187,7 @@ function SubscriptionContent() {
       const data = await res.json();
       if (!res.ok) {
         if (data.error && data.error.includes("not configured")) {
-          setError("Subscription management portal is not available yet. You can cancel your subscription using the 'Cancel Subscription' button below.");
+          setError("Subscription management portal is not available yet. You can manage your subscription using the options below:");
         } else {
           throw new Error(data.error || "Failed to open customer portal.");
         }
@@ -321,12 +321,26 @@ function SubscriptionContent() {
           <AlertDescription>{stripeMsg}</AlertDescription>
         </Alert>
       )}
-      {error && (
-        <Alert variant="destructive" className="mb-4 w-full max-w-lg">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <div className="space-y-6">
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              {error}
+              {error.includes("not available yet") && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-sm font-medium">Alternative options:</p>
+                  <ul className="text-sm space-y-1 ml-4">
+                    <li>• <strong>Cancel Subscription:</strong> Use the "Switch to Free" button below</li>
+                    <li>• <strong>Contact Support:</strong> Email support for subscription changes</li>
+                    <li>• <strong>Stripe Dashboard:</strong> Manage directly in your Stripe account</li>
+                  </ul>
+                </div>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
       <div className="flex flex-col md:flex-row gap-6 w-full max-w-4xl justify-center">
         {plansWithStatus.map((plan) => (
           <Card

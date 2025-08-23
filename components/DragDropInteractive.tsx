@@ -1,23 +1,26 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, RotateCcw, Sparkles, Target } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, XCircle, RotateCcw, Sparkles, Target, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import {
   DndContext,
   DragEndEvent,
+  DragOverlay,
   DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  rectIntersection,
   useDroppable,
-  DragOverlay,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -43,12 +46,15 @@ interface DragDropInteractiveProps {
   completedFromParent?: boolean;
 }
 
-// Sortable Item Component
-function SortableItem({ item, isChecking, shakingItems, onDragStart }: { 
+// Draggable Item Component using @dnd-kit
+function DraggableItem({ 
+  item, 
+  isChecking, 
+  shakingItems 
+}: { 
   item: DragItem; 
   isChecking: boolean;
   shakingItems: Set<string>;
-  onDragStart?: (item: DragItem, element: HTMLElement) => void;
 }) {
   const {
     attributes,
@@ -62,12 +68,7 @@ function SortableItem({ item, isChecking, shakingItems, onDragStart }: {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (onDragStart && e.currentTarget) {
-      onDragStart(item, e.currentTarget as HTMLElement);
-    }
+    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
@@ -76,68 +77,72 @@ function SortableItem({ item, isChecking, shakingItems, onDragStart }: {
       style={style}
       {...attributes}
       {...listeners}
-      onMouseDown={handleMouseDown}
-      className={`px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium flex items-center justify-center ${
-        isDragging ? 'opacity-0' : ''
-      } ${
+      className={`px-2 py-1.5 rounded-md cursor-move transition-all duration-200 text-xs font-medium flex items-center justify-between shadow-sm border ${
         shakingItems.has(item.id)
-          ? 'animate-shake bg-destructive/10 text-destructive'
+          ? 'animate-shake bg-destructive/10 text-destructive border-destructive/20'
           : isChecking
           ? item.isCorrect
-            ? 'bg-green-100 text-green-800'
-            : 'bg-destructive/10 text-destructive'
-          : 'bg-white text-foreground border border-slate-200 hover:border-slate-300'
+            ? 'bg-green-50 text-green-800 border-green-200 shadow-green-100'
+            : 'bg-destructive/10 text-destructive border-destructive/200'
+          : 'bg-white text-foreground border-slate-200 hover:border-slate-300 hover:bg-slate-50'
       }`}
     >
-      {item.text}
+      <span className="flex-1 text-xs">{item.text}</span>
       {isChecking ? (
         item.isCorrect ? (
-          <CheckCircle className="h-3 w-3 text-green-600 ml-1" />
+          <CheckCircle className="h-3 w-3 text-green-600 ml-1 flex-shrink-0" />
         ) : (
-          <XCircle className="h-3 w-3 text-destructive ml-1" />
+          <XCircle className="h-3 w-3 text-destructive ml-1 flex-shrink-0" />
         )
       ) : (
-        <span className="w-3 h-3 ml-1"></span>
+        <div className="w-3 h-3 ml-1 flex-shrink-0 opacity-30">
+          <Target className="w-full h-full" />
+        </div>
       )}
     </div>
   );
 }
 
 // Droppable Category Component
-function DroppableCategory({ category, children }: { 
+function DroppableCategory({ 
+  category, 
+  children, 
+  itemCount, 
+  categoryIndex,
+  items
+}: { 
   category: string; 
   children: React.ReactNode;
+  itemCount: number;
+  categoryIndex: number;
+  items: DragItem[];
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: category,
   });
 
+  const isRedFlags = category.toLowerCase().includes('red') || 
+                    (category.toLowerCase().includes('flag') && categoryIndex === 0);
+  const isGreenFlags = category.toLowerCase().includes('green') || 
+                      (category.toLowerCase().includes('flag') && categoryIndex === 1);
+
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[50px] p-3 rounded-lg transition-all duration-300 ${
-        isOver ? 'bg-blue-100 border-blue-300' : ''
+      className={`min-h-[120px] p-6 rounded-lg transition-all duration-200 border-2 ${
+        isOver
+          ? 'ring-4 ring-blue-500 ring-opacity-80 bg-blue-100 border-blue-400 scale-105'
+          : itemCount > 0
+          ? isRedFlags
+            ? 'bg-red-50 border-red-200 shadow-sm hover:border-red-300 hover:bg-red-100'
+            : isGreenFlags
+              ? 'bg-green-50 border-green-200 shadow-sm hover:border-green-300 hover:bg-green-100'
+              : 'bg-blue-50 border-blue-200 shadow-sm hover:border-blue-300 hover:bg-blue-100'
+          : 'bg-slate-50 border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-100 hover:scale-105'
       }`}
+      data-category={category}
     >
       {children}
-    </div>
-  );
-}
-
-// Drag Overlay Component with exact same styling
-function DragOverlayItem({ item, dimensions }: { item: DragItem; dimensions?: { width: number; height: number } }) {
-  return (
-    <div 
-      className="px-1 py-0.5 rounded cursor-move transition-all duration-300 text-xs font-medium bg-white text-foreground border border-slate-200 shadow-lg flex items-center justify-center"
-      style={{ 
-        width: dimensions?.width ? `${dimensions.width}px` : 'auto',
-        height: dimensions?.height ? `${dimensions.height}px` : 'auto',
-        transform: 'rotate(5deg)',
-        zIndex: 9999
-      }}
-    >
-      {item.text}
-      <span className="w-3 h-3 ml-1"></span>
     </div>
   );
 }
@@ -148,258 +153,395 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
   const [isChecking, setIsChecking] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [allCorrect, setAllCorrect] = useState(false);
-  const [allItemsDropped, setAllItemsDropped] = useState(false);
-  const [activeItem, setActiveItem] = useState<DragItem | null>(null);
   const [shakingItems, setShakingItems] = useState<Set<string>>(new Set());
-  const [dragDimensions, setDragDimensions] = useState<{ width: number; height: number } | undefined>();
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 1, // Super easy to start dragging
       },
     })
   );
 
+  // Initialize items and categories
   useEffect(() => {
     if (items.length === 0 && !completedFromParent) {
-      setItems(data.items.map((item, index) => ({
-        ...item,
-        id: `item-${index}`,
-        currentCategory: undefined,
-        isCorrect: undefined
-      })));
+      const shuffledItems = [...data.items]
+        .map((item, index) => ({
+          ...item,
+          id: `item-${index}`,
+          currentCategory: undefined,
+          isCorrect: undefined
+        }))
+        .sort(() => Math.random() - 0.5);
+      
+      setItems(shuffledItems);
       setCategories(data.categories);
     }
   }, [data, completedFromParent]);
 
   const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const draggedItem = items.find(item => item.id === active.id);
-    setActiveItem(draggedItem || null);
-  };
-
-  const handleItemDragStart = (item: DragItem, element: HTMLElement) => {
-    const rect = element.getBoundingClientRect();
-    setDragDimensions({
-      width: rect.width,
-      height: rect.height
-    });
+    setActiveId(event.active.id as string);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
-    setActiveItem(null);
-    setDragDimensions(undefined);
+    setActiveId(null);
 
-    if (!over) return;
+    console.log('=== DRAG END DEBUG ===');
+    console.log('Drag end event:', { active: active.id, over: over?.id });
+    console.log('Current items state:', items);
+    console.log('Available items count:', getAvailableItems().length);
+    console.log('Categories:', categories);
 
-    const activeItem = items.find(item => item.id === active.id);
-    if (!activeItem) return;
-
-    // Check if dropping on a category
-    if (categories.includes(over.id as string)) {
+    if (over && active.id !== over.id) {
+      const itemId = active.id as string;
       const category = over.id as string;
       
-      setItems(prevItems => 
-        prevItems.map(item => 
-          item.id === active.id 
-            ? { ...item, currentCategory: category }
-            : item
-        )
-      );
-
-      // Check if all items are dropped
-      const updatedItems = items.map(item => 
-        item.id === active.id 
-          ? { ...item, currentCategory: category }
-          : item
-      );
+      console.log('Attempting to move item:', itemId, 'to category:', category);
       
-      const allDropped = updatedItems.every(item => item.currentCategory !== undefined);
-      setAllItemsDropped(allDropped);
-      
-      if (allDropped && onComplete) {
-        onComplete(false);
+      // Check if the target is a category (not an item)
+      if (categories.includes(category)) {
+        setItems(prevItems => {
+          const updatedItems = prevItems.map(item => 
+            item.id === itemId 
+              ? { ...item, currentCategory: category }
+              : item
+          );
+          
+          console.log(`✅ Item moved to category "${category}"`);
+          console.log('Updated items:', updatedItems);
+          console.log('All items dropped:', updatedItems.every(item => item.currentCategory));
+          console.log('Available items after drop:', updatedItems.filter(item => !item.currentCategory));
+          
+          return updatedItems;
+        });
+      } else {
+        console.log('❌ Target is not a valid category:', category);
+        console.log('Valid categories:', categories);
       }
-    }
-  };
-
-  const checkAnswers = () => {
-    setIsChecking(true);
-    
-    const updatedItems = items.map(item => ({
-      ...item,
-      isCorrect: item.currentCategory === item.correctCategory
-    }));
-    
-    setItems(updatedItems);
-    
-    const allItemsCorrect = updatedItems.every(item => item.isCorrect);
-    setAllCorrect(allItemsCorrect);
-    setIsCompleted(true);
-    
-    if (!allItemsCorrect) {
-      const incorrectItems = updatedItems.filter(item => !item.isCorrect);
-      setShakingItems(new Set(incorrectItems.map(item => item.id)));
-      
-      setTimeout(() => {
-        setShakingItems(new Set());
-        setIsChecking(false);
-        setIsCompleted(false);
-        setAllCorrect(false);
-        
-        const resetItems = items.map(item => ({
-          ...item,
-          currentCategory: item.isCorrect ? item.currentCategory : undefined,
-          isCorrect: undefined
-        }));
-        
-        setItems(resetItems);
-      }, 1500);
     } else {
-      if (onComplete) {
-        onComplete(allItemsCorrect);
-      }
+      console.log('❌ No valid drop target or same item');
     }
-    
-    return allItemsCorrect;
-  };
-
-  useEffect(() => {
-    if (window) {
-      (window as any).checkDragDropAnswers = checkAnswers;
-      (window as any).checkDragDropAllDropped = () => {
-        return items.every(item => item.currentCategory !== undefined);
-      };
-    }
-  }, [items]);
-
-  const handleReset = () => {
-    setItems(data.items.map((item, index) => ({
-      ...item,
-      id: `item-${index}`,
-      currentCategory: undefined,
-      isCorrect: undefined
-    })));
-    setIsChecking(false);
-    setIsCompleted(false);
-    setAllCorrect(false);
+    console.log('=== END DRAG END DEBUG ===');
   };
 
   const getItemsInCategory = (category: string) => {
     return items.filter(item => item.currentCategory === category);
   };
 
-  const getUnassignedItems = () => {
+  const getAvailableItems = () => {
     return items.filter(item => !item.currentCategory);
   };
+
+  // Expose functions to parent component
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).getDragDropState = () => ({
+        items,
+        allItemsDropped: items.every(item => item.currentCategory),
+        isChecking,
+        isCompleted
+      });
+      
+      (window as any).checkDragDropAnswers = checkAnswers;
+      (window as any).areAllItemsDropped = () => items.every(item => item.currentCategory);
+      
+      (window as any).debugDragDropItems = () => {
+        console.log('=== DRAG DROP DEBUG ===');
+        console.log('All items:', items);
+        console.log('Available items:', getAvailableItems());
+        console.log('Items in categories:', categories.map(cat => ({
+          category: cat,
+          items: getItemsInCategory(cat)
+        })));
+        console.log('All items dropped:', items.every(item => item.currentCategory));
+        console.log('=======================');
+      };
+
+      // Also expose a function to check if check answer should be enabled
+      (window as any).shouldEnableCheckAnswer = () => {
+        const allDropped = items.every(item => item.currentCategory);
+        console.log('Should enable check answer:', allDropped);
+        console.log('Items status:', items.map(item => ({
+          id: item.id,
+          text: item.text,
+          hasCategory: !!item.currentCategory,
+          category: item.currentCategory
+        })));
+        return allDropped;
+      };
+      
+      // Add a more reliable function for parent components
+      (window as any).getDragDropCompletionStatus = () => {
+        const allDropped = items.every(item => item.currentCategory);
+        const droppedCount = items.filter(item => item.currentCategory).length;
+        const totalCount = items.length;
+        
+        return {
+          allDropped,
+          droppedCount,
+          totalCount,
+          progress: totalCount > 0 ? (droppedCount / totalCount) * 100 : 0,
+          canCheckAnswers: allDropped && !isChecking && !isCompleted
+        };
+      };
+      
+      // Function to manually check answers (for parent component)
+      (window as any).checkDragDropAnswersManually = () => {
+        if (items.every(item => item.currentCategory)) {
+          console.log('Manually checking answers...');
+          checkAnswers();
+        } else {
+          console.log('Cannot check answers - not all items are dropped yet');
+        }
+      };
+      
+      // Simple boolean flag for parent components
+      (window as any).isDragDropReady = items.every(item => item.currentCategory);
+      
+      // Most reliable function for parent components
+      (window as any).canEnableCheckAnswer = () => {
+        const allDropped = items.every(item => item.currentCategory);
+        const notChecking = !isChecking;
+        const notCompleted = !isCompleted;
+        
+        console.log('=== CAN ENABLE CHECK ANSWER ===');
+        console.log('All items dropped:', allDropped);
+        console.log('Not checking:', notChecking);
+        console.log('Not completed:', notCompleted);
+        console.log('Can enable:', allDropped && notChecking && notCompleted);
+        
+        return allDropped && notChecking && notCompleted;
+      };
+      
+      // Function to check answers (this is what the parent should call)
+      (window as any).checkDragDropAnswers = () => {
+        if (items.every(item => item.currentCategory)) {
+          console.log('Checking drag and drop answers...');
+          checkAnswers();
+          return true; // Return true to indicate we're checking
+        } else {
+          console.log('Cannot check answers - not all items are dropped yet');
+          return false;
+        }
+      };
+    }
+  }); // REMOVED DEPENDENCY ARRAY - this was causing the bug!
+
+  // Auto-notify parent when all items are dropped (for easier integration)
+  useEffect(() => {
+    if (items.length > 0 && items.every(item => item.currentCategory) && !isCompleted) {
+      console.log('🎯 All items dropped! Parent can now enable check answer button');
+      // This will help parent components know when to enable the check answer button
+      if (typeof window !== 'undefined') {
+        (window as any).dragDropReadyForCheck = true;
+        
+        // Dispatch a custom event that parent components can listen to
+        const event = new CustomEvent('dragDropReady', {
+          detail: {
+            allItemsDropped: true,
+            itemCount: items.length,
+            categories: categories
+          }
+        });
+        window.dispatchEvent(event);
+      }
+      
+      // IMPORTANT: Call onComplete with false to indicate "ready to check answers" not "completed"
+      // This matches the quiz behavior where onComplete(false) means ready to check
+      onComplete?.(false);
+    }
+  }, [items, isCompleted, categories, onComplete]);
+
+  const checkAnswers = () => {
+    const updatedItems = items.map(item => ({
+      ...item,
+      isCorrect: item.currentCategory === item.correctCategory
+    }));
+    
+    setItems(updatedItems);
+    setIsChecking(true);
+    
+    const correctCount = updatedItems.filter(item => item.isCorrect).length;
+    const allCorrect = correctCount === updatedItems.length;
+    
+    console.log('=== CHECKING ANSWERS ===');
+    console.log('Items and their correctness:', updatedItems.map(item => ({
+      text: item.text,
+      currentCategory: item.currentCategory,
+      correctCategory: item.correctCategory,
+      isCorrect: item.isCorrect
+    })));
+    console.log(`Correct: ${correctCount}/${updatedItems.length}`);
+    console.log('All correct:', allCorrect);
+    
+    if (allCorrect) {
+      console.log('🎉 All answers correct! Calling onComplete(true)...');
+      setAllCorrect(true);
+      setIsCompleted(true);
+      // Call onComplete with true to indicate successful completion
+      onComplete?.(true);
+    } else {
+      console.log('❌ Some answers are wrong! Showing feedback...');
+      const incorrectItems = updatedItems.filter(item => !item.isCorrect);
+      setShakingItems(new Set(incorrectItems.map(item => item.id)));
+      
+      // Reset isChecking after showing feedback
+      setTimeout(() => {
+        setShakingItems(new Set());
+        setIsChecking(false);
+      }, 2000);
+    }
+  };
+
+  const resetGame = () => {
+    const shuffledItems = [...data.items]
+      .map((item, index) => ({
+        ...item,
+        id: `item-${index}`,
+        currentCategory: undefined,
+        isCorrect: undefined
+      }))
+      .sort(() => Math.random() - 0.5);
+    
+    setItems(shuffledItems);
+    setIsChecking(false);
+    setIsCompleted(false);
+    setAllCorrect(false);
+    setShakingItems(new Set());
+  };
+
+  const availableItems = getAvailableItems();
+  const activeItem = activeId ? items.find(item => item.id === activeId) : null;
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={rectIntersection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="max-w-3xl mx-auto p-4">
-        {/* Header Section */}
-        <div className="text-center mb-4">
-          {data.title && (
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Target className="w-4 h-4 text-primary" />
-              <h3 className="text-lg font-semibold text-foreground">
-                {data.title}
-              </h3>
-            </div>
-          )}
-          {data.instructions && (
-            <p className="text-muted-foreground text-sm">{data.instructions}</p>
-          )}
+      <div className="space-y-3">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h2 className="text-lg font-bold text-foreground">{data.title}</h2>
+          <p className="text-muted-foreground text-sm">{data.instructions}</p>
         </div>
 
-        {/* Available Items - Top */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-3 h-3 text-primary" />
-            <span className="text-sm font-medium text-foreground">Available Items</span>
-            <Badge variant="secondary" className="ml-auto text-xs">
-              {getUnassignedItems().length} remaining
-            </Badge>
-          </div>
-          <div className="min-h-[50px] flex flex-wrap gap-1.5 p-2 justify-center">
-            <SortableContext items={getUnassignedItems().map(item => item.id)} strategy={verticalListSortingStrategy}>
-              {getUnassignedItems().map((item) => (
-                <SortableItem 
+        {/* Available Items Section */}
+        <Card className="border border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-blue-600" />
+                <CardTitle className="text-base">Available Items</CardTitle>
+              </div>
+              <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                {availableItems.length} remaining
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {availableItems.map((item) => (
+                <DraggableItem 
                   key={item.id} 
                   item={item} 
                   isChecking={isChecking}
                   shakingItems={shakingItems}
-                  onDragStart={handleItemDragStart}
-                  
                 />
               ))}
-            </SortableContext>
-          </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Categories - Bottom */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          {categories.map((category) => (
-            <div key={category} className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  getItemsInCategory(category).length > 0 ? 'bg-primary' : 'bg-muted-foreground'
-                }`} />
-                <span className="text-sm font-medium text-foreground">{category}</span>
-                {getItemsInCategory(category).length > 0 && (
-                  <Badge variant="outline" className="ml-auto text-xs">
-                    {getItemsInCategory(category).length}
-                  </Badge>
-                )}
-              </div>
-              <DroppableCategory category={category}>
-                <div className={`min-h-[80px] p-3 rounded-lg transition-all duration-300 ${
-                  getItemsInCategory(category).length > 0 
-                    ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200' 
-                    : 'bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300'
-                }`}>
-                  <SortableContext items={getItemsInCategory(category).map(item => item.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-1.5">
-                      {getItemsInCategory(category).map((item) => (
-                        <SortableItem 
+        {/* Categories Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {categories.map((category, index) => {
+            const categoryItems = getItemsInCategory(category);
+            const isRedFlags = category.toLowerCase().includes('red') || 
+                              (category.toLowerCase().includes('flag') && index === 0);
+            const isGreenFlags = category.toLowerCase().includes('green') || 
+                                (category.toLowerCase().includes('flag') && index === 1);
+            
+            return (
+              <Card key={category} className="border border-slate-200">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {isRedFlags ? (
+                        <AlertTriangle className="h-4 w-4 text-red-600" />
+                      ) : isGreenFlags ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Target className="h-4 w-4 text-blue-600" />
+                      )}
+                      <CardTitle className="text-base">{category}</CardTitle>
+                    </div>
+                    {categoryItems.length > 0 && (
+                      <Badge variant="outline" className="text-xs px-2 py-0.5">
+                        {categoryItems.length}
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <DroppableCategory 
+                    category={category} 
+                    itemCount={categoryItems.length} 
+                    categoryIndex={index}
+                    items={categoryItems}
+                  >
+                    <div className="space-y-1">
+                      {categoryItems.map((item) => (
+                        <DraggableItem 
                           key={item.id} 
                           item={item} 
                           isChecking={isChecking}
                           shakingItems={shakingItems}
-                          onDragStart={handleItemDragStart}
                         />
                       ))}
+                      {categoryItems.length === 0 && (
+                        <div className="text-center text-muted-foreground py-8">
+                          <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          <p className="text-base font-semibold">Drop items here</p>
+                          <p className="text-sm opacity-70">Just drag and drop from below</p>
+                        </div>
+                      )}
                     </div>
-                  </SortableContext>
-                </div>
-              </DroppableCategory>
-            </div>
-          ))}
+                  </DroppableCategory>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
-        {/* Reset Button Only */}
+        {/* Reset Button */}
         <div className="flex justify-center">
           <Button 
-            onClick={handleReset}
-            variant="outline"
+            onClick={resetGame} 
+            variant="outline" 
+            className="px-4 py-2 text-sm font-medium gap-2"
             size="sm"
-            className="px-3"
           >
-            <RotateCcw className="w-3 h-3 mr-1" />
+            <RotateCcw className="h-4 w-4" />
             Reset
           </Button>
         </div>
       </div>
 
+      {/* Drag Overlay */}
       <DragOverlay>
-        {activeItem ? <DragOverlayItem item={activeItem} dimensions={dragDimensions} /> : null}
+        {activeItem ? (
+          <div className="px-2 py-1.5 rounded-md bg-white text-foreground border border-slate-300 shadow-lg cursor-move text-xs font-medium flex items-center justify-between opacity-90">
+            <span className="flex-1 text-xs">{activeItem.text}</span>
+            <div className="w-3 h-3 ml-1 flex-shrink-0 opacity-30">
+              <Target className="w-full h-full" />
+            </div>
+          </div>
+        ) : null}
       </DragOverlay>
     </DndContext>
   );

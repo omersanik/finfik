@@ -60,18 +60,29 @@ const Navbar = () => {
     const fetchToken = async () => {
       if (user) {
         try {
+          console.log('Fetching token for user:', user.id);
           const userToken = await getToken();
+          console.log('Token received:', userToken ? 'exists' : 'missing');
           setToken(userToken);
         } catch (error) {
           console.error('Failed to get token:', error);
         }
+      } else {
+        console.log('No user object available');
       }
     };
     fetchToken();
   }, [user, getToken]);
   
-  const { data: premiumData, isLoading: premiumLoading } = usePremiumStatus(user?.id, token || undefined);
+  const { data: premiumData, isLoading: premiumLoading, error: premiumError } = usePremiumStatus(user?.id, token || undefined);
   const isPremiumUser = premiumData?.is_premium || false;
+
+  // Force refresh when component mounts or user changes
+  useEffect(() => {
+    if (user?.id && token) {
+      // Premium status will be fetched automatically by React Query
+    }
+  }, [user?.id, token]);
 
   // Use React Query for streak data
   const { data: streakData, isLoading: streakLoading } = useStreak(user?.id, token || undefined);
@@ -171,17 +182,21 @@ const Navbar = () => {
             </div>
           ) : (
             isPremiumUser ? (
-              <Badge
-                variant="default"
-                className="hidden sm:flex items-center gap-1 px-4 py-2 text-sm font-medium"
-              >
-                <Crown className="size-4" />
-                Premium
-              </Badge>
+              <div className="hidden sm:flex items-center gap-2">
+                <Badge
+                  variant="default"
+                  className="flex items-center gap-1 px-4 py-2 text-sm font-medium"
+                >
+                  <Crown className="size-4" />
+                  Premium
+                </Badge>
+              </div>
             ) : (
-              <Button className="rounded-3xl px-6 text-base hidden sm:block hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg">
-                <Link href="/subscription">Go Premium</Link>
-              </Button>
+              <div className="hidden sm:flex items-center gap-2">
+                <Button className="rounded-3xl px-6 text-base hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg">
+                  <Link href="/subscription">Go Premium</Link>
+                </Button>
+              </div>
             )
           )}
 

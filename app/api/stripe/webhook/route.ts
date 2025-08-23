@@ -33,11 +33,23 @@ export async function POST(req: NextRequest) {
     if (fullSession.line_items && fullSession.line_items.data?.[0]?.price?.id) {
       priceId = fullSession.line_items.data[0].price.id;
     }
+    
+    console.log("Price ID from Stripe:", priceId);
+    console.log("Environment variables:");
+    console.log("  STRIPE_MONTHLY_PRICE_ID:", process.env.STRIPE_MONTHLY_PRICE_ID);
+    console.log("  STRIPE_YEARLY_PRICE_ID:", process.env.STRIPE_YEARLY_PRICE_ID);
+    
     if (priceId === process.env.STRIPE_MONTHLY_PRICE_ID) {
       subscriptionPlan = "monthly";
+      console.log("Matched monthly price ID");
     } else if (priceId === process.env.STRIPE_YEARLY_PRICE_ID) {
       subscriptionPlan = "yearly";
+      console.log("Matched yearly price ID");
+    } else {
+      console.log("Price ID did not match any known plans");
     }
+    
+    console.log("Final subscription plan:", subscriptionPlan);
     console.log("Checkout session completed for userId:", userId, "subscriptionId:", subscriptionId, "plan:", subscriptionPlan);
     if (userId) {
       // First, try to update the user if they exist
