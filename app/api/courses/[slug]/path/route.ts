@@ -100,10 +100,49 @@ export async function GET(
         description: section.description,
         slug: section.slug,
         completed: progress?.completed || false,
-        unlocked: progress?.unlocked || true,
+        unlocked: progress?.unlocked || false, // FIXED: Default to false, not true!
       };
     })
     .sort((a, b) => a.order - b.order);
+
+  // 7. Check if user has any progress for this course - if not, initialize it
+  const hasAnyProgress = sortedSections.some(section => {
+    const progress = (coursePath.course_path_sections || []).find(s => s.id === section.id)?.course_path_section_progress?.find(p => p.clerk_id === user.clerk_id);
+    return progress !== undefined;
+  });
+
+  if (!hasAnyProgress) {
+    console.log(`[API] No progress found for user ${user.clerk_id} in course ${course.id}, initializing...`);
+    
+    // Initialize progress entries for all sections
+    const progressEntries = sortedSections.map(section => ({
+      clerk_id: user.clerk_id,
+      course_path_section_id: section.id,
+      unlocked: section.order === 0, // Only unlock the first section
+      completed: false,
+      quiz_passed: false,
+      completed_at: null,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { error: initError } = await supabase
+      .from("course_path_section_progress")
+      .insert(progressEntries);
+
+    if (initError) {
+      console.error("[API] Error initializing progress:", initError);
+      // Don't fail the request - just log the error
+    } else {
+      console.log(`[API] Progress initialized for user ${user.clerk_id} in course ${course.id}`);
+      
+      // Update the sections to reflect the newly created progress
+      sortedSections.forEach(section => {
+        if (section.order === 0) {
+          section.unlocked = true; // First section is now unlocked
+        }
+      });
+    }
+  }
 
   return NextResponse.json({
     pathId: coursePath.id,
