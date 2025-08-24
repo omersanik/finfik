@@ -137,6 +137,24 @@ export async function GET() {
 
   console.log("Final week array:", week);
 
+  // Get the most recent completion date FIRST (before streak calculation)
+  let lastCompletedDate = null;
+  if (completions && completions.length > 0) {
+    // Sort completions by date and get the most recent
+    const sortedCompletions = completions
+      .filter(c => c.completed_at)
+      .sort((a, b) => {
+        const dateA = a.completed_at.includes("T") ? a.completed_at.split("T")[0] : a.completed_at;
+        const dateB = b.completed_at.includes("T") ? b.completed_at.split("T")[0] : b.completed_at;
+        return dateB.localeCompare(dateA);
+      });
+    
+    if (sortedCompletions.length > 0) {
+      const mostRecent = sortedCompletions[0].completed_at;
+      lastCompletedDate = mostRecent.includes("T") ? mostRecent.split("T")[0] : mostRecent;
+    }
+  }
+
   // Calculate current streak based on consecutive days
   let currentStreak = 0;
   
@@ -157,25 +175,49 @@ export async function GET() {
     }
   }
   
-  console.log("Final current streak:", currentStreak);
-
-  // Get the most recent completion date
-  let lastCompletedDate = null;
-  if (completions && completions.length > 0) {
-    // Sort completions by date and get the most recent
-    const sortedCompletions = completions
-      .filter(c => c.completed_at)
-      .sort((a, b) => {
-        const dateA = a.completed_at.includes("T") ? a.completed_at.split("T")[0] : a.completed_at;
-        const dateB = b.completed_at.includes("T") ? b.completed_at.split("T")[0] : b.completed_at;
-        return dateB.localeCompare(dateA);
-      });
+  // IMPORTANT FIX: If the streak is 0 but we have a recent completion,
+  // we need to check if we're still within the "grace period"
+  // A streak should only reset to 0 if we've actually missed a day
+  if (currentStreak === 0 && lastCompletedDate) {
+    // Create dates in local timezone to avoid timezone issues
+    const today = new Date();
+    const lastCompletion = new Date(lastCompletedDate + 'T00:00:00');
     
-    if (sortedCompletions.length > 0) {
-      const mostRecent = sortedCompletions[0].completed_at;
-      lastCompletedDate = mostRecent.includes("T") ? mostRecent.split("T")[0] : mostRecent;
+    // Reset time to start of day for accurate comparison
+    today.setHours(0, 0, 0, 0);
+    lastCompletion.setHours(0, 0, 0, 0);
+    
+    // Calculate days since last completion
+    const timeDiff = today.getTime() - lastCompletion.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    
+    console.log(`Today: ${today.toISOString().slice(0, 10)}`);
+    console.log(`Last completion: ${lastCompletion.toISOString().slice(0, 10)}`);
+    console.log(`Days since last completion: ${daysDiff}`);
+    console.log(`Time diff in ms: ${timeDiff}`);
+    
+    // If we completed something yesterday (daysDiff = 1), the streak should be 1
+    // If we completed something today (daysDiff = 0), the streak should be 1
+    // Only reset to 0 if we've missed at least 2 days
+    if (daysDiff <= 1) {
+      // We're still within the grace period, streak should be 1
+      currentStreak = 1;
+      console.log(`Within grace period, setting streak to 1`);
     }
   }
+  
+  // ADDITIONAL FALLBACK: If we still have 0 streak but have recent completions,
+  // check the week array more carefully
+  if (currentStreak === 0) {
+    // Check if we have any completions in the last 2 days
+    const hasRecentCompletion = week.slice(-2).some(day => day === true);
+    if (hasRecentCompletion) {
+      currentStreak = 1;
+      console.log(`Fallback: Found recent completion in last 2 days, setting streak to 1`);
+    }
+  }
+  
+  console.log("Final current streak:", currentStreak);
 
   // Calculate longest streak by looking at all completion dates
   const { data: allCompletions, error: allCompletionsError } = await supabase
