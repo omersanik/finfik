@@ -1,12 +1,29 @@
 -- =====================================================
--- PREMIUM COURSE ACCESS POLICIES - CORRECTED
+-- APPLY BETA ROLE PREMIUM ACCESS POLICIES
 -- =====================================================
--- Additional policies for premium course restrictions
--- FIXED: Uses correct table structure (course_id instead of course_path_id)
--- UPDATED: Includes 'beta' role users as having premium access
+-- This script updates the premium course policies to include 'beta' role users
+-- Run this in your Supabase SQL editor
 
 -- =====================================================
--- PREMIUM COURSE CONTENT ACCESS POLICIES
+-- 1. DROP EXISTING PREMIUM POLICIES
+-- =====================================================
+
+-- Drop existing premium content policies
+DROP POLICY IF EXISTS "Users can view content for enrolled or free courses" ON content_item;
+DROP POLICY IF EXISTS "Users can view blocks for enrolled or free courses" ON content_block;
+DROP POLICY IF EXISTS "Users can view sections for enrolled or free courses" ON course_path_sections;
+DROP POLICY IF EXISTS "Users can enroll in free courses or if premium" ON course_enrollments;
+DROP POLICY IF EXISTS "Premium content access control" ON content_item;
+DROP POLICY IF EXISTS "Users can only track enrolled course progress" ON course_path_section_progress;
+DROP POLICY IF EXISTS "Users can view own enrollments" ON course_enrollments;
+DROP POLICY IF EXISTS "Users can manage own enrollments" ON course_enrollments;
+
+-- Drop existing helper functions
+DROP FUNCTION IF EXISTS can_access_course(UUID);
+DROP FUNCTION IF EXISTS is_premium_user();
+
+-- =====================================================
+-- 2. CREATE UPDATED PREMIUM POLICIES WITH BETA SUPPORT
 -- =====================================================
 
 -- Policy: Users can only view content items for courses they're enrolled in
@@ -102,10 +119,6 @@ CREATE POLICY "Users can view sections for enrolled or free courses" ON course_p
         )
     );
 
--- =====================================================
--- PREMIUM COURSE ENROLLMENT POLICIES
--- =====================================================
-
 -- Policy: Users can only enroll in courses if they're premium users (including beta)
 -- OR if the course is free
 CREATE POLICY "Users can enroll in free courses or if premium" ON course_enrollments
@@ -131,10 +144,6 @@ CREATE POLICY "Users can enroll in free courses or if premium" ON course_enrollm
             AND role IN ('admin', 'moderator')
         )
     );
-
--- =====================================================
--- PREMIUM CONTENT ACCESS POLICIES
--- =====================================================
 
 -- Policy: Users can only access premium content if they're enrolled and premium (including beta)
 -- OR if the content is from a free course
@@ -171,10 +180,6 @@ CREATE POLICY "Premium content access control" ON content_item
         )
     );
 
--- =====================================================
--- COURSE PROGRESS RESTRICTIONS
--- =====================================================
-
 -- Policy: Users can only track progress for courses they're enrolled in
 CREATE POLICY "Users can only track enrolled course progress" ON course_path_section_progress
     FOR ALL USING (
@@ -194,10 +199,6 @@ CREATE POLICY "Users can only track enrolled course progress" ON course_path_sec
             AND role IN ('admin', 'moderator')
         )
     );
-
--- =====================================================
--- PREMIUM COURSE ENROLLMENT RESTRICTIONS
--- =====================================================
 
 -- Policy: Users can only view enrollments for courses they're enrolled in
 -- OR if they're admin/moderator
@@ -226,7 +227,7 @@ CREATE POLICY "Users can manage own enrollments" ON course_enrollments
     );
 
 -- =====================================================
--- HELPER FUNCTIONS
+-- 3. CREATE HELPER FUNCTIONS
 -- =====================================================
 
 -- Function to check if user can access a specific course
@@ -266,41 +267,49 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
--- NOTES ON PREMIUM POLICIES
+-- 4. VERIFY THE POLICIES
 -- =====================================================
 
+-- Check that all policies were created successfully
+SELECT 
+    schemaname,
+    tablename,
+    policyname,
+    cmd
+FROM pg_policies 
+WHERE tablename IN ('content_item', 'content_block', 'course_path_sections', 'course_enrollments', 'course_path_section_progress')
+ORDER BY tablename, policyname;
+
+-- Check that helper functions were created
+SELECT 
+    routine_name,
+    routine_type
+FROM information_schema.routines 
+WHERE routine_schema = 'public' 
+AND routine_name IN ('can_access_course', 'is_premium_user');
+
+-- =====================================================
+-- 5. TEST THE BETA ROLE SYSTEM
+-- =====================================================
+
+-- Test: Check if a user with beta role would be considered premium
+-- (This is a test query - replace 'test_user_id' with an actual clerk_id)
 /*
-PREMIUM COURSE ACCESS LOGIC:
-
-1. Free courses: Anyone can view content, enroll, and track progress
-2. Premium courses: Only premium users OR beta users can enroll and access content
-3. Content access: Users must be enrolled in the course to view content
-4. Progress tracking: Only enrolled users can track their progress
-5. Admin override: Admins can access all content regardless of enrollment/premium status
-6. Beta users: Have the same access as premium users (is_premium=true OR role='beta')
-
-ENFORCEMENT:
-
-- These policies work in conjunction with the base RLS policies
-- They add an additional layer of security for premium content
-- Users cannot bypass premium restrictions by directly querying tables
-- All access is controlled at the database level
-- Beta users automatically get premium access without paying
-
-IMPORTANT FIXES:
-
-- Changed course_enrollments.course_path_id to course_enrollments.course_id
-- Updated all JOIN logic to use the correct table structure
-- The course_enrollments table has: clerk_id, course_id, enrolled_at, last_accessed
-- Added support for 'beta' role users to have premium access
-
-TESTING:
-
-- Test with free user accounts
-- Test with premium user accounts  
-- Test with beta user accounts
-- Test with admin accounts
-- Test enrollment scenarios
-- Test content access restrictions
-- Test progress tracking permissions
+SELECT 
+    clerk_id,
+    is_premium,
+    role,
+    CASE 
+        WHEN is_premium = true OR role = 'beta' THEN 'Has Premium Access'
+        ELSE 'No Premium Access'
+    END as access_status
+FROM users 
+WHERE clerk_id = 'test_user_id';
 */
+
+-- =====================================================
+-- SUCCESS MESSAGE
+-- =====================================================
+
+-- If you see this message, the policies have been applied successfully!
+SELECT 'Beta role premium access policies applied successfully!' as status;

@@ -9,6 +9,7 @@ import LayoutWrapper from "@/components/LayoutWrapper";
 import PageLoading from "@/components/PageLoading";
 import Providers from "./providers";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
+import BetaWelcomeHandler from "@/components/BetaWelcomeHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               <PageLoading />
               <LayoutWrapper>{children}</LayoutWrapper>
+              <BetaWelcomeHandler />
               <Toaster 
                 position="bottom-center"
                 richColors

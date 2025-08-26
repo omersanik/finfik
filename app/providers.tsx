@@ -22,7 +22,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
+      {/* Disabled React Query DevTools to fix popup error */}
+      {/* {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />} */}
     </QueryClientProvider>
   );
 }

@@ -5,7 +5,6 @@ import { ReactTyped } from "react-typed";
 import { motion } from "framer-motion";
 import type { Variants } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -20,7 +19,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import LandingPageCardComponent from "@/components/LandingPageCardComponent";
-import finfikwhitelogo from "@/logo/finfikwhitelogo.svg";
+import finfiklogo from "@/logo/finfiklogo.svg";
 import CourseCardSkeleton from "./skeletons/CourseCardSkeleton";
 
 // Course type definition
@@ -35,56 +34,7 @@ type Course = {
   course_level?: any;
 };
 
-// Beta pricing - honest and low
-const betaPlans = [
-  {
-    name: "Free Plan – Beta",
-    price: 0,
-    period: "Forever",
-    features: [
-      "Access to free courses",
-      "Basic learning paths",
-      "Community support",
-      "Early access to new features",
-    ],
-    cta: "Start Learning Free",
-    badge: "Free",
-    highlight: false,
-    id: "free",
-  },
-  {
-    name: "Pro Plan – Monthly",
-    price: 6.99,
-    period: "/month",
-    features: [
-      "Unlock all premium courses",
-      "Exclusive beta content",
-      "Direct feedback to our team",
-      "Cancel anytime",
-      "Lock in beta pricing forever",
-    ],
-    cta: "Join Beta Program",
-    badge: "Beta Special",
-    highlight: true,
-    id: "monthly",
-  },
-  {
-    name: "Pro Plan – Yearly",
-    price: 69.99,
-    period: "/year",
-    features: [
-      "Unlock all premium courses",
-      "Exclusive beta content",
-      "Direct feedback to our team",
-      "2 months free (save 16%)",
-      "Lock in beta pricing forever",
-    ],
-    cta: "Join Beta Program",
-    badge: "Best Value",
-    highlight: false,
-    id: "yearly",
-  },
-];
+
 
 // Floating particles component - Client only to prevent hydration errors
 const FloatingParticles = () => {
@@ -103,7 +53,7 @@ const FloatingParticles = () => {
       {[...Array(20)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-2 h-2 bg-primary rounded-full opacity-30"
+          className="absolute w-2 h-2 bg-primary rounded-full opacity-80"
           animate={{
             x: [0, Math.random() * 100 - 50],
             y: [0, Math.random() * 100 - 50],
@@ -127,10 +77,10 @@ const FloatingParticles = () => {
 // Animated gradient background
 const AnimatedGradient = () => {
   return (
-    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/10 to-background z-0">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(102,187,106,0.3),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(102,187,106,0.2),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(102,187,106,0.2),transparent_50%)]" />
+    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-background z-0">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.1),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,hsl(var(--primary)/0.08),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,hsl(var(--primary)/0.08),transparent_50%)]" />
     </div>
   );
 };
@@ -196,11 +146,13 @@ const BeautifulLandingPage = () => {
         transition={{ duration: 0.8 }}
         className="relative z-50 w-full max-w-7xl mx-auto flex justify-between items-center pt-8 px-8"
       >
+
+
         {/* Logo */}
         <a href="/" className="flex items-center group">
           <div className="w-32 h-12 overflow-hidden flex items-center justify-center">
             <Image
-              src={finfikwhitelogo}
+              src={finfiklogo}
               alt="Finfik Logo"
               width={128}
               height={48}
@@ -244,7 +196,7 @@ const BeautifulLandingPage = () => {
             className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-4 py-2 rounded-full text-sm font-semibold mb-6"
           >
             <Sparkles className="w-4 h-4" />
-            Beta Version - Early Access
+            6-Month Beta Program - Early Access
           </motion.div>
 
           {/* Main headline */}
@@ -259,9 +211,9 @@ const BeautifulLandingPage = () => {
                     "bite-sized lessons",
                     "gamified learning",
                     "personalized progress",
-                    "expert insights",
+                    "interactive courses",
                     "gamified learning",
-                    "bite-sized content",
+                    "hands-on practice",
                   ]}
                   typeSpeed={50}
                   backSpeed={30}
@@ -281,7 +233,7 @@ const BeautifulLandingPage = () => {
             tailored to your goals.
             <span className="text-primary font-semibold">
               {" "}
-              Join our beta and help shape the future of financial education.
+              Join our <span className="text-yellow-400">6-month beta program</span> and help shape the future of financial education.
             </span>
           </p>
 
@@ -317,21 +269,21 @@ const BeautifulLandingPage = () => {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex flex-wrap justify-center gap-8 text-center relative z-20"
           >
-            <div className="flex items-center gap-2 bg-background/95 px-4 py-2 rounded-lg shadow-lg">
+            <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-border">
               <Users className="w-6 h-6 text-primary" />
               <span className="text-2xl font-bold text-foreground">
                 Early Access
               </span>
               <span className="text-muted-foreground">Beta Users</span>
             </div>
-            <div className="flex items-center gap-2 bg-background/95 px-4 py-2 rounded-lg shadow-lg">
+            <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-border">
               <Target className="w-6 h-6 text-accent" />
               <span className="text-2xl font-bold text-foreground">
                 {availableCourses.length}
               </span>
               <span className="text-muted-foreground">Courses Available</span>
             </div>
-            <div className="flex items-center gap-2 bg-background/95 px-4 py-2 rounded-lg shadow-lg">
+            <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-border">
               <TrendingUp className="w-6 h-6 text-secondary" />
               <span className="text-2xl font-bold text-foreground">
                 {upcomingCourses.length}+ Coming
@@ -446,9 +398,9 @@ const BeautifulLandingPage = () => {
               },
               {
                 icon: Shield,
-                title: "Lock in Beta Pricing",
+                title: "FREE Beta Access",
                 description:
-                  "Join now and keep our special beta pricing even after launch",
+                  "Join our 6-month beta program for FREE and get access to all premium courses",
                 color: "bg-secondary",
               },
               {
@@ -468,7 +420,7 @@ const BeautifulLandingPage = () => {
                 whileHover={{ y: -5 }}
                 className="group"
               >
-                <Card className="bg-card/50 backdrop-blur-xl border border-border hover:border-primary/50 transition-all duration-300 p-8 text-center">
+                <Card className="bg-card/80 backdrop-blur-xl border border-border hover:border-primary/50 transition-all duration-300 p-8 text-center">
                   <div
                     className={`w-16 h-16 mx-auto mb-6 rounded-full ${feature.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
                   >
@@ -487,126 +439,7 @@ const BeautifulLandingPage = () => {
         </div>
       </motion.section>
 
-      {/* Beta Pricing Section */}
-      <motion.section
-        initial={{ opacity: 0, y: 100 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 py-20 px-8"
-      >
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <div className="text-6xl mb-4">🚀</div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-              Beta Pricing
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Special pricing for our early supporters.{" "}
-              <span className="text-primary font-semibold">
-                Lock in these prices forever!
-              </span>
-            </p>
-          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {betaPlans.map((plan, index) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1.2, delay: index * 0.2 }}
-                whileHover={{ y: -5 }}
-              >
-                <Card
-                  className={`relative h-full bg-card/50 backdrop-blur-xl border-2 transition-all duration-300 overflow-hidden ${
-                    plan.highlight
-                      ? "border-primary/50 shadow-lg shadow-primary/25 scale-105"
-                      : "border-border hover:border-primary/30"
-                  }`}
-                >
-                  {plan.highlight && (
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
-                  )}
-                  <div className="p-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-2xl font-bold text-card-foreground">
-                        {plan.name}
-                      </h3>
-                      {plan.badge && (
-                        <Badge
-                          className={`${
-                            plan.highlight
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {plan.badge}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="mb-6">
-                      <span className="text-4xl font-black text-card-foreground">
-                        {plan.price === 0 ? "Free" : `$${plan.price}`}
-                      </span>
-                      {plan.price !== 0 && (
-                        <span className="text-lg text-muted-foreground ml-2">
-                          {plan.period}
-                        </span>
-                      )}
-                    </div>
-                    <ul className="space-y-3 mb-8">
-                      {plan.features.map((feature, i) => (
-                        <li
-                          key={i}
-                          className="flex items-center gap-3 text-muted-foreground"
-                        >
-                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                            <span className="text-primary-foreground text-xs">
-                              ✓
-                            </span>
-                          </div>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      onClick={() => (window.location.href = "/sign-up")}
-                      className={`w-full py-3 rounded-lg font-semibold transition-all duration-300 ${
-                        plan.highlight
-                          ? "bg-primary hover:bg-primary/90 text-primary-foreground hover:scale-105"
-                          : "bg-muted hover:bg-muted/80 text-muted-foreground border border-border"
-                      }`}
-                    >
-                      {plan.cta}
-                    </Button>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-center mt-8"
-          >
-            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              Beta pricing is limited time only. Prices will increase after
-              launch. Cancel anytime.
-            </p>
-          </motion.div>
-        </div>
-      </motion.section>
 
       {/* Beta Call to Action */}
       <motion.section
@@ -627,7 +460,7 @@ const BeautifulLandingPage = () => {
               Ready to Join the Beta?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Start learning for free today and be among the first to experience
+              <span className="text-primary font-semibold">Start learning for FREE today</span> and be among the first to experience
               the future of financial education.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -637,7 +470,7 @@ const BeautifulLandingPage = () => {
                 className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-full font-bold text-lg shadow-lg transition-all duration-300 hover:scale-105"
               >
                 <a href="/sign-up" className="flex items-center gap-2">
-                  Start Free Today
+                  Start FREE Today
                   <ArrowRight className="w-5 h-5" />
                 </a>
               </Button>
@@ -668,7 +501,7 @@ const BeautifulLandingPage = () => {
           <div className="flex items-center mb-6 md:mb-0">
             <div className="w-24 h-8 overflow-hidden flex items-center justify-center">
               <Image
-                src={finfikwhitelogo}
+                src={finfiklogo}
                 alt="Finfik Logo"
                 width={96}
                 height={32}

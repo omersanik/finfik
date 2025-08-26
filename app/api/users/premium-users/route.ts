@@ -9,7 +9,10 @@ export async function GET() {
   
   if (!userId) {
     console.log('No userId found, returning unauthorized');
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { 
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   const supabase = await createSupabaseServerClient();
@@ -35,7 +38,7 @@ export async function GET() {
   
   const { data: user, error } = await supabase
     .from("users")
-    .select("is_premium, subscription_plan")
+    .select("is_premium, subscription_plan, role")
     .eq("clerk_id", userId)
     .single();
 
@@ -47,34 +50,40 @@ export async function GET() {
     console.log('User keys:', Object.keys(user));
     console.log('subscription_plan value:', user.subscription_plan);
     console.log('subscription_plan type:', typeof user.subscription_plan);
+    console.log('role value:', user.role);
   }
 
   if (error) {
     console.error("Database error:", error);
-    // If user doesn't exist, create them with default values
-    if (error.code === 'PGRST116') {
-      const { data: newUser, error: createError } = await supabase
-        .from("users")
-        .insert([{ clerk_id: userId, is_premium: false, subscription_plan: null }])
-        .select("is_premium, subscription_plan")
-        .single();
-      
-      if (createError) {
-        console.error("Error creating user:", createError);
-        return new Response(JSON.stringify({ error: "Failed to create user" }), { status: 500 });
-      }
-      
-      return new Response(JSON.stringify({ is_premium: newUser.is_premium, subscription_plan: newUser.subscription_plan }), { status: 200 });
-    }
-    
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Database error" }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   if (!user) {
-    return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
+    console.log('No user found in database');
+    return new Response(JSON.stringify({ is_premium: false, subscription_plan: null }), { 
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   }
 
-  return new Response(JSON.stringify({ is_premium: user.is_premium, subscription_plan: user.subscription_plan }), { 
+  // Check if user has premium access (either is_premium=true OR role='beta')
+  const hasPremiumAccess = user.is_premium === true || user.role === 'beta';
+  
+  console.log(`User premium access: ${hasPremiumAccess} (is_premium: ${user.is_premium}, role: ${user.role})`);
+
+  return new Response(JSON.stringify({ 
+    is_premium: hasPremiumAccess, 
+    subscription_plan: user.subscription_plan,
+    role: user.role
+  }), { 
     status: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -88,7 +97,10 @@ export async function GET() {
 export async function PATCH(req: Request) {
   const { userId } = await auth();
   if (!userId) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { 
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
   
   const supabase = await createSupabaseServerClient();

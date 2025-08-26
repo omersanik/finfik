@@ -4,7 +4,12 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log("Webhook received:", JSON.stringify(body, null, 2));
+    console.log("=== WEBHOOK RECEIVED ===");
+    console.log("Event type:", body.type);
+    console.log("User ID:", body.data?.id);
+    console.log("Email:", body.data?.email_addresses?.[0]?.email_address);
+    console.log("Full webhook payload:", JSON.stringify(body, null, 2));
+    console.log("=== END WEBHOOK ===");
 
     const eventType = body.type;
     const user = body.data;
@@ -26,18 +31,58 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Missing email" }, { status: 400 });
       }
 
-      const { error } = await supabaseAdmin
-        .from("users")
-        .upsert({ clerk_id, email, name }, { onConflict: "clerk_id" });
+      // For new users, set role to 'beta' and is_premium to true
+      // This gives them access to premium courses automatically
+      const userData = {
+        clerk_id, 
+        email, 
+        name,
+        role: 'beta',
+        is_premium: true
+      };
 
-      if (error) {
-        console.error("Supabase upsert error:", error);
-        return NextResponse.json(
-          { error: "Supabase upsert failed" },
-          { status: 500 }
-        );
+      // First, check if user already exists by clerk_id
+      const { data: existingUser } = await supabaseAdmin
+        .from("users")
+        .select("clerk_id, email, role")
+        .eq("clerk_id", clerk_id)
+        .single();
+
+      if (existingUser) {
+        // User exists, update with beta role if not already set
+        const { error: updateError } = await supabaseAdmin
+          .from("users")
+          .update({ 
+            email, 
+            name, 
+            role: 'beta', 
+            is_premium: true 
+          })
+          .eq("clerk_id", clerk_id);
+
+        if (updateError) {
+          console.error("Supabase update error:", updateError);
+          return NextResponse.json(
+            { error: "Supabase update failed" },
+            { status: 500 }
+          );
+        }
+      } else {
+        // User doesn't exist, insert new user
+        const { error: insertError } = await supabaseAdmin
+          .from("users")
+          .insert([userData]);
+
+        if (insertError) {
+          console.error("Supabase insert error:", insertError);
+          return NextResponse.json(
+            { error: "Supabase insert failed" },
+            { status: 500 }
+          );
+        }
       }
 
+      console.log(`User ${clerk_id} created/updated with beta role and premium access`);
       return NextResponse.json({ success: true });
     }
 
@@ -64,6 +109,9 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     console.error("Webhook handler error:", err);
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

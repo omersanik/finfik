@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { Book, Layers, Blocks, FileText, Trash2 } from "lucide-react";
+import { Book, Layers, Blocks, FileText, Trash2, MessageSquare } from "lucide-react";
 
 async function getStats() {
   // Fetch real data from APIs
@@ -57,6 +57,7 @@ export default async function AdminPage() {
         <NavCard href="/admin/add-content-blocks" title="Add Content Blocks" desc="Add blocks to sections for modular content." icon={<Blocks className="w-6 h-6" />} />
         <NavCard href="/admin/add-content-items" title="Add Content Items" desc="Add and edit rich content, images, tables, and more." icon={<FileText className="w-6 h-6" />} />
         <NavCard href="/admin/delete-content" title="Delete Content" desc="Safely delete courses, sections, blocks, and content items." icon={<Trash2 className="w-6 h-6" />} />
+        <NavCard href="/admin/feedback" title="Beta Feedback Management" desc="Review and manage all beta user feedback submissions." icon={<MessageSquare className="w-6 h-6" />} />
       </div>
     </div>
   );

@@ -34,8 +34,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { useClerk, useUser, useAuth } from "@clerk/nextjs";
-import { Flame } from "lucide-react";
+import { Flame, MessageSquare } from "lucide-react";
 import { usePremiumStatus, useStreak } from "@/lib/hooks/useApi";
+import BetaBadge from "./BetaBadge";
 
 const Navbar = () => {
   const { signOut } = useClerk();
@@ -76,6 +77,18 @@ const Navbar = () => {
   
   const { data: premiumData, isLoading: premiumLoading, error: premiumError } = usePremiumStatus(user?.id, token || undefined);
   const isPremiumUser = premiumData?.is_premium || false;
+  const isBetaUser = premiumData?.role === 'beta';
+
+  // Debug logging
+  console.log("Navbar Debug:", {
+    userId: user?.id,
+    hasToken: !!token,
+    premiumData,
+    isPremiumUser,
+    isBetaUser,
+    premiumLoading,
+    premiumError
+  });
 
   // Force refresh when component mounts or user changes
   useEffect(() => {
@@ -175,17 +188,31 @@ const Navbar = () => {
             )
           )}
 
-          {/* Premium Status */}
+          {/* Premium/Beta Status */}
           {premiumLoading ? (
             <div className="hidden sm:flex">
               <Skeleton className="w-28 h-8 rounded-full" />
             </div>
           ) : (
-            isPremiumUser ? (
+            isBetaUser ? (
+              <div className="hidden sm:flex items-center gap-3">
+                <BetaBadge size="md" />
+                <Link href="/beta/feedback">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+                  >
+                    <MessageSquare className="size-4" />
+                    Feedback
+                  </Button>
+                </Link>
+              </div>
+            ) : isPremiumUser ? (
               <div className="hidden sm:flex items-center gap-2">
                 <Badge
                   variant="default"
-                  className="flex items-center gap-1 px-4 py-2 text-sm font-medium"
+                  className="flex items-center gap-1 px-4 py-2 text-sm font-medium bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 shadow-sm"
                 >
                   <Crown className="size-4" />
                   Premium
@@ -240,13 +267,24 @@ const Navbar = () => {
                   </DropdownMenuLabel>
                 </Link>
                 <DropdownMenuSeparator />
-                <Link href="/subscription">
-                  {" "}
-                  <DropdownMenuItem className="flex items-start gap-1">
-                    <Wallet className="size-4" />
-                    Billing
-                  </DropdownMenuItem>
-                </Link>
+                {isBetaUser ? (
+                  <Link href="/beta/feedback">
+                    <DropdownMenuItem className="flex items-start gap-2 text-purple-700 hover:bg-purple-50">
+                      <MessageSquare className="size-4" />
+                      <div>
+                        <div className="font-medium">Beta Feedback</div>
+                        <div className="text-xs text-purple-500">Share your thoughts</div>
+                      </div>
+                    </DropdownMenuItem>
+                  </Link>
+                ) : (
+                  <Link href="/subscription">
+                    <DropdownMenuItem className="flex items-start gap-1">
+                      <Wallet className="size-4" />
+                      Billing
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <DropdownMenuItem
                   className="flex items-start gap-1 text-red-700"
                   onClick={() => signOut()}

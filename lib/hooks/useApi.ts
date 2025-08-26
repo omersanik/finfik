@@ -13,10 +13,14 @@ const apiFetch = async (endpoint: string, options?: RequestInit, token?: string)
     ...options?.headers,
   };
 
+  console.log("apiFetch called:", { endpoint, url, hasToken: !!token });
+
   const response = await fetch(url, {
     ...options,
     headers,
   });
+
+  console.log("apiFetch response:", { status: response.status, ok: response.ok });
 
   if (!response.ok) {
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
@@ -26,10 +30,24 @@ const apiFetch = async (endpoint: string, options?: RequestInit, token?: string)
   const contentType = response.headers.get('content-type');
   
   if (contentType && contentType.includes('application/json')) {
-    return response.json();
+    const result = await response.json();
+    console.log("apiFetch JSON result:", result);
+    return result;
   } else {
-    // For text responses, return the text
-    return response.text();
+    // For text responses, try to parse as JSON first
+    const textResult = await response.text();
+    console.log("apiFetch text result:", textResult);
+    
+    try {
+      // Try to parse as JSON
+      const jsonResult = JSON.parse(textResult);
+      console.log("apiFetch parsed JSON result:", jsonResult);
+      return jsonResult;
+    } catch (e) {
+      // If parsing fails, return as text
+      console.log("apiFetch returning as text (not JSON):", textResult);
+      return textResult;
+    }
   }
 };
 
@@ -45,13 +63,18 @@ export const useCourses = () => {
 
 // Custom hook for user premium status
 export const usePremiumStatus = (userId?: string, token?: string) => {
+  console.log("usePremiumStatus hook initialized with:", { userId, hasToken: !!token });
+  
   return useQuery({
     queryKey: ['premium-status', userId, token], // Include token in query key for better cache invalidation
     queryFn: async () => {
+      console.log("usePremiumStatus hook called with:", { userId, hasToken: !!token });
       if (!userId) {
+        console.log("No userId provided, returning default");
         return { is_premium: false };
       }
       const result = await apiFetch('/api/users/premium-users', undefined, token);
+      console.log("usePremiumStatus API result:", result);
       return result;
     },
     enabled: !!userId && !!token,
