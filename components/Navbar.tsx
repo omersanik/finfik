@@ -56,28 +56,32 @@ const Navbar = () => {
 
   // Use React Query for premium status
   const [token, setToken] = useState<string | null>(null);
-  
+
   useEffect(() => {
     const fetchToken = async () => {
       if (user) {
         try {
-          console.log('Fetching token for user:', user.id);
+          console.log("Fetching token for user:", user.id);
           const userToken = await getToken();
-          console.log('Token received:', userToken ? 'exists' : 'missing');
+          console.log("Token received:", userToken ? "exists" : "missing");
           setToken(userToken);
         } catch (error) {
-          console.error('Failed to get token:', error);
+          console.error("Failed to get token:", error);
         }
       } else {
-        console.log('No user object available');
+        console.log("No user object available");
       }
     };
     fetchToken();
   }, [user, getToken]);
-  
-  const { data: premiumData, isLoading: premiumLoading, error: premiumError } = usePremiumStatus(user?.id, token || undefined);
+
+  const {
+    data: premiumData,
+    isLoading: premiumLoading,
+    error: premiumError,
+  } = usePremiumStatus(user?.id, token || undefined);
   const isPremiumUser = premiumData?.is_premium || false;
-  const isBetaUser = premiumData?.role === 'beta';
+  const isBetaUser = premiumData?.role === "beta";
 
   // Debug logging
   console.log("Navbar Debug:", {
@@ -87,7 +91,7 @@ const Navbar = () => {
     isPremiumUser,
     isBetaUser,
     premiumLoading,
-    premiumError
+    premiumError,
   });
 
   // Force refresh when component mounts or user changes
@@ -98,8 +102,11 @@ const Navbar = () => {
   }, [user?.id, token]);
 
   // Use React Query for streak data
-  const { data: streakData, isLoading: streakLoading } = useStreak(user?.id, token || undefined);
-  
+  const { data: streakData, isLoading: streakLoading } = useStreak(
+    user?.id,
+    token || undefined
+  );
+
   useEffect(() => {
     if (streakData) {
       setStreak({
@@ -193,38 +200,36 @@ const Navbar = () => {
             <div className="hidden sm:flex">
               <Skeleton className="w-28 h-8 rounded-full" />
             </div>
-          ) : (
-            isBetaUser ? (
-              <div className="hidden sm:flex items-center gap-3">
-                <BetaBadge size="md" />
-                <Link href="/beta/feedback">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
-                  >
-                    <MessageSquare className="size-4" />
-                    Feedback
-                  </Button>
-                </Link>
-              </div>
-            ) : isPremiumUser ? (
-              <div className="hidden sm:flex items-center gap-2">
-                <Badge
-                  variant="default"
-                  className="flex items-center gap-1 px-4 py-2 text-sm font-medium bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 shadow-sm"
+          ) : isBetaUser ? (
+            <div className="hidden sm:flex items-center gap-3">
+              <BetaBadge size="md" />
+              <Link href="/beta/feedback">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
                 >
-                  <Crown className="size-4" />
-                  Premium
-                </Badge>
-              </div>
-            ) : (
-              <div className="hidden sm:flex items-center gap-2">
-                <Button className="rounded-3xl px-6 text-base hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg">
-                  <Link href="/subscription">Go Premium</Link>
+                  <MessageSquare className="size-4" />
+                  Feedback
                 </Button>
-              </div>
-            )
+              </Link>
+            </div>
+          ) : isPremiumUser ? (
+            <div className="hidden sm:flex items-center gap-2">
+              <Badge
+                variant="default"
+                className="flex items-center gap-1 px-4 py-2 text-sm font-medium bg-gradient-to-r bg-primary text-white border-0 shadow-sm"
+              >
+                <Crown className="size-4" />
+                Premium
+              </Badge>
+            </div>
+          ) : (
+            <div className="hidden sm:flex items-center gap-2">
+              <Button className="rounded-3xl px-6 text-base hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg">
+                <Link href="/subscription">Go Premium</Link>
+              </Button>
+            </div>
           )}
 
           {/* Theme Toggle */}
@@ -273,7 +278,9 @@ const Navbar = () => {
                       <MessageSquare className="size-4" />
                       <div>
                         <div className="font-medium">Beta Feedback</div>
-                        <div className="text-xs text-purple-500">Share your thoughts</div>
+                        <div className="text-xs text-purple-500">
+                          Share your thoughts
+                        </div>
                       </div>
                     </DropdownMenuItem>
                   </Link>
