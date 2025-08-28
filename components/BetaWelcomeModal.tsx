@@ -60,7 +60,7 @@ export default function BetaWelcomeModal({ isOpen, onClose, userName }: BetaWelc
           </DialogTitle>
           
           <DialogDescription className="text-lg text-muted-foreground">
-            {userName ? `Hi ${userName}, you're` : "You're"} now part of our exclusive beta program!
+                         {userName ? `Hi ${userName}, you&apos;re` : "You&apos;re"} now part of our exclusive beta program!
           </DialogDescription>
         </DialogHeader>
 

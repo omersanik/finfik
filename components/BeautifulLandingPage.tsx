@@ -257,7 +257,7 @@ const BeautifulLandingPage = () => {
             >
               <a href="#courses" className="flex items-center gap-2">
                 <Play className="w-5 h-5" />
-                See What's Available
+                See What&apos;s Available
               </a>
             </Button>
           </div>

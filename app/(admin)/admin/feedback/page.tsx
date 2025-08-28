@@ -9,15 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { 
   MessageSquare, 
-  Bug, 
-  Lightbulb, 
-  Palette, 
-  BookOpen, 
-  Zap, 
-  Settings,
   Search,
   Filter,
   Eye,
@@ -337,17 +332,15 @@ export default function AdminFeedbackPage() {
             </CardContent>
           </Card>
         ) : (
-          filteredFeedback.map((item) => {
-            const CategoryIcon = categoryIcons[item.category as keyof typeof categoryIcons] || Settings;
-            
-            return (
+                     filteredFeedback.map((item) => {
+             return (
               <Card key={item.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                        <CategoryIcon className="w-5 h-5 text-white" />
-                      </div>
+                                         <div className="flex items-center gap-3">
+                       <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                         <MessageSquare className="w-5 h-5 text-white" />
+                       </div>
                       <div>
                         <h3 className="font-semibold text-lg">{item.title}</h3>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -398,10 +391,10 @@ export default function AdminFeedbackPage() {
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                           <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                              <CategoryIcon className="w-5 h-5" />
-                              {item.title}
-                            </DialogTitle>
+                                                         <DialogTitle className="flex items-center gap-2">
+                               <MessageSquare className="w-5 h-5" />
+                               {item.title}
+                             </DialogTitle>
                             <DialogDescription>
                               Feedback from {item.users.name} ({item.users.email})
                             </DialogDescription>
