@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import LandingPageCardComponent from "@/components/LandingPageCardComponent";
 import finfiklogo from "@/logo/finfiklogo.svg";
 import CourseCardSkeleton from "./skeletons/CourseCardSkeleton";
@@ -149,7 +150,7 @@ const BeautifulLandingPage = () => {
 
 
         {/* Logo */}
-        <a href="/" className="flex items-center group">
+        <Link href="/" className="flex items-center group">
           <div className="w-32 h-12 overflow-hidden flex items-center justify-center">
             <Image
               src={finfiklogo}
@@ -160,7 +161,7 @@ const BeautifulLandingPage = () => {
               className="object-contain transition-transform group-hover:scale-110"
             />
           </div>
-        </a>
+        </Link>
 
         {/* Navigation buttons */}
         <div className="flex items-center space-x-4">
@@ -169,13 +170,13 @@ const BeautifulLandingPage = () => {
             variant="ghost"
             className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
           >
-            <a href="/sign-in">Login</a>
+            <Link href="/sign-in">Login</Link>
           </Button>
           <Button
             asChild
             className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-full font-semibold shadow-lg transition-all duration-300"
           >
-            <a href="/sign-up">Join Beta</a>
+            <Link href="/sign-up">Join Beta</Link>
           </Button>
         </div>
       </motion.nav>
@@ -244,10 +245,10 @@ const BeautifulLandingPage = () => {
               size="lg"
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-full font-bold text-lg shadow-lg transition-all duration-300 hover:scale-105"
             >
-              <a href="/sign-up" className="flex items-center gap-2">
-                Start Learning Free
-                <ArrowRight className="w-5 h-5" />
-              </a>
+                          <Link href="/sign-up" className="flex items-center gap-2">
+              Start Learning Free
+              <ArrowRight className="w-5 h-5" />
+            </Link>
             </Button>
             <Button
               asChild
@@ -469,10 +470,10 @@ const BeautifulLandingPage = () => {
                 size="lg"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-full font-bold text-lg shadow-lg transition-all duration-300 hover:scale-105"
               >
-                <a href="/sign-up" className="flex items-center gap-2">
+                <Link href="/sign-up" className="flex items-center gap-2">
                   Start FREE Today
                   <ArrowRight className="w-5 h-5" />
-                </a>
+                </Link>
               </Button>
               <Button
                 asChild
@@ -480,9 +481,9 @@ const BeautifulLandingPage = () => {
                 variant="outline"
                 className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 hover:scale-105"
               >
-                <a href="/sign-in" className="flex items-center gap-2">
+                <Link href="/sign-in" className="flex items-center gap-2">
                   Already have an account?
-                </a>
+                </Link>
               </Button>
             </div>
           </motion.div>

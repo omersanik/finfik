@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   console.log('Test endpoint called');
   
   try {

@@ -164,7 +164,7 @@ export default function BetaWelcomeModal({ isOpen, onClose, userName }: BetaWelc
                   <div>
                     <p className="font-semibold text-yellow-800">Use the Feedback Button</p>
                     <p className="text-sm text-yellow-700">
-                      Click the "Feedback" button in the navbar anytime
+                                             Click the &quot;Feedback&quot; button in the navbar anytime
                     </p>
                   </div>
                 </div>

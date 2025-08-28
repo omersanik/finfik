@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   // Redirect to the correct Stripe webhook endpoint
