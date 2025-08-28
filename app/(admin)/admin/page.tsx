@@ -22,7 +22,7 @@ async function getStats() {
   } catch {}
   try {
     // If you have a blocks API, use it; otherwise, estimate from items
-    blocks = Array.isArray(items) ? items.filter((i: any) => i.type === "block").length : 0;
+    blocks = Array.isArray(items) ? items.filter((i: { type: string }) => i.type === "block").length : 0;
   } catch {}
   return {
     courses: Array.isArray(courses) ? courses.length : 0,

@@ -82,7 +82,7 @@ function SubscriptionContent() {
         const data = await res.json();
         setIsPremium(!!data.is_premium);
         setSubscriptionPlan(data.subscription_plan || null);
-      } catch (e) {
+      } catch {
         setIsPremium(false);
         setSubscriptionPlan(null);
       }
@@ -331,7 +331,7 @@ function SubscriptionContent() {
                 <div className="mt-3 space-y-2">
                   <p className="text-sm font-medium">Alternative options:</p>
                   <ul className="text-sm space-y-1 ml-4">
-                    <li>• <strong>Cancel Subscription:</strong> Use the "Switch to Free" button below</li>
+                    <li>• <strong>Cancel Subscription:</strong> Use the &quot;Switch to Free&quot; button below</li>
                     <li>• <strong>Contact Support:</strong> Email support for subscription changes</li>
                     <li>• <strong>Stripe Dashboard:</strong> Manage directly in your Stripe account</li>
                   </ul>
