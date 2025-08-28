@@ -10,25 +10,28 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const courseId = searchParams.get('courseId');
-    const coursePathId = searchParams.get('course_path_id');
-    const allSections = searchParams.get('all');
+    const courseId = searchParams.get("courseId");
+    const coursePathId = searchParams.get("course_path_id");
+    const allSections = searchParams.get("all");
 
     // If requesting all sections for admin edit page
-    if (allSections === 'true') {
+    if (allSections === "true") {
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
 
       const { data: sections, error } = await supabase
-        .from('course_path_sections')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("course_path_sections")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) {
-        console.error('Error fetching all sections:', error);
-        return NextResponse.json({ error: 'Failed to fetch sections' }, { status: 500 });
+        console.error("Error fetching all sections:", error);
+        return NextResponse.json(
+          { error: "Failed to fetch sections" },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json(sections || []);
@@ -42,10 +45,11 @@ export async function GET(request: NextRequest) {
     if (coursePathId) {
       // Direct course_path_id provided
       console.log("Looking for sections with course_path_id:", coursePathId);
-      
+
       const { data: sections, error: sectionsError } = await supabase
         .from("course_path_sections")
-        .select(`
+        .select(
+          `
           id,
           title,
           "order",
@@ -56,20 +60,24 @@ export async function GET(request: NextRequest) {
             order_index,
             created_at
           )
-        `)
+        `
+        )
         .eq("course_path_id", coursePathId)
         .order("order");
 
       if (sectionsError) {
         console.error("Error fetching sections:", sectionsError);
-        return NextResponse.json({ error: "Failed to fetch sections" }, { status: 500 });
+        return NextResponse.json(
+          { error: "Failed to fetch sections" },
+          { status: 500 }
+        );
       }
 
       console.log("Sections found:", sections?.length || 0);
       return NextResponse.json(sections || []);
     } else if (courseId) {
       console.log("Looking for course path with courseId:", courseId);
-      
+
       // First, let's check if the course exists
       const { data: course, error: courseError } = await supabase
         .from("courses")
@@ -79,7 +87,10 @@ export async function GET(request: NextRequest) {
 
       if (courseError || !course) {
         console.error("Course not found:", courseId, "Error:", courseError);
-        return NextResponse.json({ error: "Course not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Course not found" },
+          { status: 404 }
+        );
       }
 
       console.log("Found course:", course.title);
@@ -92,16 +103,30 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (coursePathError || !coursePath) {
-        console.error("Course path not found for courseId:", courseId, "Error:", coursePathError);
-        return NextResponse.json({ error: "Course path not found" }, { status: 404 });
+        console.error(
+          "Course path not found for courseId:",
+          courseId,
+          "Error:",
+          coursePathError
+        );
+        return NextResponse.json(
+          { error: "Course path not found" },
+          { status: 404 }
+        );
       }
 
-      console.log("Found course path:", coursePath.id, "name:", coursePath.name);
+      console.log(
+        "Found course path:",
+        coursePath.id,
+        "name:",
+        coursePath.name
+      );
 
       // Now fetch sections for this course path
       const { data: sections, error: sectionsError } = await supabase
         .from("course_path_sections")
-        .select(`
+        .select(
+          `
           id,
           title,
           "order",
@@ -112,13 +137,17 @@ export async function GET(request: NextRequest) {
             order_index,
             created_at
           )
-        `)
+        `
+        )
         .eq("course_path_id", coursePath.id)
         .order("order");
 
       if (sectionsError) {
         console.error("Error fetching sections:", sectionsError);
-        return NextResponse.json({ error: "Failed to fetch sections" }, { status: 500 });
+        return NextResponse.json(
+          { error: "Failed to fetch sections" },
+          { status: 500 }
+        );
       }
 
       console.log("Sections found:", sections?.length || 0);
@@ -126,10 +155,11 @@ export async function GET(request: NextRequest) {
     } else {
       // If no courseId, return all sections (for debugging)
       console.log("No courseId provided, returning all sections");
-      
+
       const { data: sections, error } = await supabase
         .from("course_path_sections")
-        .select(`
+        .select(
+          `
           id,
           title,
           "order",
@@ -141,12 +171,16 @@ export async function GET(request: NextRequest) {
             order_index,
             created_at
           )
-        `)
+        `
+        )
         .order("order");
 
       if (error) {
         console.error("Error fetching all sections:", error);
-        return NextResponse.json({ error: "Failed to fetch sections" }, { status: 500 });
+        return NextResponse.json(
+          { error: "Failed to fetch sections" },
+          { status: 500 }
+        );
       }
 
       console.log("All sections found:", sections?.length || 0);
@@ -154,7 +188,10 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("Error in sections API:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -184,7 +221,9 @@ export async function POST(req: NextRequest) {
       parsedLessons =
         typeof lessons === "string" ? JSON.parse(lessons) : lessons;
     } catch (error) {
-      return new Response("Invalid lessons JSON format", { status: 400 });
+      return new Response(`Invalid lessons JSON format ${error}`, {
+        status: 400,
+      });
     }
 
     // Step 1: Insert the new section

@@ -7,9 +7,45 @@ import { useState, useEffect, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
-const plans = [
+// Type definitions
+interface Plan {
+  name: string;
+  price: number;
+  period: string;
+  features: string[];
+  cta: string;
+  badge: string;
+  highlight: boolean;
+  id: string;
+  disabled: boolean;
+  onClick?: () => void;
+}
+
+interface SubscriptionResponse {
+  is_premium: boolean;
+  subscription_plan?: string;
+}
+
+interface StripeCheckoutResponse {
+  url: string;
+  error?: string;
+}
+
+interface StripePortalResponse {
+  url: string;
+  error?: string;
+}
+
+const plans: Plan[] = [
   {
     name: "Free Plan – Starter",
     price: 0,
@@ -79,7 +115,7 @@ function SubscriptionContent() {
       if (!user) return;
       try {
         const res = await fetch("/api/users/premium-users");
-        const data = await res.json();
+        const data: SubscriptionResponse = await res.json();
         setIsPremium(!!data.is_premium);
         setSubscriptionPlan(data.subscription_plan || null);
       } catch {
@@ -88,7 +124,7 @@ function SubscriptionContent() {
       }
     };
     fetchPremium();
-    
+
     // If we're on the success page, poll for premium status updates
     if (searchParams?.get("success") === "1") {
       const interval = setInterval(fetchPremium, 3000); // Check every 3 seconds
@@ -99,24 +135,26 @@ function SubscriptionContent() {
   // Show Stripe message only once after redirect
   useEffect(() => {
     if (searchParams?.get("success") === "1") {
-      setStripeMsg("Your payment was successful and your account is now premium! 🎉");
+      setStripeMsg(
+        "Your payment was successful and your account is now premium! 🎉"
+      );
       setShowStripeMsg(true);
-      
+
       // Refresh premium status immediately after successful payment
       const refreshPremiumStatus = async () => {
         try {
           const res = await fetch("/api/users/premium-users");
-          const data = await res.json();
+          const data: SubscriptionResponse = await res.json();
           setIsPremium(!!data.is_premium);
           setSubscriptionPlan(data.subscription_plan || null);
         } catch (e) {
           console.error("Failed to refresh premium status:", e);
         }
       };
-      
+
       // Refresh status after a short delay to allow webhook to process
       setTimeout(refreshPremiumStatus, 2000);
-      
+
       // Remove the query param after showing the message
       setTimeout(() => {
         setShowStripeMsg(false);
@@ -130,31 +168,31 @@ function SubscriptionContent() {
         router.replace("/subscription", { scroll: false });
       }, 5000);
     } else if (searchParams?.get("portal") === "1") {
-      setStripeMsg("Subscription management completed. Your changes have been applied.");
+      setStripeMsg(
+        "Subscription management completed. Your changes have been applied."
+      );
       setShowStripeMsg(true);
-      
+
       // Refresh premium status after portal return
       const refreshPremiumStatus = async () => {
         try {
           const res = await fetch("/api/users/premium-users");
-          const data = await res.json();
+          const data: SubscriptionResponse = await res.json();
           setIsPremium(!!data.is_premium);
           setSubscriptionPlan(data.subscription_plan || null);
         } catch (e) {
           console.error("Failed to refresh premium status:", e);
         }
       };
-      
+
       setTimeout(refreshPremiumStatus, 1000);
-      
+
       setTimeout(() => {
         setShowStripeMsg(false);
         router.replace("/subscription", { scroll: false });
       }, 5000);
     }
   }, [searchParams, router]);
-
-
 
   const handleSubscribe = async (plan: "monthly" | "yearly") => {
     setLoading(plan);
@@ -166,11 +204,15 @@ function SubscriptionContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan, userId: user.id }),
       });
-      const data = await res.json();
+      const data: StripeCheckoutResponse = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to start checkout.");
       window.location.href = data.url;
-    } catch (e: any) {
-      setError(e.message || "Failed to start checkout. Please try again.");
+    } catch (e) {
+      const errorMessage =
+        e instanceof Error
+          ? e.message
+          : "Failed to start checkout. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(null);
     }
@@ -184,18 +226,24 @@ function SubscriptionContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      const data = await res.json();
+      const data: StripePortalResponse = await res.json();
       if (!res.ok) {
         if (data.error && data.error.includes("not configured")) {
-          setError("Subscription management portal is not available yet. You can manage your subscription using the options below:");
+          setError(
+            "Subscription management portal is not available yet. You can manage your subscription using the options below:"
+          );
         } else {
           throw new Error(data.error || "Failed to open customer portal.");
         }
       } else {
         window.location.href = data.url;
       }
-    } catch (e: any) {
-      setError(e.message || "Failed to open customer portal. Please try again.");
+    } catch (e) {
+      const errorMessage =
+        e instanceof Error
+          ? e.message
+          : "Failed to open customer portal. Please try again.";
+      setError(errorMessage);
     } finally {
       setManageLoading(false);
     }
@@ -214,8 +262,10 @@ function SubscriptionContent() {
       setIsPremium(false);
       setShowCancelDialog(false);
       window.location.reload(); // Force full page reload after downgrade
-    } catch (e: any) {
-      setError(e.message || "Failed to downgrade.");
+    } catch (e) {
+      const errorMessage =
+        e instanceof Error ? e.message : "Failed to downgrade.";
+      setError(errorMessage);
     } finally {
       setDowngradeLoading(false);
     }
@@ -225,16 +275,36 @@ function SubscriptionContent() {
   const plansWithStatus = plans.map((plan) => {
     if (plan.id === "free") {
       if (isPremium) {
-        return { ...plan, cta: "Switch to Free", disabled: false, onClick: () => setShowCancelDialog(true) };
+        return {
+          ...plan,
+          cta: "Switch to Free",
+          disabled: false,
+          onClick: () => setShowCancelDialog(true),
+        };
       } else {
-        return { ...plan, cta: "Current Plan", disabled: true, onClick: undefined };
+        return {
+          ...plan,
+          cta: "Current Plan",
+          disabled: true,
+          onClick: undefined,
+        };
       }
     }
     if (plan.id === "monthly" || plan.id === "yearly") {
       if (isPremium && subscriptionPlan === plan.id) {
-        return { ...plan, cta: "Manage Subscription", disabled: false, onClick: handleManageSubscription };
+        return {
+          ...plan,
+          cta: "Manage Subscription",
+          disabled: false,
+          onClick: handleManageSubscription,
+        };
       } else {
-        return { ...plan, cta: plan.cta, disabled: false, onClick: () => handleSubscribe(plan.id as "monthly" | "yearly") };
+        return {
+          ...plan,
+          cta: plan.cta,
+          disabled: false,
+          onClick: () => handleSubscribe(plan.id as "monthly" | "yearly"),
+        };
       }
     }
     return { ...plan, onClick: undefined };
@@ -250,36 +320,48 @@ function SubscriptionContent() {
             <DialogDescription>
               <div className="space-y-3">
                 <p>
-                  Are you sure you want to cancel your premium subscription and switch to the Free plan?
+                  Are you sure you want to cancel your premium subscription and
+                  switch to the Free plan?
                 </p>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <p className="text-sm text-yellow-800">
-                    <strong>Important:</strong> This will immediately cancel your Stripe subscription and remove premium access.
+                    <strong>Important:</strong> This will immediately cancel
+                    your Stripe subscription and remove premium access.
                     {isPremium && (
                       <span className="block mt-1">
-                        Note: The customer portal is not configured yet, so this is the only way to cancel your subscription.
+                        Note: The customer portal is not configured yet, so this
+                        is the only way to cancel your subscription.
                       </span>
                     )}
                   </p>
                 </div>
                 <p className="text-destructive font-semibold">
-                  You will lose access to all premium features and courses immediately.
+                  You will lose access to all premium features and courses
+                  immediately.
                 </p>
               </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setShowCancelDialog(false)} disabled={downgradeLoading}>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelDialog(false)}
+              disabled={downgradeLoading}
+            >
               Keep Premium
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleManageSubscription} 
+            <Button
+              variant="outline"
+              onClick={handleManageSubscription}
               disabled={manageLoading || downgradeLoading}
             >
               Manage in Stripe Portal
             </Button>
-            <Button variant="destructive" onClick={handleDowngrade} disabled={downgradeLoading}>
+            <Button
+              variant="destructive"
+              onClick={handleDowngrade}
+              disabled={downgradeLoading}
+            >
               {downgradeLoading ? "Cancelling..." : "Yes, Cancel Now"}
             </Button>
           </DialogFooter>
@@ -293,20 +375,21 @@ function SubscriptionContent() {
         <p className="text-muted-foreground max-w-xl mx-auto">
           Unlock all premium courses and exclusive content!
           <br />
-          Support your learning journey with <span className="font-semibold">Finfik Premium</span>.
+          Support your learning journey with{" "}
+          <span className="font-semibold">Finfik Premium</span>.
         </p>
         {isPremium && (
           <div className="mt-4">
-            <Button 
-              onClick={handleManageSubscription} 
+            <Button
+              onClick={handleManageSubscription}
               disabled={manageLoading}
               variant="outline"
               className="mr-2"
             >
               {manageLoading ? "Opening..." : "Manage Subscription"}
             </Button>
-            <Button 
-              onClick={() => setShowCancelDialog(true)} 
+            <Button
+              onClick={() => setShowCancelDialog(true)}
               variant="destructive"
               size="sm"
             >
@@ -331,9 +414,18 @@ function SubscriptionContent() {
                 <div className="mt-3 space-y-2">
                   <p className="text-sm font-medium">Alternative options:</p>
                   <ul className="text-sm space-y-1 ml-4">
-                    <li>• <strong>Cancel Subscription:</strong> Use the &quot;Switch to Free&quot; button below</li>
-                    <li>• <strong>Contact Support:</strong> Email support for subscription changes</li>
-                    <li>• <strong>Stripe Dashboard:</strong> Manage directly in your Stripe account</li>
+                    <li>
+                      • <strong>Cancel Subscription:</strong> Use the
+                      &quot;Switch to Free&quot; button below
+                    </li>
+                    <li>
+                      • <strong>Contact Support:</strong> Email support for
+                      subscription changes
+                    </li>
+                    <li>
+                      • <strong>Stripe Dashboard:</strong> Manage directly in
+                      your Stripe account
+                    </li>
                   </ul>
                 </div>
               )}
@@ -350,7 +442,9 @@ function SubscriptionContent() {
             }`}
           >
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg font-bold text-foreground">{plan.name}</span>
+              <span className="text-lg font-bold text-foreground">
+                {plan.name}
+              </span>
               {plan.badge && (
                 <Badge
                   className={
@@ -380,16 +474,25 @@ function SubscriptionContent() {
             </ul>
             <Button
               disabled={plan.disabled || loading === plan.id || manageLoading}
-              className={`w-full mt-auto text-base font-semibold rounded-full py-2 ${plan.disabled ? "opacity-80 cursor-default" : "bg-primary hover:bg-primary/90 text-primary-foreground"}`}
+              className={`w-full mt-auto text-base font-semibold rounded-full py-2 ${
+                plan.disabled
+                  ? "opacity-80 cursor-default"
+                  : "bg-primary hover:bg-primary/90 text-primary-foreground"
+              }`}
               onClick={plan.onClick}
             >
-              {loading === plan.id ? "Processing..." : manageLoading ? "Opening..." : plan.cta}
+              {loading === plan.id
+                ? "Processing..."
+                : manageLoading
+                ? "Opening..."
+                : plan.cta}
             </Button>
           </Card>
         ))}
       </div>
       <p className="text-xs text-muted-foreground mt-6 text-center max-w-lg">
-        All users start on the Free Plan by default. Cancel anytime. Secure payments powered by Stripe.
+        All users start on the Free Plan by default. Cancel anytime. Secure
+        payments powered by Stripe.
       </p>
     </div>
   );
@@ -397,19 +500,21 @@ function SubscriptionContent() {
 
 export default function SubscriptionPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
-        <div className="mb-8 text-center">
-          <div className="text-5xl mb-2">👑</div>
-          <h1 className="text-4xl font-bold mb-2 text-foreground">
-            Choose Your Plan
-          </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Loading subscription options...
-          </p>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
+          <div className="mb-8 text-center">
+            <div className="text-5xl mb-2">👑</div>
+            <h1 className="text-4xl font-bold mb-2 text-foreground">
+              Choose Your Plan
+            </h1>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Loading subscription options...
+            </p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <SubscriptionContent />
     </Suspense>
   );

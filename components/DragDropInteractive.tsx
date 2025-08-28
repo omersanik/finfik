@@ -1,10 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, XCircle, RotateCcw, Sparkles, Target, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CheckCircle,
+  XCircle,
+  RotateCcw,
+  Sparkles,
+  Target,
+  AlertTriangle,
+  CheckCircle2,
+} from "lucide-react";
 import {
   DndContext,
   DragEndEvent,
@@ -15,15 +23,10 @@ import {
   useSensors,
   rectIntersection,
   useDroppable,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+} from "@dnd-kit/core";
+
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface DragItem {
   id: string;
@@ -46,13 +49,40 @@ interface DragDropInteractiveProps {
   completedFromParent?: boolean;
 }
 
+// Extended Window interface for type safety
+declare global {
+  interface Window {
+    getDragDropState: () => {
+      items: DragItem[];
+      allItemsDropped: boolean;
+      isChecking: boolean;
+      isCompleted: boolean;
+    };
+    checkDragDropAnswers: () => boolean;
+    areAllItemsDropped: () => boolean;
+    debugDragDropItems: () => void;
+    shouldEnableCheckAnswer: () => boolean;
+    getDragDropCompletionStatus: () => {
+      allDropped: boolean;
+      droppedCount: number;
+      totalCount: number;
+      progress: number;
+      canCheckAnswers: boolean;
+    };
+    checkDragDropAnswersManually: () => void;
+    isDragDropReady: boolean;
+    canEnableCheckAnswer: () => boolean;
+    dragDropReadyForCheck: boolean;
+  }
+}
+
 // Draggable Item Component using @dnd-kit
-function DraggableItem({ 
-  item, 
-  isChecking, 
-  shakingItems 
-}: { 
-  item: DragItem; 
+function DraggableItem({
+  item,
+  isChecking,
+  shakingItems,
+}: {
+  item: DragItem;
   isChecking: boolean;
   shakingItems: Set<string>;
 }) {
@@ -79,12 +109,12 @@ function DraggableItem({
       {...listeners}
       className={`px-2 py-1.5 rounded-md cursor-move transition-all duration-200 text-xs font-medium flex items-center justify-between shadow-sm border ${
         shakingItems.has(item.id)
-          ? 'animate-shake bg-destructive/10 text-destructive border-destructive/20'
+          ? "animate-shake bg-destructive/10 text-destructive border-destructive/20"
           : isChecking
           ? item.isCorrect
-            ? 'bg-green-50 text-green-800 border-green-200 shadow-green-100'
-            : 'bg-destructive/10 text-destructive border-destructive/200'
-          : 'bg-white text-foreground border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+            ? "bg-green-50 text-green-800 border-green-200 shadow-green-100"
+            : "bg-destructive/10 text-destructive border-destructive/200"
+          : "bg-white text-foreground border-slate-200 hover:border-slate-300 hover:bg-slate-50"
       }`}
     >
       <span className="flex-1 text-xs">{item.text}</span>
@@ -104,14 +134,13 @@ function DraggableItem({
 }
 
 // Droppable Category Component
-function DroppableCategory({ 
-  category, 
-  children, 
-  itemCount, 
+function DroppableCategory({
+  category,
+  children,
+  itemCount,
   categoryIndex,
-  items
-}: { 
-  category: string; 
+}: {
+  category: string;
   children: React.ReactNode;
   itemCount: number;
   categoryIndex: number;
@@ -121,24 +150,26 @@ function DroppableCategory({
     id: category,
   });
 
-  const isRedFlags = category.toLowerCase().includes('red') || 
-                    (category.toLowerCase().includes('flag') && categoryIndex === 0);
-  const isGreenFlags = category.toLowerCase().includes('green') || 
-                      (category.toLowerCase().includes('flag') && categoryIndex === 1);
+  const isRedFlags =
+    category.toLowerCase().includes("red") ||
+    (category.toLowerCase().includes("flag") && categoryIndex === 0);
+  const isGreenFlags =
+    category.toLowerCase().includes("green") ||
+    (category.toLowerCase().includes("flag") && categoryIndex === 1);
 
   return (
     <div
       ref={setNodeRef}
       className={`min-h-[120px] p-6 rounded-lg transition-all duration-200 border-2 ${
         isOver
-          ? 'ring-4 ring-blue-500 ring-opacity-80 bg-blue-100 border-blue-400 scale-105'
+          ? "ring-4 ring-blue-500 ring-opacity-80 bg-blue-100 border-blue-400 scale-105"
           : itemCount > 0
           ? isRedFlags
-            ? 'bg-red-50 border-red-200 shadow-sm hover:border-red-300 hover:bg-red-100'
+            ? "bg-red-50 border-red-200 shadow-sm hover:border-red-300 hover:bg-red-100"
             : isGreenFlags
-              ? 'bg-green-50 border-green-200 shadow-sm hover:border-green-300 hover:bg-green-100'
-              : 'bg-blue-50 border-blue-200 shadow-sm hover:border-blue-300 hover:bg-blue-100'
-          : 'bg-slate-50 border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-100 hover:scale-105'
+            ? "bg-green-50 border-green-200 shadow-sm hover:border-green-300 hover:bg-green-100"
+            : "bg-blue-50 border-blue-200 shadow-sm hover:border-blue-300 hover:bg-blue-100"
+          : "bg-slate-50 border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-100 hover:scale-105"
       }`}
       data-category={category}
     >
@@ -147,12 +178,15 @@ function DroppableCategory({
   );
 }
 
-export default function DragDropInteractive({ data, onComplete, completedFromParent = false }: DragDropInteractiveProps) {
+export default function DragDropInteractive({
+  data,
+  onComplete,
+  completedFromParent = false,
+}: DragDropInteractiveProps) {
   const [items, setItems] = useState<DragItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [isChecking, setIsChecking] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [allCorrect, setAllCorrect] = useState(false);
   const [shakingItems, setShakingItems] = useState<Set<string>>(new Set());
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -164,6 +198,63 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
     })
   );
 
+  // Memoized helper functions to avoid dependency issues
+  const getItemsInCategory = useCallback(
+    (category: string) => {
+      return items.filter((item) => item.currentCategory === category);
+    },
+    [items]
+  );
+
+  const getAvailableItems = useCallback(() => {
+    return items.filter((item) => !item.currentCategory);
+  }, [items]);
+
+  const checkAnswers = useCallback(() => {
+    const updatedItems = items.map((item) => ({
+      ...item,
+      isCorrect: item.currentCategory === item.correctCategory,
+    }));
+
+    setItems(updatedItems);
+    setIsChecking(true);
+
+    const correctCount = updatedItems.filter((item) => item.isCorrect).length;
+    const allCorrect = correctCount === updatedItems.length;
+
+    console.log("=== CHECKING ANSWERS ===");
+    console.log(
+      "Items and their correctness:",
+      updatedItems.map((item) => ({
+        text: item.text,
+        currentCategory: item.currentCategory,
+        correctCategory: item.correctCategory,
+        isCorrect: item.isCorrect,
+      }))
+    );
+    console.log(`Correct: ${correctCount}/${updatedItems.length}`);
+    console.log("All correct:", allCorrect);
+
+    if (allCorrect) {
+      console.log("🎉 All answers correct! Calling onComplete(true)...");
+      setIsCompleted(true);
+      // Call onComplete with true to indicate successful completion
+      onComplete?.(true);
+      return true;
+    } else {
+      console.log("❌ Some answers are wrong! Showing feedback...");
+      const incorrectItems = updatedItems.filter((item) => !item.isCorrect);
+      setShakingItems(new Set(incorrectItems.map((item) => item.id)));
+
+      // Reset isChecking after showing feedback
+      setTimeout(() => {
+        setShakingItems(new Set());
+        setIsChecking(false);
+      }, 2000);
+      return false;
+    }
+  }, [items, onComplete]);
+
   // Initialize items and categories
   useEffect(() => {
     if (items.length === 0 && !completedFromParent) {
@@ -172,14 +263,14 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
           ...item,
           id: `item-${index}`,
           currentCategory: undefined,
-          isCorrect: undefined
+          isCorrect: undefined,
         }))
         .sort(() => Math.random() - 0.5);
-      
+
       setItems(shuffledItems);
       setCategories(data.categories);
     }
-  }, [data, completedFromParent]);
+  }, [data, completedFromParent, items.length]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -189,212 +280,191 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
     const { active, over } = event;
     setActiveId(null);
 
-    console.log('=== DRAG END DEBUG ===');
-    console.log('Drag end event:', { active: active.id, over: over?.id });
-    console.log('Current items state:', items);
-    console.log('Available items count:', getAvailableItems().length);
-    console.log('Categories:', categories);
+    console.log("=== DRAG END DEBUG ===");
+    console.log("Drag end event:", { active: active.id, over: over?.id });
+    console.log("Current items state:", items);
+    console.log("Available items count:", getAvailableItems().length);
+    console.log("Categories:", categories);
 
     if (over && active.id !== over.id) {
       const itemId = active.id as string;
       const category = over.id as string;
-      
-      console.log('Attempting to move item:', itemId, 'to category:', category);
-      
+
+      console.log("Attempting to move item:", itemId, "to category:", category);
+
       // Check if the target is a category (not an item)
       if (categories.includes(category)) {
-        setItems(prevItems => {
-          const updatedItems = prevItems.map(item => 
-            item.id === itemId 
-              ? { ...item, currentCategory: category }
-              : item
+        setItems((prevItems) => {
+          const updatedItems = prevItems.map((item) =>
+            item.id === itemId ? { ...item, currentCategory: category } : item
           );
-          
+
           console.log(`✅ Item moved to category "${category}"`);
-          console.log('Updated items:', updatedItems);
-          console.log('All items dropped:', updatedItems.every(item => item.currentCategory));
-          console.log('Available items after drop:', updatedItems.filter(item => !item.currentCategory));
-          
+          console.log("Updated items:", updatedItems);
+          console.log(
+            "All items dropped:",
+            updatedItems.every((item) => item.currentCategory)
+          );
+          console.log(
+            "Available items after drop:",
+            updatedItems.filter((item) => !item.currentCategory)
+          );
+
           return updatedItems;
         });
       } else {
-        console.log('❌ Target is not a valid category:', category);
-        console.log('Valid categories:', categories);
+        console.log("❌ Target is not a valid category:", category);
+        console.log("Valid categories:", categories);
       }
     } else {
-      console.log('❌ No valid drop target or same item');
+      console.log("❌ No valid drop target or same item");
     }
-    console.log('=== END DRAG END DEBUG ===');
-  };
-
-  const getItemsInCategory = (category: string) => {
-    return items.filter(item => item.currentCategory === category);
-  };
-
-  const getAvailableItems = () => {
-    return items.filter(item => !item.currentCategory);
+    console.log("=== END DRAG END DEBUG ===");
   };
 
   // Expose functions to parent component
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).getDragDropState = () => ({
+    if (typeof window !== "undefined") {
+      window.getDragDropState = () => ({
         items,
-        allItemsDropped: items.every(item => item.currentCategory),
+        allItemsDropped: items.every((item) => item.currentCategory),
         isChecking,
-        isCompleted
+        isCompleted,
       });
-      
-      (window as any).checkDragDropAnswers = checkAnswers;
-      (window as any).areAllItemsDropped = () => items.every(item => item.currentCategory);
-      
-      (window as any).debugDragDropItems = () => {
-        console.log('=== DRAG DROP DEBUG ===');
-        console.log('All items:', items);
-        console.log('Available items:', getAvailableItems());
-        console.log('Items in categories:', categories.map(cat => ({
-          category: cat,
-          items: getItemsInCategory(cat)
-        })));
-        console.log('All items dropped:', items.every(item => item.currentCategory));
-        console.log('=======================');
+
+      // Fixed: This now returns a boolean as expected
+      window.checkDragDropAnswers = () => {
+        if (items.every((item) => item.currentCategory)) {
+          console.log("Checking drag and drop answers...");
+          return checkAnswers(); // This now returns boolean
+        } else {
+          console.log("Cannot check answers - not all items are dropped yet");
+          return false;
+        }
+      };
+
+      window.areAllItemsDropped = () =>
+        items.every((item) => item.currentCategory);
+
+      window.debugDragDropItems = () => {
+        console.log("=== DRAG DROP DEBUG ===");
+        console.log("All items:", items);
+        console.log("Available items:", getAvailableItems());
+        console.log(
+          "Items in categories:",
+          categories.map((cat) => ({
+            category: cat,
+            items: getItemsInCategory(cat),
+          }))
+        );
+        console.log(
+          "All items dropped:",
+          items.every((item) => item.currentCategory)
+        );
+        console.log("=======================");
       };
 
       // Also expose a function to check if check answer should be enabled
-      (window as any).shouldEnableCheckAnswer = () => {
-        const allDropped = items.every(item => item.currentCategory);
-        console.log('Should enable check answer:', allDropped);
-        console.log('Items status:', items.map(item => ({
-          id: item.id,
-          text: item.text,
-          hasCategory: !!item.currentCategory,
-          category: item.currentCategory
-        })));
+      window.shouldEnableCheckAnswer = () => {
+        const allDropped = items.every((item) => item.currentCategory);
+        console.log("Should enable check answer:", allDropped);
+        console.log(
+          "Items status:",
+          items.map((item) => ({
+            id: item.id,
+            text: item.text,
+            hasCategory: !!item.currentCategory,
+            category: item.currentCategory,
+          }))
+        );
         return allDropped;
       };
-      
+
       // Add a more reliable function for parent components
-      (window as any).getDragDropCompletionStatus = () => {
-        const allDropped = items.every(item => item.currentCategory);
-        const droppedCount = items.filter(item => item.currentCategory).length;
+      window.getDragDropCompletionStatus = () => {
+        const allDropped = items.every((item) => item.currentCategory);
+        const droppedCount = items.filter(
+          (item) => item.currentCategory
+        ).length;
         const totalCount = items.length;
-        
+
         return {
           allDropped,
           droppedCount,
           totalCount,
           progress: totalCount > 0 ? (droppedCount / totalCount) * 100 : 0,
-          canCheckAnswers: allDropped && !isChecking && !isCompleted
+          canCheckAnswers: allDropped && !isChecking && !isCompleted,
         };
       };
-      
+
       // Function to manually check answers (for parent component)
-      (window as any).checkDragDropAnswersManually = () => {
-        if (items.every(item => item.currentCategory)) {
-          console.log('Manually checking answers...');
+      window.checkDragDropAnswersManually = () => {
+        if (items.every((item) => item.currentCategory)) {
+          console.log("Manually checking answers...");
           checkAnswers();
         } else {
-          console.log('Cannot check answers - not all items are dropped yet');
+          console.log("Cannot check answers - not all items are dropped yet");
         }
       };
-      
+
       // Simple boolean flag for parent components
-      (window as any).isDragDropReady = items.every(item => item.currentCategory);
-      
+      window.isDragDropReady = items.every((item) => item.currentCategory);
+
       // Most reliable function for parent components
-      (window as any).canEnableCheckAnswer = () => {
-        const allDropped = items.every(item => item.currentCategory);
+      window.canEnableCheckAnswer = () => {
+        const allDropped = items.every((item) => item.currentCategory);
         const notChecking = !isChecking;
         const notCompleted = !isCompleted;
-        
-        console.log('=== CAN ENABLE CHECK ANSWER ===');
-        console.log('All items dropped:', allDropped);
-        console.log('Not checking:', notChecking);
-        console.log('Not completed:', notCompleted);
-        console.log('Can enable:', allDropped && notChecking && notCompleted);
-        
+
+        console.log("=== CAN ENABLE CHECK ANSWER ===");
+        console.log("All items dropped:", allDropped);
+        console.log("Not checking:", notChecking);
+        console.log("Not completed:", notCompleted);
+        console.log("Can enable:", allDropped && notChecking && notCompleted);
+
         return allDropped && notChecking && notCompleted;
       };
-      
-      // Function to check answers (this is what the parent should call)
-      (window as any).checkDragDropAnswers = () => {
-        if (items.every(item => item.currentCategory)) {
-          console.log('Checking drag and drop answers...');
-          checkAnswers();
-          return true; // Return true to indicate we're checking
-        } else {
-          console.log('Cannot check answers - not all items are dropped yet');
-          return false;
-        }
-      };
     }
-  }); // REMOVED DEPENDENCY ARRAY - this was causing the bug!
+  }, [
+    items,
+    categories,
+    isChecking,
+    isCompleted,
+    checkAnswers,
+    getAvailableItems,
+    getItemsInCategory,
+  ]);
 
   // Auto-notify parent when all items are dropped (for easier integration)
   useEffect(() => {
-    if (items.length > 0 && items.every(item => item.currentCategory) && !isCompleted) {
-      console.log('🎯 All items dropped! Parent can now enable check answer button');
+    if (
+      items.length > 0 &&
+      items.every((item) => item.currentCategory) &&
+      !isCompleted
+    ) {
+      console.log(
+        "🎯 All items dropped! Parent can now enable check answer button"
+      );
       // This will help parent components know when to enable the check answer button
-      if (typeof window !== 'undefined') {
-        (window as any).dragDropReadyForCheck = true;
-        
+      if (typeof window !== "undefined") {
+        window.dragDropReadyForCheck = true;
+
         // Dispatch a custom event that parent components can listen to
-        const event = new CustomEvent('dragDropReady', {
+        const event = new CustomEvent("dragDropReady", {
           detail: {
             allItemsDropped: true,
             itemCount: items.length,
-            categories: categories
-          }
+            categories: categories,
+          },
         });
         window.dispatchEvent(event);
       }
-      
+
       // IMPORTANT: Call onComplete with false to indicate "ready to check answers" not "completed"
       // This matches the quiz behavior where onComplete(false) means ready to check
       onComplete?.(false);
     }
   }, [items, isCompleted, categories, onComplete]);
-
-  const checkAnswers = () => {
-    const updatedItems = items.map(item => ({
-      ...item,
-      isCorrect: item.currentCategory === item.correctCategory
-    }));
-    
-    setItems(updatedItems);
-    setIsChecking(true);
-    
-    const correctCount = updatedItems.filter(item => item.isCorrect).length;
-    const allCorrect = correctCount === updatedItems.length;
-    
-    console.log('=== CHECKING ANSWERS ===');
-    console.log('Items and their correctness:', updatedItems.map(item => ({
-      text: item.text,
-      currentCategory: item.currentCategory,
-      correctCategory: item.correctCategory,
-      isCorrect: item.isCorrect
-    })));
-    console.log(`Correct: ${correctCount}/${updatedItems.length}`);
-    console.log('All correct:', allCorrect);
-    
-    if (allCorrect) {
-      console.log('🎉 All answers correct! Calling onComplete(true)...');
-      setAllCorrect(true);
-      setIsCompleted(true);
-      // Call onComplete with true to indicate successful completion
-      onComplete?.(true);
-    } else {
-      console.log('❌ Some answers are wrong! Showing feedback...');
-      const incorrectItems = updatedItems.filter(item => !item.isCorrect);
-      setShakingItems(new Set(incorrectItems.map(item => item.id)));
-      
-      // Reset isChecking after showing feedback
-      setTimeout(() => {
-        setShakingItems(new Set());
-        setIsChecking(false);
-      }, 2000);
-    }
-  };
 
   const resetGame = () => {
     const shuffledItems = [...data.items]
@@ -402,19 +472,20 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
         ...item,
         id: `item-${index}`,
         currentCategory: undefined,
-        isCorrect: undefined
+        isCorrect: undefined,
       }))
       .sort(() => Math.random() - 0.5);
-    
+
     setItems(shuffledItems);
     setIsChecking(false);
     setIsCompleted(false);
-    setAllCorrect(false);
     setShakingItems(new Set());
   };
 
   const availableItems = getAvailableItems();
-  const activeItem = activeId ? items.find(item => item.id === activeId) : null;
+  const activeItem = activeId
+    ? items.find((item) => item.id === activeId)
+    : null;
 
   return (
     <DndContext
@@ -446,9 +517,9 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {availableItems.map((item) => (
-                <DraggableItem 
-                  key={item.id} 
-                  item={item} 
+                <DraggableItem
+                  key={item.id}
+                  item={item}
                   isChecking={isChecking}
                   shakingItems={shakingItems}
                 />
@@ -461,11 +532,13 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {categories.map((category, index) => {
             const categoryItems = getItemsInCategory(category);
-            const isRedFlags = category.toLowerCase().includes('red') || 
-                              (category.toLowerCase().includes('flag') && index === 0);
-            const isGreenFlags = category.toLowerCase().includes('green') || 
-                                (category.toLowerCase().includes('flag') && index === 1);
-            
+            const isRedFlags =
+              category.toLowerCase().includes("red") ||
+              (category.toLowerCase().includes("flag") && index === 0);
+            const isGreenFlags =
+              category.toLowerCase().includes("green") ||
+              (category.toLowerCase().includes("flag") && index === 1);
+
             return (
               <Card key={category} className="border border-slate-200">
                 <CardHeader className="pb-2">
@@ -488,17 +561,17 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <DroppableCategory 
-                    category={category} 
-                    itemCount={categoryItems.length} 
+                  <DroppableCategory
+                    category={category}
+                    itemCount={categoryItems.length}
                     categoryIndex={index}
                     items={categoryItems}
                   >
                     <div className="space-y-1">
                       {categoryItems.map((item) => (
-                        <DraggableItem 
-                          key={item.id} 
-                          item={item} 
+                        <DraggableItem
+                          key={item.id}
+                          item={item}
                           isChecking={isChecking}
                           shakingItems={shakingItems}
                         />
@@ -506,8 +579,12 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
                       {categoryItems.length === 0 && (
                         <div className="text-center text-muted-foreground py-8">
                           <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                          <p className="text-base font-semibold">Drop items here</p>
-                          <p className="text-sm opacity-70">Just drag and drop from below</p>
+                          <p className="text-base font-semibold">
+                            Drop items here
+                          </p>
+                          <p className="text-sm opacity-70">
+                            Just drag and drop from below
+                          </p>
                         </div>
                       )}
                     </div>
@@ -520,9 +597,9 @@ export default function DragDropInteractive({ data, onComplete, completedFromPar
 
         {/* Reset Button */}
         <div className="flex justify-center">
-          <Button 
-            onClick={resetGame} 
-            variant="outline" 
+          <Button
+            onClick={resetGame}
+            variant="outline"
             className="px-4 py-2 text-sm font-medium gap-2"
             size="sm"
           >

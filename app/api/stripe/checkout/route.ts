@@ -12,11 +12,15 @@ export async function POST(req: NextRequest) {
   try {
     const { plan, userId } = await req.json();
     if (!plan || !["monthly", "yearly"].includes(plan) || !userId) {
-      return new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 });
+      return new Response(JSON.stringify({ error: "Invalid request" }), {
+        status: 400,
+      });
     }
     const priceId = PRICE_IDS[plan as "monthly" | "yearly"];
     if (!priceId) {
-      return new Response(JSON.stringify({ error: "Price ID not found" }), { status: 400 });
+      return new Response(JSON.stringify({ error: "Price ID not found" }), {
+        status: 400,
+      });
     }
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -34,7 +38,11 @@ export async function POST(req: NextRequest) {
       expand: ["line_items"],
     });
     return new Response(JSON.stringify({ url: session.url }), { status: 200 });
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+    });
   }
-} 
+}

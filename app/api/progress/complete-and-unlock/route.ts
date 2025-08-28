@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
     const { sectionId, courseId, currentOrder } = body;
     // sectionId is actually course_path_section_id
     const course_path_section_id = sectionId;
-    const course_path_id = courseId;
     console.log("Extracted values:", { sectionId, courseId, currentOrder });
 
     const { userId } = await auth();
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
       // 1. Get today's date in UTC (YYYY-MM-DD)
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
-      
+
       // 1. Mark the current section as completed
       console.log("Marking current section as completed...");
       // Always update completed_at to todayStr
@@ -68,15 +67,23 @@ export async function POST(request: NextRequest) {
         console.error("Error marking section as completed:", updateError);
         throw updateError;
       }
-      
-      console.log('Stored completed_at date:', todayStr);
-      console.log('Upserted data:', upserted);
-      
+
+      console.log("Stored completed_at date:", todayStr);
+      console.log("Upserted data:", upserted);
+
       // If the row already existed and was completed before, force update completed_at
-      if (upserted && upserted.length > 0 && upserted[0].completed && upserted[0].completed_at !== todayStr) {
+      if (
+        upserted &&
+        upserted.length > 0 &&
+        upserted[0].completed &&
+        upserted[0].completed_at !== todayStr
+      ) {
         await supabase
           .from("course_path_section_progress")
-          .update({ completed_at: todayStr, updated_at: new Date().toISOString() })
+          .update({
+            completed_at: todayStr,
+            updated_at: new Date().toISOString(),
+          })
           .eq("clerk_id", userId)
           .eq("course_path_section_id", course_path_section_id);
       }
@@ -87,23 +94,33 @@ export async function POST(request: NextRequest) {
       // which looks at actual completion dates from course_path_section_progress
 
       // 2. Look up the current section to get order and course_path_id
-      const { data: currentSection, error: currentSectionError } = await supabase
-        .from("course_path_sections")
-        .select("id, order, course_path_id")
-        .eq("id", course_path_section_id)
-        .single();
+      const { data: currentSection, error: currentSectionError } =
+        await supabase
+          .from("course_path_sections")
+          .select("id, order, course_path_id")
+          .eq("id", course_path_section_id)
+          .single();
 
       if (currentSectionError || !currentSection) {
         console.error("Error fetching current section:", currentSectionError);
         throw currentSectionError || new Error("Current section not found");
       }
 
-      console.log("Current section order:", currentSection.order, typeof currentSection.order);
-      const currentOrderNum = typeof currentSection.order === 'string'
-        ? parseInt(currentSection.order, 10)
-        : Number(currentSection.order);
+      console.log(
+        "Current section order:",
+        currentSection.order,
+        typeof currentSection.order
+      );
+      const currentOrderNum =
+        typeof currentSection.order === "string"
+          ? parseInt(currentSection.order, 10)
+          : Number(currentSection.order);
       const nextOrder = currentOrderNum + 1;
-      console.log("Looking for next section with order:", nextOrder, typeof nextOrder);
+      console.log(
+        "Looking for next section with order:",
+        nextOrder,
+        typeof nextOrder
+      );
 
       // 3. Find the next section by order+1 and same course_path_id
       const { data: nextSection, error: nextError } = await supabase
@@ -114,7 +131,12 @@ export async function POST(request: NextRequest) {
         .limit(1)
         .single();
 
-      console.log("Next section query result:", nextSection, "Error:", nextError);
+      console.log(
+        "Next section query result:",
+        nextSection,
+        "Error:",
+        nextError
+      );
 
       let nextSectionUnlocked = false;
       let nextSectionId = null;
@@ -130,7 +152,12 @@ export async function POST(request: NextRequest) {
           .eq("course_path_section_id", nextSection.id)
           .single();
 
-        console.log("Existing progress for next section:", existingProgress, "Error:", progressError);
+        console.log(
+          "Existing progress for next section:",
+          existingProgress,
+          "Error:",
+          progressError
+        );
 
         if (existingProgress && !progressError) {
           // Update existing progress to unlock the next section
@@ -161,7 +188,10 @@ export async function POST(request: NextRequest) {
             ]);
 
           if (createError) {
-            console.error("Error creating progress for next section:", createError);
+            console.error(
+              "Error creating progress for next section:",
+              createError
+            );
             throw createError;
           }
           nextSectionUnlocked = true;
@@ -174,11 +204,12 @@ export async function POST(request: NextRequest) {
       // 5. Get the next section details for response
       let nextSectionDetails = null;
       if (nextSectionUnlocked && nextSectionId) {
-        const { data: nextSectionData, error: nextSectionDataError } = await supabase
-          .from("course_path_sections")
-          .select("id, title, order, course_path_id")
-          .eq("id", nextSectionId)
-          .single();
+        const { data: nextSectionData, error: nextSectionDataError } =
+          await supabase
+            .from("course_path_sections")
+            .select("id, title, order, course_path_id")
+            .eq("id", nextSectionId)
+            .single();
 
         if (!nextSectionDataError && nextSectionData) {
           nextSectionDetails = nextSectionData;
@@ -197,7 +228,9 @@ export async function POST(request: NextRequest) {
         console.log("Total sections in course:", totalSections?.length);
       }
 
-      const isLastSection = totalSections ? nextOrder > totalSections.length : false;
+      const isLastSection = totalSections
+        ? nextOrder > totalSections.length
+        : false;
 
       console.log("=== COMPLETE SECTION API SUCCESS ===");
       return NextResponse.json({
@@ -206,7 +239,9 @@ export async function POST(request: NextRequest) {
           completed: true,
           nextSection: nextSectionDetails,
           isLastSection,
-          message: isLastSection ? "Course completed!" : "Section completed and next section unlocked!",
+          message: isLastSection
+            ? "Course completed!"
+            : "Section completed and next section unlocked!",
         },
       });
     } catch (error) {

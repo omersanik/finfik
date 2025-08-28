@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import CourseDetailSkeleton from "./skeletons/CourseDetailSkeleton";
-import CourseLearningPathCardComponent from "./CoursesLearningPathCardComponent";
 import LearningPathClient from "./LearningPath";
+import CourseLearningPathCardComponent from "./CoursesLearningPathCardComponent";
 
 interface CoursePathSection {
   id: number;
@@ -16,17 +17,42 @@ interface CoursePathSection {
   sectionSlug: string;
 }
 
+// Define proper types for the course data
+interface PathSection {
+  id: number;
+  title: string;
+  completed: boolean;
+  unlocked: boolean;
+  description?: string;
+  lessons?: string[];
+  slug?: string;
+}
+
+interface Path {
+  sections: PathSection[];
+}
+
+interface CourseInfo {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail_url: string;
+  coming_soon?: boolean;
+  [key: string]: unknown; // For other properties that might be passed
+}
+
 interface CourseDetailWrapperProps {
   initialData: {
-    path: any;
-    courseInfo: any;
+    path: Path;
+    courseInfo: CourseInfo;
     slug: string;
   };
 }
 
-export default function CourseDetailWrapper({ initialData }: CourseDetailWrapperProps) {
+export default function CourseDetailWrapper({
+  initialData,
+}: CourseDetailWrapperProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState(initialData);
 
   useEffect(() => {
     // Show skeleton for a very brief moment for smooth transition
@@ -42,24 +68,29 @@ export default function CourseDetailWrapper({ initialData }: CourseDetailWrapper
     return <CourseDetailSkeleton />;
   }
 
-  const { path, courseInfo, slug } = data;
+  const { path, courseInfo, slug } = initialData;
 
   if (courseInfo.coming_soon) {
     return (
       <main className="min-h-screen bg-background flex items-center justify-center">
         <div className="bg-white border rounded-xl shadow p-10 max-w-lg mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Coming Soon!</h2>
-          <p className="text-lg text-gray-600 mb-6">This course is not yet available. Please check back soon!</p>
-          <a href="/courses" className="inline-block bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90">
+          <p className="text-lg text-gray-600 mb-6">
+            This course is not yet available. Please check back soon!
+          </p>
+          <Link
+            href="/courses"
+            className="inline-block bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90"
+          >
             Back to Courses
-          </a>
+          </Link>
         </div>
       </main>
     );
   }
 
   const steps = path.sections.map(
-    (section: any): CoursePathSection => ({
+    (section: PathSection): CoursePathSection => ({
       id: section.id,
       title: section.title,
       completed: section.completed,
@@ -67,7 +98,7 @@ export default function CourseDetailWrapper({ initialData }: CourseDetailWrapper
       description: section.description ?? "No description",
       lessons: section.lessons || [],
       courseSlug: slug,
-      sectionSlug: section.slug?.trim() || section.slug,
+      sectionSlug: section.slug?.trim() || section.slug || "",
     })
   );
 

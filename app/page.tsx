@@ -20,7 +20,7 @@ const Page = async () => {
     thumbnail_url: string;
     description: string;
     coming_soon?: boolean;
-    course_level?: 'Easy' | 'Medium' | 'Hard';
+    course_level?: "Easy" | "Medium" | "Hard";
   };
 
   type Streak = {
@@ -83,20 +83,23 @@ const Page = async () => {
   }
 
   // Fetch progress for all enrolled courses
-  let courseProgress: Record<string, any> = {};
+  let courseProgress: Record<string, unknown> = {};
   if (enrolledCourses.length > 0) {
     try {
-      const courseIds = enrolledCourses.map(course => course.id);
-      const progressRes = await fetch(`${baseUrl}/api/progress/batch-course-progress`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ courseIds }),
-        next: { revalidate: 60 }, // Cache for 1 minute
-      });
-      
+      const courseIds = enrolledCourses.map((course) => course.id);
+      const progressRes = await fetch(
+        `${baseUrl}/api/progress/batch-course-progress`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ courseIds }),
+          next: { revalidate: 60 }, // Cache for 1 minute
+        }
+      );
+
       if (progressRes.ok) {
         courseProgress = await progressRes.json();
       }
@@ -106,7 +109,12 @@ const Page = async () => {
   }
 
   // Fetch streak
-  let streak: Streak = { current_streak: 0, longest_streak: 0, last_completed_date: null, week: [false, false, false, false, false, false, false] };
+  let streak: Streak = {
+    current_streak: 0,
+    longest_streak: 0,
+    last_completed_date: null,
+    week: [false, false, false, false, false, false, false],
+  };
   try {
     const res = await fetch(`${baseUrl}/api/streak`, {
       headers: { Authorization: `Bearer ${await getToken()}` },
@@ -119,11 +127,9 @@ const Page = async () => {
     console.error("Error fetching streak:", err);
   }
 
-
-
   // If user has no enrolled courses, redirect to courses page
   if (enrolledCourses.length === 0) {
-    return redirect('/courses');
+    return redirect("/courses");
   }
 
   // Pass data to the client-side wrapper

@@ -19,14 +19,16 @@ export async function POST(req: NextRequest) {
     userId = claims.sub;
     if (!userId) throw new Error("User ID (sub) missing in token claims");
   } catch (err) {
-    return new Response("Invalid token", { status: 401 });
+    return new Response(`Invalid token ${err}`, { status: 401 });
   }
 
   const supabase = CreateSupabaseClient();
 
   const { data, error } = await supabase
     .from("course_enrollments")
-    .select("courses(id, title, slug, thumbnail_url, description, course_level)")
+    .select(
+      "courses(id, title, slug, thumbnail_url, description, course_level)"
+    )
     .eq("clerk_id", userId);
 
   if (error) {

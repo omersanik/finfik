@@ -7,13 +7,22 @@ import LoadingAnimation from "./LoadingAnimation";
 import StreakAnimation from "./StreakAnimation";
 import { Button } from "./ui/button";
 
+// Define proper quiz data type
+interface QuizData {
+  question: string;
+  options: Array<{
+    id: string;
+    text: string;
+  }>;
+}
+
 interface ContentItem {
   id: string;
   block_id: string;
   type: "text" | "image" | "quiz" | "animation";
   content_text?: string;
   image_url?: string;
-  quiz_data?: any;
+  quiz_data?: QuizData; // Replace 'any' with proper type
   component_key?: string;
   order_index: number;
   created_at: string;
@@ -52,10 +61,11 @@ interface CourseContentPageProps {
       sections: Section[];
     };
   };
-  userId: string;
+  // Remove unused userId parameter or use it
+  // userId: string;
 }
 
-const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
+const CourseContentPage = ({ courseData }: CourseContentPageProps) => {
   // Find the current active section (first unlocked but not completed section)
   const findCurrentSection = () => {
     const uncompletedUnlocked = courseData.path.sections.find(
@@ -91,13 +101,13 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
   const [streakCount, setStreakCount] = useState(0);
 
   const currentSection = courseData.path.sections[currentSectionIndex];
-  
+
   // Set loading to false after component mounts
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -134,7 +144,7 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
       }
 
       const result = await response.json();
-      
+
       // Streak is now calculated by the /api/streak route
       // We'll fetch the updated streak data after completion
       console.log("Section completed successfully:", result);
@@ -166,7 +176,7 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
             currentSection.completed = true;
 
             // Add a small delay to allow streak data to be processed
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 500));
 
             // Fetch updated streak data
             try {
@@ -246,10 +256,16 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
     return (
       <div className="min-h-screen bg-[#fefaf1] pt-24 pb-12 flex items-center justify-center">
         <div className="text-center">
-          <Suspense fallback={<div className="w-32 h-32 bg-gray-200 rounded-full animate-pulse"></div>}>
+          <Suspense
+            fallback={
+              <div className="w-32 h-32 bg-gray-200 rounded-full animate-pulse"></div>
+            }
+          >
             <LoadingAnimation size="large" />
           </Suspense>
-          <p className="mt-4 text-gray-600 text-sm">Loading course content...</p>
+          <p className="mt-4 text-gray-600 text-sm">
+            Loading course content...
+          </p>
         </div>
       </div>
     );
@@ -309,8 +325,8 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
                     🔒 Section Locked
                   </h2>
                   <p className="text-yellow-700 mb-4 text-sm">
-                    Complete the previous sections to unlock "
-                    {currentSection?.title}".
+                    Complete the previous sections to unlock &ldquo;
+                    {currentSection?.title}&rdquo;.
                   </p>
                   <Link
                     href={`/courses/${courseData.course.slug}`}
@@ -335,7 +351,7 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
         streakCount={streakCount}
         onAnimationComplete={() => setShowStreakAnimation(false)}
       />
-      
+
       <CourseIdNavbar
         hrefX={`/courses/${courseData.course.slug}`}
         currentProgress={
@@ -399,7 +415,6 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
                         block={block}
                         isVisible={true}
                         onContinue={handleContinue}
-                        canContinue={true}
                         isLastBlock={
                           index === currentBlockIndex &&
                           isLastBlockOfCurrentSection(currentBlockIndex) &&
@@ -416,7 +431,7 @@ const CourseContentPage = ({ courseData, userId }: CourseContentPageProps) => {
                   🎉 Congratulations!
                 </h2>
                 <p className="text-lg text-gray-600 mb-6">
-                  You've completed this section. Great job!
+                  You&apos;ve completed this section. Great job!
                 </p>
                 <Button
                   onClick={() => {

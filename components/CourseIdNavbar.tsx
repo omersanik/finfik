@@ -3,7 +3,14 @@ import { X } from "lucide-react";
 import React, { useState } from "react";
 import { Progress } from "./ui/progress";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface CourseIdNavbarProps {
   hrefX: string;
@@ -30,7 +37,8 @@ const CourseIdNavbar = ({
     setShowExitModal(false);
   };
 
-  const progressValue = totalProgress > 0 ? (currentProgress / totalProgress) * 100 : 0;
+  const progressValue =
+    totalProgress > 0 ? (currentProgress / totalProgress) * 100 : 0;
 
   return (
     <>
@@ -62,7 +70,8 @@ const CourseIdNavbar = ({
           <DialogHeader>
             <DialogTitle>Exit Course?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to exit? Your progress will be saved, but you'll lose your current position in the lesson.
+              Are you sure you want to exit? Your progress will be saved, but
+              you&apos;ll lose your current position in the lesson.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -79,4 +88,4 @@ const CourseIdNavbar = ({
   );
 };
 
-export default CourseIdNavbar; 
+export default CourseIdNavbar;
