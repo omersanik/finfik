@@ -3,13 +3,13 @@
 import React, { useEffect, useState } from "react";
 import { ReactTyped } from "react-typed";
 import { motion } from "framer-motion";
-import type { Variants } from "framer-motion";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   Play,
-  Star,
+
   Users,
   TrendingUp,
   Shield,
@@ -31,7 +31,7 @@ type Course = {
   description: string;
   coming_soon?: boolean;
   is_premium?: boolean;
-  course_level?: any;
+  course_level?: string;
 };
 
 

@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import { 
   MessageSquare, 
   Bug, 
@@ -50,14 +50,7 @@ interface FeedbackItem {
   };
 }
 
-const categoryIcons = {
-  bug: Bug,
-  feature: Lightbulb,
-  ui: Palette,
-  content: BookOpen,
-  performance: Zap,
-  other: Settings,
-};
+
 
 const priorityColors = {
   low: "bg-green-100 text-green-800 border-green-200",
@@ -102,8 +95,8 @@ export default function AdminFeedbackPage() {
       }
       const data = await response.json();
       setFeedback(data.feedback || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch feedback");
+    } catch {
+      setError("Failed to fetch feedback");
       toast.error("Failed to fetch feedback");
     } finally {
       setLoading(false);
@@ -146,7 +139,7 @@ export default function AdminFeedbackPage() {
       setSelectedFeedback(null);
       setUpdateStatus("");
       setAdminNotes("");
-    } catch (err) {
+    } catch {
       toast.error("Failed to update feedback");
     }
   };

@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import { Badge } from "@/components/ui/badge";
 
 import { MessageSquare, Send, CheckCircle, Sparkles, Bug, Lightbulb, Palette, BookOpen, Zap, Settings } from "lucide-react";
@@ -34,14 +34,7 @@ const feedbackSchema = z.object({
 
 type FeedbackFormData = z.infer<typeof feedbackSchema>;
 
-const categoryIcons = {
-  bug: Bug,
-  feature: Lightbulb,
-  ui: Palette,
-  content: BookOpen,
-  performance: Zap,
-  other: Settings,
-};
+
 
 const priorityColors = {
   low: "bg-green-100 text-green-800 border-green-200",

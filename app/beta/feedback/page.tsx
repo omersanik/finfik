@@ -65,7 +65,7 @@ export default async function BetaFeedbackPage() {
                 </div>
                 <h3 className="font-semibold text-purple-800 mb-2">Exclusive Access</h3>
                 <p className="text-sm text-purple-600">
-                  You're part of our exclusive beta program with premium features
+                  You&apos;re part of our exclusive beta program with premium features
                 </p>
               </CardContent>
             </Card>

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Sparkles, Star, MessageSquare, Zap, Gift, CheckCircle, AlertCircle, Lightbulb } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 
 interface BetaWelcomeModalProps {
   isOpen: boolean;
