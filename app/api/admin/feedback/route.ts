@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient } from "@/supabase-client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Create Supabase client
-    const supabase = createClient();
+    const supabase = await createSupabaseServerClient();
 
     // Check if user is admin
     const { data: userData, error: userError } = await supabase
@@ -61,7 +61,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Create Supabase client
-    const supabase = createClient();
+    const supabase = await createSupabaseServerClient();
 
     // Check if user is admin
     const { data: userData, error: userError } = await supabase
