@@ -4,6 +4,7 @@ export interface QuizOption {
 }
 
 export interface QuizData {
+  question: string;
   options: QuizOption[];
 }
 
