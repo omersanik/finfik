@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 
-type RouteContext = {
-  params: { id: string };
-};
-
-export async function PUT(req: NextRequest, context: RouteContext) {
+export async function PUT(
+  req: NextRequest,
+  context: { params: Record<string, string> } // ✅ must be Record<string, string>
+) {
   try {
     const { userId } = await auth();
 
@@ -14,7 +13,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Correct Clerk usage
+    // ✅ correct Clerk usage
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     const role = user.publicMetadata.role as string | undefined;
@@ -55,7 +54,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         course_level: course_level || null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", context.params.id)
+      .eq("id", context.params.id) // ✅ works
       .select()
       .single();
 
