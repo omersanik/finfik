@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 
 export async function PUT(
   req: NextRequest,
-  context: { params: Record<string, string> } // ✅ must be Record<string, string>
+  { params }: { params: { id: string } }
 ) {
   try {
     const { userId } = await auth();
@@ -13,10 +13,10 @@ export async function PUT(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // ✅ correct Clerk usage
+    // Check if user is admin using Clerk
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    const role = user.publicMetadata.role as string | undefined;
+    const role = user?.publicMetadata?.role;
 
     if (role !== "admin") {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
@@ -31,6 +31,7 @@ export async function PUT(
       course_level,
     } = await req.json();
 
+    // Validate required fields
     if (!title || !description || !slug) {
       return NextResponse.json(
         { error: "Title, description, and slug are required" },
@@ -43,6 +44,7 @@ export async function PUT(
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
+    // Update course
     const { data, error } = await supabase
       .from("courses")
       .update({
@@ -54,7 +56,7 @@ export async function PUT(
         course_level: course_level || null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", context.params.id) // ✅ works
+      .eq("id", params.id)
       .select()
       .single();
 
