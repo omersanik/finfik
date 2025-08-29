@@ -185,7 +185,7 @@ const AdminDeletePanel = () => {
     setDeleteLoading(id);
     try {
       let endpoint = "";
-      let body = { adminPassword };
+      let body: Record<string, string> = { adminPassword };
 
       switch (type) {
         case "course":
