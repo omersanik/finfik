@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { LazyLoadImage } from 'react-lazy-load-image-component';
-import 'react-lazy-load-image-component/src/effects/blur.css';
-import { Skeleton } from '@/components/ui/skeleton';
+import React, { useState, useRef, useEffect } from "react";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import "react-lazy-load-image-component/src/effects/blur.css";
+import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
 
 interface OptimizedImageProps {
   src: string;
@@ -26,7 +27,7 @@ export default function OptimizedImage({
   priority = false,
   sizes = "(max-width: 768px) 100vw, 350px",
   onLoad,
-  onError
+  onError,
 }: OptimizedImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -45,8 +46,8 @@ export default function OptimizedImage({
         }
       },
       {
-        rootMargin: '50px', // Start loading 50px before image enters viewport
-        threshold: 0.1
+        rootMargin: "50px", // Start loading 50px before image enters viewport
+        threshold: 0.1,
       }
     );
 
@@ -79,7 +80,7 @@ export default function OptimizedImage({
             height={height}
             effect="blur"
             className={`${className} transition-opacity duration-300 ${
-              isLoaded ? 'opacity-100' : 'opacity-0'
+              isLoaded ? "opacity-100" : "opacity-0"
             }`}
             onLoad={handleLoad}
             onError={handleError}
@@ -94,7 +95,9 @@ export default function OptimizedImage({
   // Show error state
   if (hasError) {
     return (
-      <div className={`${className} bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center`}>
+      <div
+        className={`${className} bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center`}
+      >
         <div className="text-center text-gray-500">
           <div className="text-2xl mb-2">🖼️</div>
           <div className="text-sm">Image failed to load</div>
@@ -105,7 +108,7 @@ export default function OptimizedImage({
 
   // Show optimized image
   return (
-    <img
+    <Image
       src={src}
       alt={alt}
       width={width}

@@ -1,26 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@supabase/supabase-js";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const { params } = context;
+    const { id } = params;
 
-    // For now, we'll skip the admin role check to simplify the API
-    // You can add this back later if needed
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
 
     const { title, order_index, section_id } = await req.json();
 
-    // Validate required fields
     if (!title || !section_id) {
-      return NextResponse.json({ error: 'Title and section_id are required' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Title and section_id are required" },
+        { status: 400 }
+      );
     }
 
     const supabase = createClient(
@@ -28,26 +29,34 @@ export async function PUT(
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    // Update content block
     const { data, error } = await supabase
-      .from('content_block')
+      .from("content_block")
       .update({
         title,
         order_index: order_index || 0,
-        section_id
+        section_id,
       })
-      .eq('id', params.id)
+      .eq("id", id)
       .select()
       .single();
 
     if (error) {
-      console.error('Error updating content block:', error);
-      return NextResponse.json({ error: 'Failed to update content block' }, { status: 500 });
+      console.error("Error updating content block:", error);
+      return NextResponse.json(
+        { error: "Failed to update content block" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ message: 'Content block updated successfully', block: data });
+    return NextResponse.json({
+      message: "Content block updated successfully",
+      block: data,
+    });
   } catch (error) {
-    console.error('Error in update content block:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("Error in update content block:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
