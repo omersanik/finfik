@@ -13,7 +13,7 @@ export const DynamicChart = dynamic(
 );
 
 export const DynamicEditor = dynamic(
-  () => import('@/components/Editor').then((mod) => mod.default),
+  () => import('@/components/editor/RichTextEditorWrapper').then((mod) => mod.default),
   {
     loading: () => <Skeleton className="w-full h-96" />,
     ssr: false,

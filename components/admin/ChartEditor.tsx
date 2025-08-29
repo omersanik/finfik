@@ -153,27 +153,22 @@ export default function ChartEditor({ value, onChange }: ChartEditorProps) {
     }
   }, [value, initialized]);
 
-  // Save changes to parent
-  const saveChanges = () => {
-    const chartConfig: ChartConfig = {
-      type: chartType as "line" | "bar" | "pie",
-      title,
-      description,
-      data: chartData,
-      yAxis: {
-        title: yAxisTitle,
-        min: yAxisMin,
-        max: yAxisMax,
-        stepSize: yAxisStepSize,
-      },
-    };
-    onChange(JSON.stringify(chartConfig, null, 2));
-  };
-
   // Save whenever any value changes
   useEffect(() => {
     if (initialized) {
-      saveChanges();
+      const chartConfig: ChartConfig = {
+        type: chartType as "line" | "bar" | "pie",
+        title,
+        description,
+        data: chartData,
+        yAxis: {
+          title: yAxisTitle,
+          min: yAxisMin,
+          max: yAxisMax,
+          stepSize: yAxisStepSize,
+        },
+      };
+      onChange(JSON.stringify(chartConfig, null, 2));
     }
   }, [
     chartType,
@@ -185,7 +180,6 @@ export default function ChartEditor({ value, onChange }: ChartEditorProps) {
     yAxisMax,
     yAxisStepSize,
     initialized,
-    saveChanges,
   ]);
 
   const addDataset = () => {
