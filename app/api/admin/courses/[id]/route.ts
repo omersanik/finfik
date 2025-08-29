@@ -4,8 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
   try {
     const { userId } = await auth();
 
