@@ -71,7 +71,6 @@ interface Section {
   title: string;
 }
 
-type ContentItemFormValues = z.infer<typeof formSchema>;
 
 // Custom Rich Text Editor Component
 interface CustomRichTextEditorProps {
