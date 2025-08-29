@@ -2,17 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 
-export async function PUT(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
+// Note: We do NOT put 'context' as the second argument
+export async function PUT(req: NextRequest) {
   try {
-    const { params } = context;
-    const { id } = params;
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    // Get the 'id' from the URL
+    const url = new URL(req.url);
+    const id = url.pathname.split("/").pop(); // gets the last segment of the path
+    if (!id) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
     }
 
     const { title, order_index, section_id } = await req.json();
@@ -23,11 +30,6 @@ export async function PUT(
         { status: 400 }
       );
     }
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
 
     const { data, error } = await supabase
       .from("content_block")
