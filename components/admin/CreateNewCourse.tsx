@@ -35,10 +35,8 @@ const formSchema = z.object({
   course_level: z.enum(["Easy", "Medium", "Hard"]).default("Medium"),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
 export default function CreateNewCourse() {
-  const form = useForm<FormValues>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
@@ -51,7 +49,7 @@ export default function CreateNewCourse() {
     },
   });
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const response = await fetch("/api/admin/create-new-course", {
         method: "POST",
