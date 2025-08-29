@@ -180,6 +180,7 @@ export default function ChartEditor({ value, onChange }: ChartEditorProps) {
     yAxisMax,
     yAxisStepSize,
     initialized,
+    onChange,
   ]);
 
   const addDataset = () => {

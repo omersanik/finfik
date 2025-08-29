@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect } from 'react';
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
 
 export default function PerformanceMonitor() {
   useEffect(() => {
     // Only run in production
     if (process.env.NODE_ENV === 'production') {
       // Core Web Vitals
-      getCLS(console.log);
-      getFID(console.log);
-      getFCP(console.log);
-      getLCP(console.log);
-      getTTFB(console.log);
+      onCLS(console.log);
+      onINP(console.log);
+      onFCP(console.log);
+      onLCP(console.log);
+      onTTFB(console.log);
     }
   }, []);
 
