@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Quill } from "quill"; // For quillRef type
-import type { ReactQuillProps } from "react-quill";
 
 interface RichTextEditorWrapperProps {
   value: string;
@@ -19,7 +18,7 @@ export default function RichTextEditorWrapper({
 }: RichTextEditorWrapperProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [ReactQuill, setReactQuill] =
-    useState<React.ComponentType<ReactQuillProps> | null>(null);
+    useState<React.ComponentType<any> | null>(null);
   const quillRef = useRef<Quill | null>(null);
 
   useEffect(() => {
