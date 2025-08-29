@@ -15,6 +15,7 @@ interface QuizOption {
 }
 
 interface QuizData {
+  question: string;
   options: QuizOption[];
 }
 
