@@ -3,7 +3,6 @@ import { CreateSupabaseClient } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { ContentItem, Block, QuizData } from "@/types/content";
-import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import {
@@ -209,6 +208,8 @@ export default async function SectionPage({
     .eq("course_path_section_id", section.id)
     .single();
 
+    if(progressError) {
+      console.error("Error fetching progress:", progressError); }
   // If the section is not the first one (order > 0) and it's not unlocked, redirect
   if (section.order > 0 && (!progress || !progress.unlocked)) {
     return (
@@ -218,7 +219,7 @@ export default async function SectionPage({
         </CardHeader>
         <CardContent>
           <CardDescription>
-            Looks like you're trying to skip ahead! Follow the learning path, you'll get there!
+            Looks like you&apos;re trying to skip ahead! Follow the learning path, you&apos;ll get there!
           </CardDescription>
           <p className="mt-2 text-muted-foreground">
             Return to your course to continue learning.
