@@ -284,10 +284,8 @@ export default function SectionClient({
               locked={false}
               hideContinueButton={true}
               onQuizAnswer={handleQuizAnswer}
-              quizAnswer={quizAnswers[idx]}
               quizCompleted={quizCompleted}
               onDragDropComplete={handleDragDropComplete}
-              dragDropCompletedProp={dragDropCompleted}
             />
           </div>
         ))}
