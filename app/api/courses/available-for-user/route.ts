@@ -4,7 +4,7 @@ import { CreateSupabaseClient } from "@/supabase-client";
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return new Response("Unauthorized", { status: 401 });
-
+  
   const supabase = CreateSupabaseClient();
 
   // Get enrolled course IDs

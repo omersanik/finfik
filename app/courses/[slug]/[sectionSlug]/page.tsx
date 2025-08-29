@@ -3,6 +3,8 @@ import { CreateSupabaseClient } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { ContentItem, Block, QuizData } from "@/types/content";
+import { notFound } from "next/navigation";
+import Link from "next/link";
 
 import {
   Card,
@@ -194,6 +196,39 @@ export default async function SectionPage({
           <p className="mt-2 text-muted-foreground">
             In course: <span className="font-mono">{slug}</span>
           </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Check if section is unlocked for the user
+  const { data: progress, error: progressError } = await supabase
+    .from("course_path_section_progress")
+    .select("unlocked, completed")
+    .eq("clerk_id", userId)
+    .eq("course_path_section_id", section.id)
+    .single();
+
+  // If the section is not the first one (order > 0) and it's not unlocked, redirect
+  if (section.order > 0 && (!progress || !progress.unlocked)) {
+    return (
+      <Card className="max-w-xl mx-auto mt-16">
+        <CardHeader>
+          <CardTitle>Whoops, not so fast!</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription>
+            Looks like you're trying to skip ahead! Follow the learning path, you'll get there!
+          </CardDescription>
+          <p className="mt-2 text-muted-foreground">
+            Return to your course to continue learning.
+          </p>
+          <Link
+            href={`/courses/${slug}`}
+            className="mt-4 inline-block bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90"
+          >
+            Back to Course
+          </Link>
         </CardContent>
       </Card>
     );
