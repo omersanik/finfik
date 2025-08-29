@@ -18,7 +18,7 @@ export default function RichTextEditorWrapper({
 }: RichTextEditorWrapperProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [ReactQuill, setReactQuill] =
-    useState<React.ComponentType<any> | null>(null);
+    useState<React.ComponentType<unknown> | null>(null);
   const quillRef = useRef<Quill | null>(null);
 
   useEffect(() => {
