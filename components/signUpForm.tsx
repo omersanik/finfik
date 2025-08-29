@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 
@@ -37,6 +37,8 @@ export default function SignUpForm() {
   const [verificationError, setVerificationError] = useState<string | null>(
     null
   );
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
   useEffect(() => {
     setTheme("light");
@@ -161,12 +163,14 @@ export default function SignUpForm() {
               className="object-contain"
             />
           </div>
+          <h1 className="text-xl font-bold text-center mb-2">Create Your Account</h1>
 
           {verifying ? (
             <>
               <h2 className="text-xl font-bold mb-2">Verify Your Email</h2>
               {verificationError && (
                 <Alert variant="destructive" className="mb-2 w-full">
+                  <AlertCircle className="h-4 w-4" />
                   <AlertTitle className="text-sm">Error</AlertTitle>
                   <AlertDescription className="text-xs">
                     {verificationError}
@@ -211,9 +215,63 @@ export default function SignUpForm() {
             </>
           ) : (
             <>
-              <h2 className="text-xl font-bold mb-2">Create Your Account</h2>
+              {/* Social Sign Up Buttons */}
+              <div className="flex flex-col gap-1 w-full mb-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-10 max-w-none flex items-center justify-center gap-2 bg-white text-black border border-gray-300 hover:bg-gray-100 text-base font-medium mx-auto px-2"
+                  onClick={async () => {
+                    if (!isLoaded) return;
+                    try {
+                      await signUp.authenticateWithRedirect({
+                        strategy: "oauth_google",
+                        redirectUrl: "/",
+                        redirectUrlComplete: "/",
+                      });
+                    } catch (err) {
+                      setAuthError(
+                        `Google sign-up failed. Please try again. ${err}`
+                      );
+                    }
+                  }}
+                >
+                  <span className="flex items-center justify-center w-5 h-5">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 48 48"
+                      className=""
+                      style={{ display: "block" }}
+                    >
+                      <g>
+                        <path
+                          fill="#4285F4"
+                          d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C36.13 2.36 30.45 0 24 0 14.82 0 6.73 5.4 2.69 13.32l7.98 6.19C12.13 13.09 17.62 9.5 24 9.5z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.6C43.98 37.13 46.1 31.36 46.1 24.55z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M10.67 28.13a14.5 14.5 0 0 1 0-8.26l-7.98-6.19A23.94 23.94 0 0 0 0 24c0 3.77.9 7.34 2.69 10.53l7.98-6.4z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M24 48c6.45 0 11.86-2.13 15.81-5.81l-7.19-5.6c-2.01 1.35-4.59 2.16-8.62 2.16-6.38 0-11.87-3.59-14.33-8.79l-7.98 6.4C6.73 42.6 14.82 48 24 48z"
+                        />
+                        <path fill="none" d="M0 0h48v48H0z" />
+                      </g>
+                    </svg>
+                  </span>
+                  Sign up with Google
+                </Button>
+              </div>
+
               {authError && (
-                <Alert variant="destructive" className="mb-2 w-full">
+                <Alert variant="destructive" className="mb-3 w-full">
+                  <AlertCircle className="h-4 w-4" />
                   <AlertTitle className="text-sm">Error</AlertTitle>
                   <AlertDescription className="text-xs">
                     {authError}
@@ -230,6 +288,7 @@ export default function SignUpForm() {
                   </AlertDescription>
                 </Alert>
               )}
+
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -243,7 +302,7 @@ export default function SignUpForm() {
                         <FormLabel>Email</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 " />
+                            <Mail className="absolute left-3 top-3.5 h-4 w-4 " />
                             <Input
                               placeholder="your.email@example.com"
                               {...field}
@@ -264,13 +323,24 @@ export default function SignUpForm() {
                         <FormLabel>Password</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 " />
+                            <Lock className="absolute left-3 top-3.5 h-4 w-4 " />
                             <Input
-                              type="password"
+                              type={showPassword ? "text" : "password"}
                               placeholder="••••••••"
                               {...field}
-                              className="pl-10"
+                              className="pl-10 pr-10"
                             />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-2.5"
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </button>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -286,13 +356,24 @@ export default function SignUpForm() {
                         <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 " />
+                            <Lock className="absolute left-3 top-3.5 h-4 w-4 " />
                             <Input
-                              type="password"
+                              type={showPasswordConfirmation ? "text" : "password"}
                               placeholder="••••••••"
                               {...field}
-                              className="pl-10"
+                              className="pl-10 pr-10"
                             />
+                            <button
+                              type="button"
+                              onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                              className="absolute right-3 top-2.5"
+                            >
+                              {showPasswordConfirmation ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </button>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -315,6 +396,10 @@ export default function SignUpForm() {
                   Sign in
                 </Link>
               </p>
+              {/* CAPTCHA element for Clerk - inside the sign-up card */}
+              <div className="flex justify-center mt-4">
+                <div id="clerk-captcha"></div>
+              </div>
             </>
           )}
         </div>
