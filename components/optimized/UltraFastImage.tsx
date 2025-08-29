@@ -82,8 +82,6 @@ export default function UltraFastImage({
       onLoad={onLoad}
       onError={onError}
       style={{
-        imageRendering: "auto",
-        imageRendering: "-webkit-optimize-contrast",
         imageRendering: "crisp-edges",
       }}
     />
