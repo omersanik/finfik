@@ -6,14 +6,12 @@ import type { Quill } from "quill"; // For quillRef type
 interface RichTextEditorWrapperProps {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
   minHeight?: number;
 }
 
 export default function RichTextEditorWrapper({
   value,
   onChange,
-  placeholder = "Start typing...",
   minHeight = 200,
 }: RichTextEditorWrapperProps) {
   const [isMounted, setIsMounted] = useState(false);
@@ -47,47 +45,7 @@ export default function RichTextEditorWrapper({
     );
   }
 
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      ["bold", "italic", "underline", "strike"],
-      ["blockquote", "code-block"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ script: "sub" }, { script: "super" }],
-      [{ indent: "-1" }, { indent: "+1" }],
-      [{ direction: "rtl" }],
-      [{ size: ["small", false, "large", "huge"] }],
-      [{ color: [] }, { background: [] }],
-      [{ align: [] }],
-      ["link", "image", "video"],
-      ["clean"],
-    ],
-    clipboard: {
-      matchVisual: false,
-    },
-  };
-
-  const formats = [
-    "header",
-    "font",
-    "size",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "blockquote",
-    "list",
-    "bullet",
-    "indent",
-    "link",
-    "image",
-    "video",
-    "align",
-    "color",
-    "background",
-    "script",
-    "code-block",
-  ];
+  // Removed Quill-specific toolbar/modules since we're using Mantine RTE
 
   return (
     <div className="rich-text-editor-wrapper">
