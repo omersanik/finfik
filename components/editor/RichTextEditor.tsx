@@ -101,7 +101,6 @@ function CustomRichTextEditor({
     <RichTextEditor
       value={value}
       onChange={onChange}
-      placeholder={placeholder}
       style={{ minHeight: `${minHeight}px` }}
       controls={[
         ["bold", "italic", "underline", "strike", "code"],
