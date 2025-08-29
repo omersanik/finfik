@@ -280,7 +280,6 @@ export default function SectionClient({
               block={block}
               isVisible={true}
               onContinue={() => handleContinue(idx)}
-              canContinue={true}
               isLastBlock={idx === blocks.length - 1}
               locked={false}
               hideContinueButton={true}
