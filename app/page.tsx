@@ -23,6 +23,16 @@ const Page = async () => {
     course_level?: "Easy" | "Medium" | "Hard";
   };
 
+  type CourseProgress = {
+    // Add the actual structure of CourseProgress here
+    // For example:
+    progress: number;
+    completed_sections: number;
+    total_sections: number;
+    last_accessed?: string;
+    // Add other properties that exist in your CourseProgress type
+  };
+
   type Streak = {
     current_streak: number;
     longest_streak: number;
@@ -83,7 +93,7 @@ const Page = async () => {
   }
 
   // Fetch progress for all enrolled courses
-  let courseProgress: Record<string, unknown> = {};
+  let courseProgress: Record<string, CourseProgress> = {};
   if (enrolledCourses.length > 0) {
     try {
       const courseIds = enrolledCourses.map((course) => course.id);
@@ -101,7 +111,9 @@ const Page = async () => {
       );
 
       if (progressRes.ok) {
-        courseProgress = await progressRes.json();
+        const progressData = await progressRes.json();
+        // Type assertion to ensure it matches the expected structure
+        courseProgress = progressData as Record<string, CourseProgress>;
       }
     } catch (err) {
       console.error("Error fetching course progress:", err);
