@@ -113,7 +113,7 @@ interface ContentBlockProps {
 // Extend the Window interface for the global function
 declare global {
   interface Window {
-    checkDragDropAnswers: () => boolean;
+    checkDragDropAnswers?: () => boolean;
   }
 }
 

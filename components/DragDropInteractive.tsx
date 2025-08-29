@@ -58,7 +58,7 @@ declare global {
       isChecking: boolean;
       isCompleted: boolean;
     };
-    checkDragDropAnswers: () => boolean;
+    checkDragDropAnswers?: () => boolean;
     areAllItemsDropped: () => boolean;
     debugDragDropItems: () => void;
     shouldEnableCheckAnswer: () => boolean;
