@@ -4,16 +4,19 @@ import { createClient } from "@supabase/supabase-js";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   console.log("=== GET request received for content item ===");
-  console.log("Params:", params);
+
+  // Await params for Next.js 15 compatibility
+  const { id } = await params;
+  console.log("Params:", { id });
   console.log("URL:", req.url);
   console.log("Method:", req.method);
 
   return NextResponse.json({
     message: "Route is working",
-    params,
+    params: { id },
     method: req.method,
     timestamp: new Date().toISOString(),
   });
@@ -21,7 +24,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   console.log("=== PUT request received for content item ===");
 
