@@ -26,12 +26,10 @@ export default function RichTextEditorWrapper({
 
     const loadEditor = async () => {
       try {
-        const ReactQuillModule = await import("react-quill");
-        await import("react-quill/dist/quill.snow.css");
-
-        setReactQuill(() => ReactQuillModule.default);
+        const MantineModule = await import("@mantine/rte");
+        setReactQuill(() => MantineModule.RichTextEditor as unknown as React.ComponentType<unknown>);
       } catch (error) {
-        console.error("Failed to load ReactQuill:", error);
+        console.error("Failed to load editor:", error);
       }
     };
 
@@ -95,40 +93,12 @@ export default function RichTextEditorWrapper({
     <div className="rich-text-editor-wrapper">
       <ReactQuill
         ref={quillRef}
-        theme="snow"
         value={value}
         onChange={onChange}
-        placeholder={placeholder}
-        modules={modules}
-        formats={formats}
-        style={{
-          minHeight: `${minHeight}px`,
-          backgroundColor: "white",
-        }}
+        style={{ minHeight: `${minHeight}px` }}
+        // @ts-expect-error Mantine RTE uses different props; keep minimal
       />
-      <style jsx global>{`
-        .ql-editor {
-          min-height: ${minHeight - 42}px;
-          font-size: 14px;
-          line-height: 1.6;
-        }
-        .ql-toolbar {
-          border-top: 1px solid #ccc;
-          border-left: 1px solid #ccc;
-          border-right: 1px solid #ccc;
-          border-bottom: none;
-        }
-        .ql-container {
-          border-bottom: 1px solid #ccc;
-          border-left: 1px solid #ccc;
-          border-right: 1px solid #ccc;
-          border-top: none;
-        }
-        .rich-text-editor-wrapper .ql-editor.ql-blank::before {
-          color: #9ca3af;
-          font-style: normal;
-        }
-      `}</style>
+      {/* Mantine RTE handles its own styles */}
     </div>
   );
 }
