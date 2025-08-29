@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 
-export async function PUT(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
+type RouteContext = {
+  params: { id: string };
+};
+
+export async function PUT(req: NextRequest, context: RouteContext) {
   try {
     const { userId } = await auth();
 
@@ -13,10 +14,10 @@ export async function PUT(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // ✅ no need to "await clerkClient()" here
+    // Correct Clerk usage
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    const role = user?.publicMetadata?.role;
+    const role = user.publicMetadata.role as string | undefined;
 
     if (role !== "admin") {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
