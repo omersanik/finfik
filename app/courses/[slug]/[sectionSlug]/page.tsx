@@ -2,6 +2,8 @@ import SectionClient from "@/components/SectionClient";
 import { CreateSupabaseClient } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { ContentItem, Block, QuizData } from "@/types/content";
+
 import {
   Card,
   CardHeader,
@@ -11,35 +13,6 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-// Use the exact interfaces from SectionClient but with better typing
-interface ContentItem {
-  id: string;
-  block_id: string;
-  type:
-    | "text"
-    | "image"
-    | "quiz"
-    | "animation"
-    | "calculator"
-    | "math"
-    | "chart";
-  content_text?: string;
-  image_url?: string;
-  quiz_data?: unknown; // Changed from any to unknown
-  component_key?: string;
-  order_index: number;
-  created_at: string;
-}
-
-interface Block {
-  id: string;
-  section_id: string;
-  title: string;
-  order_index: number;
-  created_at: string;
-  content_items: ContentItem[];
-}
-
 // Database types (what Supabase returns)
 interface DatabaseContentItem {
   id: string;
@@ -47,22 +20,53 @@ interface DatabaseContentItem {
   type: string;
   content_text: string | null;
   image_url: string | null;
-  quiz_data: unknown; // Changed from any to unknown
+  quiz_data: unknown;
   component_key: string | null;
   order_index: number;
   created_at: string;
   content_type: string | null;
-  styling_data: unknown; // Changed from any to unknown
+  styling_data: unknown;
   math_formula: string | null;
-  interactive_data: unknown; // Changed from any to unknown
-  media_files: unknown; // Changed from any to unknown
-  font_settings: unknown; // Changed from any to unknown
-  layout_config: unknown; // Changed from any to unknown
-  animation_settings: unknown; // Changed from any to unknown
+  interactive_data: unknown;
+  media_files: unknown;
+  font_settings: unknown;
+  layout_config: unknown;
+  animation_settings: unknown;
   drag_drop_title: string | null;
   drag_drop_instructions: string | null;
-  drag_drop_items: unknown; // Changed from any to unknown
-  drag_drop_categories: unknown; // Changed from any to unknown
+  drag_drop_items: unknown;
+  drag_drop_categories: unknown;
+}
+
+// Type guard function for quiz data
+// Type guard function for quiz data
+function isQuizData(data: unknown): data is QuizData {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+
+  const potentialQuizData = data as Record<string, unknown>;
+
+  if (!("options" in potentialQuizData)) {
+    return false;
+  }
+
+  if (!Array.isArray(potentialQuizData.options)) {
+    return false;
+  }
+
+  // Validate that each option has the correct structure
+  return potentialQuizData.options.every((option: unknown) => {
+    if (typeof option !== "object" || option === null) {
+      return false;
+    }
+
+    const potentialOption = option as Record<string, unknown>;
+    return (
+      typeof potentialOption.id === "string" &&
+      typeof potentialOption.text === "string"
+    );
+  });
 }
 
 export default async function SectionPage({
@@ -215,24 +219,37 @@ export default async function SectionPage({
       // Transform database items to match ContentItem interface
       const transformedItems: ContentItem[] = (
         items as DatabaseContentItem[]
-      ).map((item) => ({
-        id: item.id,
-        block_id: item.block_id,
-        type: item.type as
-          | "text"
-          | "image"
-          | "quiz"
-          | "animation"
-          | "calculator"
-          | "math"
-          | "chart",
-        content_text: item.content_text || undefined,
-        image_url: item.image_url || undefined,
-        quiz_data: item.quiz_data,
-        component_key: item.component_key || undefined,
-        order_index: item.order_index,
-        created_at: item.created_at,
-      }));
+      ).map((item) => {
+        let quizData: QuizData | undefined = undefined;
+
+        // Only set quiz_data if it's actually quiz data with the correct structure
+        if (
+          item.type === "quiz" &&
+          item.quiz_data &&
+          isQuizData(item.quiz_data)
+        ) {
+          quizData = item.quiz_data;
+        }
+
+        return {
+          id: item.id,
+          block_id: item.block_id,
+          type: item.type as
+            | "text"
+            | "image"
+            | "quiz"
+            | "animation"
+            | "calculator"
+            | "math"
+            | "chart",
+          content_text: item.content_text || undefined,
+          image_url: item.image_url || undefined,
+          quiz_data: quizData, // Use the validated quiz data
+          component_key: item.component_key || undefined,
+          order_index: item.order_index,
+          created_at: item.created_at,
+        };
+      });
 
       itemsByBlock = transformedItems.reduce(
         (acc: Record<string, ContentItem[]>, item) => {
