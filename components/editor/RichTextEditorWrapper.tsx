@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import type { Quill } from "quill"; // For quillRef type
+import { useState, useEffect } from "react";
 
 interface RichTextEditorWrapperProps {
   value: string;
@@ -17,7 +16,6 @@ export default function RichTextEditorWrapper({
   const [isMounted, setIsMounted] = useState(false);
   const [ReactQuill, setReactQuill] =
     useState<React.ComponentType<unknown> | null>(null);
-  const quillRef = useRef<Quill | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -47,14 +45,20 @@ export default function RichTextEditorWrapper({
 
   // Removed Quill-specific toolbar/modules since we're using Mantine RTE
 
+  type MantineEditorProps = {
+    value: string;
+    onChange: (value: string) => void;
+    style?: React.CSSProperties;
+  };
+
+  const EditorComponent = ReactQuill as React.ComponentType<MantineEditorProps>;
+
   return (
     <div className="rich-text-editor-wrapper">
-      <ReactQuill
-        ref={quillRef}
+      <EditorComponent
         value={value}
         onChange={onChange}
         style={{ minHeight: `${minHeight}px` }}
-        // @ts-expect-error Mantine RTE uses different props; keep minimal
       />
       {/* Mantine RTE handles its own styles */}
     </div>
