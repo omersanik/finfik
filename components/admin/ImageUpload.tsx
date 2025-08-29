@@ -27,11 +27,11 @@ interface ImageUploadProps {
   className?: string;
 }
 
-export default function ImageUpload({ 
-  onImageUploaded, 
-  currentImageUrl, 
+export default function ImageUpload({
+  onImageUploaded,
+  currentImageUrl,
   placeholder = "course-slug/image-name.jpg",
-  className = ""
+  className = "",
 }: ImageUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -41,43 +41,48 @@ export default function ImageUpload({
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [loadingFolders, setLoadingFolders] = useState(true);
 
-    // Fetch available folders from the thumbnails bucket (only once)
+  // Fetch available folders from the thumbnails bucket (only once)
   useEffect(() => {
     const fetchFolders = async () => {
       try {
         setLoadingFolders(true);
-        console.log('Fetching folders from thumbnail bucket...');
-        
+        console.log("Fetching folders from thumbnail bucket...");
+
         // Now try to list the thumbnails bucket contents
         const { data, error } = await supabase.storage
-          .from('thumbnails')
-          .list('', { limit: 1000 });
+          .from("thumbnails")
+          .list("", { limit: 1000 });
 
         if (error) {
-          console.error('Error fetching folders:', error);
+          console.error("Error fetching folders:", error);
           setError(`Storage error: ${error.message}`);
           return;
         }
 
-        console.log('Raw storage data:', data);
+        console.log("Raw storage data:", data);
 
         // Extract folder names from the data
-        const folderNames = data.map(item => item.name);
-        
-        console.log('Found folders:', folderNames);
+        const folderNames = data.map((item) => item.name);
+
+        console.log("Found folders:", folderNames);
         setFolders(folderNames);
-        
+
         // Set default folder if available
         if (folderNames.length > 0) {
-          console.log('Setting default folder to:', folderNames[0]);
+          console.log("Setting default folder to:", folderNames[0]);
           setSelectedFolder(folderNames[0]);
         }
-        
-        console.log('Final state - folders:', folderNames);
-        console.log('Final state - selectedFolder will be set to:', folderNames[0] || 'none');
+
+        console.log("Final state - folders:", folderNames);
+        console.log(
+          "Final state - selectedFolder will be set to:",
+          folderNames[0] || "none"
+        );
       } catch (err) {
-        console.error('Error fetching folders:', err);
-        setError(`Fetch error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        console.error("Error fetching folders:", err);
+        setError(
+          `Fetch error: ${err instanceof Error ? err.message : "Unknown error"}`
+        );
       } finally {
         setLoadingFolders(false);
       }
@@ -88,8 +93,8 @@ export default function ImageUpload({
 
   // Monitor state changes
   useEffect(() => {
-    console.log('State changed - selectedFolder:', selectedFolder);
-    console.log('State changed - folders:', folders);
+    console.log("State changed - selectedFolder:", selectedFolder);
+    console.log("State changed - folders:", folders);
   }, [selectedFolder, folders]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -102,42 +107,48 @@ export default function ImageUpload({
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    setError(null);
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      setError(null);
 
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length === 0) return;
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length === 0) return;
 
-    const file = files[0];
-    if (!file.type.startsWith('image/')) {
-      setError('Please upload an image file');
-      return;
-    }
+      const file = files[0];
+      if (!file.type.startsWith("image/")) {
+        setError("Please upload an image file");
+        return;
+      }
 
-    await uploadImage(file);
-  }, [selectedFolder]); // Add selectedFolder as dependency
+      await uploadImage(file);
+    },
+    [selectedFolder]
+  ); // Add selectedFolder as dependency
 
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
 
-    const file = files[0];
-    setError(null);
-    await uploadImage(file);
-  }, [selectedFolder]); // Add selectedFolder as dependency
+      const file = files[0];
+      setError(null);
+      await uploadImage(file);
+    },
+    [selectedFolder]
+  ); // Add selectedFolder as dependency
 
   const uploadImage = async (file: File) => {
-    console.log('=== UPLOAD ATTEMPT ===');
-    console.log('selectedFolder state:', selectedFolder);
-    console.log('folders state:', folders);
-    console.log('loadingFolders state:', loadingFolders);
-    console.log('current error state:', error);
-    console.log('=======================');
-    
+    console.log("=== UPLOAD ATTEMPT ===");
+    console.log("selectedFolder state:", selectedFolder);
+    console.log("folders state:", folders);
+    console.log("loadingFolders state:", loadingFolders);
+    console.log("current error state:", error);
+    console.log("=======================");
+
     if (!selectedFolder) {
-      setError('Please select a folder first');
+      setError("Please select a folder first");
       return;
     }
 
@@ -145,44 +156,32 @@ export default function ImageUpload({
     setUploadProgress(0);
     setError(null);
 
-         try {
-               // Use the original filename directly
-        const fileExtension = file.name.split('.').pop();
-        const fileName = file.name;
-       
-       // Upload to the selected folder in Supabase Storage
-       const filePath = `${selectedFolder}/${fileName}`;
-       const { data, error: uploadError } = await supabase.storage
-         .from('thumbnails')
-         .upload(filePath, file, {
-           cacheControl: '3600',
-           upsert: false
-         });
+    try {
+      // Use the original filename directly
+      const fileName = file.name;
 
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
+      // Upload to the selected folder in Supabase Storage
+      const filePath = `${selectedFolder}/${fileName}`;
 
-                    // Get the public URL
-       const { data: { publicUrl } } = supabase.storage
-         .from('thumbnails')
-         .getPublicUrl(filePath);
+      // Get the public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("thumbnails").getPublicUrl(filePath);
 
-       // Extract just the path part for the database (folder/filename)
-       const pathForDatabase = `${selectedFolder}/${fileName}`;
-       
-       console.log('Full public URL:', publicUrl);
-       console.log('Path for database:', pathForDatabase);
-       
-       // Call the callback with the path for database (not the full URL)
-       onImageUploaded(pathForDatabase);
+      // Extract just the path part for the database (folder/filename)
+      const pathForDatabase = `${selectedFolder}/${fileName}`;
+
+      console.log("Full public URL:", publicUrl);
+      console.log("Path for database:", pathForDatabase);
+
+      // Call the callback with the path for database (not the full URL)
+      onImageUploaded(pathForDatabase);
       setUploadProgress(100);
-      
+
       // Reset progress after a short delay
       setTimeout(() => setUploadProgress(0), 1000);
-
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(err instanceof Error ? err.message : "Upload failed");
       setUploadProgress(0);
     } finally {
       setIsUploading(false);
@@ -190,106 +189,116 @@ export default function ImageUpload({
   };
 
   const removeImage = () => {
-    onImageUploaded('');
+    onImageUploaded("");
   };
 
   return (
     <div className={`space-y-4 ${className}`}>
       <Label>Image Upload</Label>
-      
-             {/* Folder Selector */}
-       <div className="space-y-2">
-         <div className="flex items-center justify-between">
-           <Label htmlFor="folder-select">Select Upload Folder:</Label>
-           <Button
-             type="button"
-             variant="outline"
-             size="sm"
-             onClick={() => {
-               setLoadingFolders(true);
-               setError(null);
-                               // Re-fetch folders
-                const fetchFolders = async () => {
-                  try {
-                    const { data, error } = await supabase.storage
-                      .from('thumbnails')
-                      .list('', { limit: 1000 });
-                    
-                    if (error) {
-                      console.error('Refresh error:', error);
-                      setError(`Storage error: ${error.message}`);
-                      return;
-                    }
-                    
-                    const folderNames = data.map(item => item.name);
-                    console.log('Refresh - found folders:', folderNames);
-                    
-                    setFolders(folderNames);
-                    if (folderNames.length > 0) {
-                      console.log('Refresh - setting selected folder to:', folderNames[0]);
-                      setSelectedFolder(folderNames[0]);
-                    }
-                  } catch (err) {
-                    console.error('Refresh error:', err);
-                  } finally {
-                    setLoadingFolders(false);
+
+      {/* Folder Selector */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="folder-select">Select Upload Folder:</Label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setLoadingFolders(true);
+              setError(null);
+              // Re-fetch folders
+              const fetchFolders = async () => {
+                try {
+                  const { data, error } = await supabase.storage
+                    .from("thumbnails")
+                    .list("", { limit: 1000 });
+
+                  if (error) {
+                    console.error("Refresh error:", error);
+                    setError(`Storage error: ${error.message}`);
+                    return;
                   }
-                };
-               fetchFolders();
-             }}
-             disabled={loadingFolders}
-           >
-             {loadingFolders ? 'Loading...' : 'Refresh'}
-           </Button>
-         </div>
-         
-                   <Select value={selectedFolder} onValueChange={(value) => {
-            console.log('Folder selected:', value);
+
+                  const folderNames = data.map((item) => item.name);
+                  console.log("Refresh - found folders:", folderNames);
+
+                  setFolders(folderNames);
+                  if (folderNames.length > 0) {
+                    console.log(
+                      "Refresh - setting selected folder to:",
+                      folderNames[0]
+                    );
+                    setSelectedFolder(folderNames[0]);
+                  }
+                } catch (err) {
+                  console.error("Refresh error:", err);
+                } finally {
+                  setLoadingFolders(false);
+                }
+              };
+              fetchFolders();
+            }}
+            disabled={loadingFolders}
+          >
+            {loadingFolders ? "Loading..." : "Refresh"}
+          </Button>
+        </div>
+
+        <Select
+          value={selectedFolder}
+          onValueChange={(value) => {
+            console.log("Folder selected:", value);
             setSelectedFolder(value);
-          }}>
-           <SelectTrigger>
-             <SelectValue placeholder={loadingFolders ? "Loading folders..." : "Select a folder"} />
-           </SelectTrigger>
-           <SelectContent>
-             {loadingFolders ? (
-               <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                 Loading folders...
-               </div>
-             ) : folders.length > 0 ? (
-               folders.map((folder) => (
-                 <SelectItem key={folder} value={folder}>
-                   <div className="flex items-center gap-2">
-                     <FolderOpen className="w-4 h-4" />
-                     {folder}
-                   </div>
-                 </SelectItem>
-               ))
-             ) : (
-               <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                 No folders found
-               </div>
-             )}
-           </SelectContent>
-         </Select>
-         
-         <p className="text-xs text-gray-500">
-           Choose which folder to upload the image to
-         </p>
-         
-         {/* Debug Info */}
-         <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">
-           <p>Debug: Found {folders.length} folders</p>
-           <p>Selected: {selectedFolder || 'None'}</p>
-           <p>Loading: {loadingFolders ? 'Yes' : 'No'}</p>
-         </div>
-       </div>
-      
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue
+              placeholder={
+                loadingFolders ? "Loading folders..." : "Select a folder"
+              }
+            />
+          </SelectTrigger>
+          <SelectContent>
+            {loadingFolders ? (
+              <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                Loading folders...
+              </div>
+            ) : folders.length > 0 ? (
+              folders.map((folder) => (
+                <SelectItem key={folder} value={folder}>
+                  <div className="flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4" />
+                    {folder}
+                  </div>
+                </SelectItem>
+              ))
+            ) : (
+              <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                No folders found
+              </div>
+            )}
+          </SelectContent>
+        </Select>
+
+        <p className="text-xs text-gray-500">
+          Choose which folder to upload the image to
+        </p>
+
+        {/* Debug Info */}
+        <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">
+          <p>Debug: Found {folders.length} folders</p>
+          <p>Selected: {selectedFolder || "None"}</p>
+          <p>Loading: {loadingFolders ? "Yes" : "No"}</p>
+        </div>
+      </div>
+
       {/* Current Image Display */}
       {currentImageUrl && (
         <div className="relative inline-block">
-          <img 
-            src={currentImageUrl} 
-            alt="Current image" 
+          <img
+            src={currentImageUrl}
+            alt="Current image"
             className="w-32 h-32 object-cover rounded border"
           />
           <Button
@@ -307,9 +316,9 @@ export default function ImageUpload({
       {/* Drag & Drop Zone */}
       <div
         className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-          isDragOver 
-            ? 'border-blue-500 bg-blue-50' 
-            : 'border-gray-300 hover:border-gray-400'
+          isDragOver
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 hover:border-gray-400"
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -318,12 +327,12 @@ export default function ImageUpload({
         <div className="flex flex-col items-center space-y-2">
           <ImageIcon className="w-8 h-8 text-gray-400" />
           <div className="text-sm text-gray-600">
-            <span className="font-medium">Drop an image here</span> or{' '}
+            <span className="font-medium">Drop an image here</span> or{" "}
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => document.getElementById('file-input')?.click()}
+              onClick={() => document.getElementById("file-input")?.click()}
               disabled={isUploading || !selectedFolder}
             >
               <Upload className="w-4 h-4 mr-2" />
@@ -339,9 +348,7 @@ export default function ImageUpload({
               ⚠️ Please select a folder first
             </p>
           )}
-          <p className="text-xs text-gray-500">
-            Supports: JPG, PNG, GIF, WebP
-          </p>
+          <p className="text-xs text-gray-500">Supports: JPG, PNG, GIF, WebP</p>
         </div>
       </div>
 
@@ -362,7 +369,7 @@ export default function ImageUpload({
             <span>{uploadProgress}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}
             />
@@ -382,16 +389,17 @@ export default function ImageUpload({
         <Label htmlFor="manual-path">Or enter image path manually:</Label>
         <Input
           id="manual-path"
-          placeholder={selectedFolder ? `${selectedFolder}/filename.ext` : placeholder}
-          defaultValue={currentImageUrl || ''}
+          placeholder={
+            selectedFolder ? `${selectedFolder}/filename.ext` : placeholder
+          }
+          defaultValue={currentImageUrl || ""}
           onChange={(e) => onImageUploaded(e.target.value)}
         />
-                 <p className="text-xs text-gray-500">
-           {selectedFolder 
-             ? `Format: ${selectedFolder}/filename.ext (e.g., ${selectedFolder}/chart1.png)`
-             : 'Format: course-slug/filename.ext (e.g., finance-101/chart1.png)'
-           }
-         </p>
+        <p className="text-xs text-gray-500">
+          {selectedFolder
+            ? `Format: ${selectedFolder}/filename.ext (e.g., ${selectedFolder}/chart1.png)`
+            : "Format: course-slug/filename.ext (e.g., finance-101/chart1.png)"}
+        </p>
       </div>
     </div>
   );

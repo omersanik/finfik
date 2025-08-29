@@ -17,14 +17,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-
-import finfiklogo from "@/logo/finfiklogo.svg";
-
 import Image from "next/image";
 import { Mail, Lock } from "lucide-react";
 import Link from "next/link";
-import { signUpSchema } from "@/schemas/signUpSchema";
 import { useTheme } from "next-themes";
+
+import finfiklogo from "@/logo/finfiklogo.svg";
+import { signUpSchema } from "@/schemas/signUpSchema";
 
 export default function SignUpForm() {
   const { setTheme } = useTheme();
@@ -41,12 +40,10 @@ export default function SignUpForm() {
 
   useEffect(() => {
     setTheme("light");
-  }, []);
+  }, [setTheme]);
 
   useEffect(() => {
-    if (isSignedIn) {
-      router.replace("/");
-    }
+    if (isSignedIn) router.replace("/");
   }, [isSignedIn, router]);
 
   const form = useForm<z.infer<typeof signUpSchema>>({
@@ -58,9 +55,37 @@ export default function SignUpForm() {
     },
   });
 
+  const extractClerkErrorMessage = (error: unknown): string => {
+    let message = "An error occurred. Please try again.";
+
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "errors" in error &&
+      Array.isArray(
+        (error as { errors?: { message?: string; code?: string }[] }).errors
+      )
+    ) {
+      const firstError = (
+        error as { errors?: { message?: string; code?: string }[] }
+      ).errors![0];
+      if (
+        firstError.message?.includes("already exists") ||
+        firstError.message?.includes("already registered") ||
+        firstError.code === "form_identifier_exists"
+      ) {
+        message =
+          "An account with this email already exists. Please sign in instead.";
+      } else if (firstError.message) {
+        message = firstError.message;
+      }
+    }
+
+    return message;
+  };
+
   const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
     if (!isLoaded) return;
-
     setIsSubmitting(true);
     setAuthError(null);
 
@@ -69,29 +94,11 @@ export default function SignUpForm() {
         emailAddress: data.identifier,
         password: data.password,
       });
-
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setVerifying(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Sign-up error:", error);
-      
-      // Handle specific Clerk errors
-      let errorMessage = "An error occurred during sign-up. Please try again.";
-      
-      if (error.errors && error.errors.length > 0) {
-        const firstError = error.errors[0];
-        
-        // Check for existing email error
-        if (firstError.message?.includes("already exists") || 
-            firstError.message?.includes("already registered") ||
-            firstError.code === "form_identifier_exists") {
-          errorMessage = "An account with this email already exists. Please sign in instead.";
-        } else if (firstError.message) {
-          errorMessage = firstError.message;
-        }
-      }
-      
-      setAuthError(errorMessage);
+      setAuthError(extractClerkErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -115,17 +122,27 @@ export default function SignUpForm() {
         await setActive({ session: result.createdSessionId });
         router.push("/");
       } else {
-        console.error("Verification incomplete:", result);
         setVerificationError(
           "Verification could not be completed. Please try again."
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Verification error:", error);
-      setVerificationError(
-        error.errors?.[0]?.message ||
-          "An error occurred during verification. Please try again."
-      );
+
+      let message = "An error occurred during verification. Please try again.";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "errors" in error &&
+        Array.isArray((error as { errors?: { message?: string }[] }).errors) &&
+        (error as { errors?: { message?: string }[] }).errors![0]?.message
+      ) {
+        message = (error as { errors?: { message?: string }[] }).errors![0]
+          .message!;
+      }
+
+      setVerificationError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -144,37 +161,22 @@ export default function SignUpForm() {
               className="object-contain"
             />
           </div>
-          {/* Social Sign Up Buttons */}
-          <div className="flex flex-col gap-1 w-full mb-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-10 max-w-none flex items-center justify-center gap-2 bg-white text-black border border-gray-300 hover:bg-gray-100 text-base font-medium mx-auto px-2"
-              onClick={async () => {
-                if (!isLoaded) return;
-                try {
-                  await signUp.authenticateWithRedirect({ strategy: "oauth_google", redirectUrl: "/", redirectUrlComplete: "/" });
-                } catch (err) {
-                  setAuthError("Google sign-up failed. Please try again.");
-                }
-              }}
-            >
-              <span className="flex items-center justify-center w-5 h-5">
-                <svg width="20" height="20" viewBox="0 0 48 48" className="" style={{ display: 'block' }}><g><path fill="#4285F4" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C36.13 2.36 30.45 0 24 0 14.82 0 6.73 5.4 2.69 13.32l7.98 6.19C12.13 13.09 17.62 9.5 24 9.5z"/><path fill="#34A853" d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.6C43.98 37.13 46.1 31.36 46.1 24.55z"/><path fill="#FBBC05" d="M10.67 28.13a14.5 14.5 0 0 1 0-8.26l-7.98-6.19A23.94 23.94 0 0 0 0 24c0 3.77.9 7.34 2.69 10.53l7.98-6.4z"/><path fill="#EA4335" d="M24 48c6.45 0 11.86-2.13 15.81-5.81l-7.19-5.6c-2.01 1.35-4.59 2.16-8.62 2.16-6.38 0-11.87-3.59-14.33-8.79l-7.98 6.4C6.73 42.6 14.82 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></g></svg>
-              </span>
-              Sign up with Google
-            </Button>
-          </div>
+
           {verifying ? (
             <>
               <h2 className="text-xl font-bold mb-2">Verify Your Email</h2>
               {verificationError && (
                 <Alert variant="destructive" className="mb-2 w-full">
                   <AlertTitle className="text-sm">Error</AlertTitle>
-                  <AlertDescription className="text-xs">{verificationError}</AlertDescription>
+                  <AlertDescription className="text-xs">
+                    {verificationError}
+                  </AlertDescription>
                 </Alert>
               )}
-              <form onSubmit={handleVerificationSubmit} className="space-y-2 w-full">
+              <form
+                onSubmit={handleVerificationSubmit}
+                className="space-y-2 w-full"
+              >
                 <Input
                   id="verificationCode"
                   type="text"
@@ -183,7 +185,11 @@ export default function SignUpForm() {
                   onChange={(e) => setVerificationCode(e.target.value)}
                   autoFocus
                 />
-                <Button type="submit" disabled={isSubmitting} className="w-full text-sm py-2">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full text-sm py-2"
+                >
                   {isSubmitting ? "Verifying..." : "Verify Email"}
                 </Button>
               </form>
@@ -213,7 +219,10 @@ export default function SignUpForm() {
                     {authError}
                     {authError.includes("already exists") && (
                       <div className="mt-2">
-                        <Link href="/sign-in" className="text-blue-600 hover:underline font-medium">
+                        <Link
+                          href="/sign-in"
+                          className="text-blue-600 hover:underline font-medium"
+                        >
                           Click here to sign in instead
                         </Link>
                       </div>
@@ -304,7 +313,7 @@ export default function SignUpForm() {
                 Already have an account?{" "}
                 <Link href="/sign-in" className="hover:underline font-medium">
                   Sign in
-                </Link>{" "}
+                </Link>
               </p>
             </>
           )}

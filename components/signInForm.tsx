@@ -71,15 +71,32 @@ export default function SignInForm() {
         console.error("Sign-in incomplete:", result);
         setAuthError("Sign-in could not be completed. Please try again.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Sign-in error:", error);
-      const errorMessage = error.errors?.[0]?.message || "An error occurred during sign-in. Please try again.";
-      
+
+      let errorMessage = "An error occurred during sign-in. Please try again.";
+
+      // Narrow the error type safely
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "errors" in error &&
+        Array.isArray((error as { errors?: { message?: string }[] }).errors) &&
+        (error as { errors?: { message?: string }[] }).errors![0]?.message
+      ) {
+        errorMessage = (error as { errors?: { message?: string }[] }).errors![0]
+          .message!;
+      }
+
       // Check if it's a "not found" error and suggest signing up
-      if (errorMessage.toLowerCase().includes("not found") || 
-          errorMessage.toLowerCase().includes("doesn't exist") ||
-          errorMessage.toLowerCase().includes("no account")) {
-        setAuthError("No account found with this email. Please sign up instead.");
+      if (
+        errorMessage.toLowerCase().includes("not found") ||
+        errorMessage.toLowerCase().includes("doesn't exist") ||
+        errorMessage.toLowerCase().includes("no account")
+      ) {
+        setAuthError(
+          "No account found with this email. Please sign up instead."
+        );
       } else {
         setAuthError(errorMessage);
       }
@@ -112,14 +129,46 @@ export default function SignInForm() {
               onClick={async () => {
                 if (!isLoaded) return;
                 try {
-                  await signIn.authenticateWithRedirect({ strategy: "oauth_google", redirectUrl: "/", redirectUrlComplete: "/" });
+                  await signIn.authenticateWithRedirect({
+                    strategy: "oauth_google",
+                    redirectUrl: "/",
+                    redirectUrlComplete: "/",
+                  });
                 } catch (err) {
-                  setAuthError("Google sign-in failed. Please try again.");
+                  setAuthError(
+                    `Google sign-in failed. Please try again. ${err}`
+                  );
                 }
               }}
             >
               <span className="flex items-center justify-center w-5 h-5">
-                <svg width="20" height="20" viewBox="0 0 48 48" className="" style={{ display: 'block' }}><g><path fill="#4285F4" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C36.13 2.36 30.45 0 24 0 14.82 0 6.73 5.4 2.69 13.32l7.98 6.19C12.13 13.09 17.62 9.5 24 9.5z"/><path fill="#34A853" d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.6C43.98 37.13 46.1 31.36 46.1 24.55z"/><path fill="#FBBC05" d="M10.67 28.13a14.5 14.5 0 0 1 0-8.26l-7.98-6.19A23.94 23.94 0 0 0 0 24c0 3.77.9 7.34 2.69 10.53l7.98-6.4z"/><path fill="#EA4335" d="M24 48c6.45 0 11.86-2.13 15.81-5.81l-7.19-5.6c-2.01 1.35-4.59 2.16-8.62 2.16-6.38 0-11.87-3.59-14.33-8.79l-7.98 6.4C6.73 42.6 14.82 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></g></svg>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 48 48"
+                  className=""
+                  style={{ display: "block" }}
+                >
+                  <g>
+                    <path
+                      fill="#4285F4"
+                      d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C36.13 2.36 30.45 0 24 0 14.82 0 6.73 5.4 2.69 13.32l7.98 6.19C12.13 13.09 17.62 9.5 24 9.5z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.6C43.98 37.13 46.1 31.36 46.1 24.55z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M10.67 28.13a14.5 14.5 0 0 1 0-8.26l-7.98-6.19A23.94 23.94 0 0 0 0 24c0 3.77.9 7.34 2.69 10.53l7.98-6.4z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M24 48c6.45 0 11.86-2.13 15.81-5.81l-7.19-5.6c-2.01 1.35-4.59 2.16-8.62 2.16-6.38 0-11.87-3.59-14.33-8.79l-7.98 6.4C6.73 42.6 14.82 48 24 48z"
+                    />
+                    <path fill="none" d="M0 0h48v48H0z" />
+                  </g>
+                </svg>
               </span>
               Sign in with Google
             </Button>
@@ -129,7 +178,9 @@ export default function SignInForm() {
             <Alert variant="destructive" className="mb-3 w-full">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle className="text-sm">Error</AlertTitle>
-              <AlertDescription className="text-xs">{authError}</AlertDescription>
+              <AlertDescription className="text-xs">
+                {authError}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -193,7 +244,11 @@ export default function SignInForm() {
                 )}
               />
 
-              <Button type="submit" disabled={isSubmitting} className="w-full text-sm py-2">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full text-sm py-2"
+              >
                 {isSubmitting ? "Signing in..." : "Sign In"}
               </Button>
             </form>

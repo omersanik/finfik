@@ -110,6 +110,13 @@ interface ContentBlockProps {
   onDragDropComplete?: (isCompleted: boolean) => void;
 }
 
+// Extend the Window interface for the global function
+declare global {
+  interface Window {
+    checkDragDropAnswers: () => boolean;
+  }
+}
+
 const ContentBlockComponent = ({
   block,
   isVisible,
@@ -383,14 +390,8 @@ const ContentBlockComponent = ({
     // Handle drag-drop logic
     if (blockHasDragDrop && !dragDropCompleted) {
       // Check drag-drop answers using the exposed function
-      if (
-        typeof window !== "undefined" &&
-        (window as unknown as { checkDragDropAnswers: () => boolean })
-          .checkDragDropAnswers
-      ) {
-        const isCorrect = (
-          window as unknown as { checkDragDropAnswers: () => boolean }
-        ).checkDragDropAnswers();
+      if (typeof window !== "undefined" && window.checkDragDropAnswers) {
+        const isCorrect = window.checkDragDropAnswers();
         setDragDropCompleted(isCorrect);
         return; // Don't continue yet, let user see the results
       }

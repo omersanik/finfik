@@ -1,7 +1,8 @@
-// components/ui/RichTextEditorWrapper.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import type { Quill } from "quill"; // For quillRef type
+import type { ReactQuillProps } from "react-quill";
 
 interface RichTextEditorWrapperProps {
   value: string;
@@ -17,16 +18,15 @@ export default function RichTextEditorWrapper({
   minHeight = 200,
 }: RichTextEditorWrapperProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const [ReactQuill, setReactQuill] = useState<any>(null);
-  const quillRef = useRef<any>(null);
+  const [ReactQuill, setReactQuill] =
+    useState<React.ComponentType<ReactQuillProps> | null>(null);
+  const quillRef = useRef<Quill | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
 
-    // Import ReactQuill directly (newer version that's React 18 compatible)
     const loadEditor = async () => {
       try {
-        // Import ReactQuill and CSS
         const ReactQuillModule = await import("react-quill");
         await import("react-quill/dist/quill.snow.css");
 
@@ -39,7 +39,6 @@ export default function RichTextEditorWrapper({
     loadEditor();
   }, []);
 
-  // Show loading state while editor is loading
   if (!isMounted || !ReactQuill) {
     return (
       <div

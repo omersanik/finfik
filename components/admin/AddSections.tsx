@@ -99,10 +99,12 @@ const AddSections = () => {
   ) => {
     setSelectedCoursePath(coursePathName);
     form.setValue("course_path", coursePathId);
-    
+
     // Fetch latest order for this course path
     try {
-      const response = await fetch(`/api/admin/latest-indexes?course_path_id=${coursePathId}`);
+      const response = await fetch(
+        `/api/admin/latest-indexes?course_path_id=${coursePathId}`
+      );
       if (response.ok) {
         const data = await response.json();
         setLatestOrder(data.latestSectionOrder);
@@ -157,7 +159,7 @@ const AddSections = () => {
         <FormField
           control={form.control}
           name="course_path"
-          render={({ field }) => (
+          render={() => (
             <FormItem>
               <FormLabel>Course Path</FormLabel>
               <FormControl>
@@ -242,8 +244,8 @@ const AddSections = () => {
                 <Input placeholder="Lessons" {...field} />
               </FormControl>
               <FormDescription>
-                Enter the lessons in JSON format. Example: ["Lesson 1", "Lesson
-                2"]
+                Enter the lessons in JSON format. Example: [&quot;Lesson
+                1&quot;, &quot;Lesson 2&quot;]
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -267,10 +269,9 @@ const AddSections = () => {
                 />
               </FormControl>
               <FormDescription>
-                {latestOrder !== null 
+                {latestOrder !== null
                   ? `Latest order: ${latestOrder} | Next available: ${nextOrder}`
-                  : "Enter the order number for this section."
-                }
+                  : "Enter the order number for this section."}
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -19,13 +19,15 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
-  order_index: z.number().int().min(0, { message: "Order index must be a non-negative integer" }),
+  order_index: z
+    .number()
+    .int()
+    .min(0, { message: "Order index must be a non-negative integer" }),
 });
 
 interface CoursePath {
@@ -41,7 +43,8 @@ interface Section {
 export default function AddContentBlocks() {
   const [coursePaths, setCoursePaths] = useState<CoursePath[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
-  const [selectedCoursePath, setSelectedCoursePath] = useState<CoursePath | null>(null);
+  const [selectedCoursePath, setSelectedCoursePath] =
+    useState<CoursePath | null>(null);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
   const [loadingPaths, setLoadingPaths] = useState(true);
   const [loadingSections, setLoadingSections] = useState(false);
@@ -105,10 +108,12 @@ export default function AddContentBlocks() {
   // Handle section select
   async function handleSectionSelect(section: Section) {
     setSelectedSection(section);
-    
+
     // Fetch latest order for this section
     try {
-      const response = await fetch(`/api/admin/latest-indexes?section_id=${section.id}`);
+      const response = await fetch(
+        `/api/admin/latest-indexes?section_id=${section.id}`
+      );
       if (response.ok) {
         const data = await response.json();
         setLatestBlockOrder(data.latestBlockOrder);
@@ -147,10 +152,12 @@ export default function AddContentBlocks() {
         setMessage("Content block created successfully!");
       } else {
         const errorData = await response.json();
-        setMessage(`Error: ${errorData.error || "Failed to create content block"}`);
+        setMessage(
+          `Error: ${errorData.error || "Failed to create content block"}`
+        );
       }
     } catch (error) {
-      setMessage("An unexpected error occurred. Please try again.");
+      setMessage(`An unexpected error occurred. Please try again. ${error}`);
     } finally {
       setSubmitting(false);
     }
@@ -164,7 +171,11 @@ export default function AddContentBlocks() {
           <FormLabel>Course Path</FormLabel>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full justify-start" disabled={loadingPaths}>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                disabled={loadingPaths}
+              >
                 {selectedCoursePath?.name || "Select a course path..."}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
@@ -176,12 +187,17 @@ export default function AddContentBlocks() {
                 <DropdownMenuItem disabled>{errorPaths}</DropdownMenuItem>
               ) : coursePaths.length > 0 ? (
                 coursePaths.map((cp) => (
-                  <DropdownMenuItem key={cp.id} onClick={() => handleCoursePathSelect(cp)}>
+                  <DropdownMenuItem
+                    key={cp.id}
+                    onClick={() => handleCoursePathSelect(cp)}
+                  >
                     {cp.name}
                   </DropdownMenuItem>
                 ))
               ) : (
-                <DropdownMenuItem disabled>No course paths found</DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  No course paths found
+                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -192,8 +208,15 @@ export default function AddContentBlocks() {
           <FormLabel>Section</FormLabel>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full justify-start" disabled={!selectedCoursePath || loadingSections}>
-                {selectedSection?.title || (!selectedCoursePath ? "Select a course path first" : "Select a section...")}
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                disabled={!selectedCoursePath || loadingSections}
+              >
+                {selectedSection?.title ||
+                  (!selectedCoursePath
+                    ? "Select a course path first"
+                    : "Select a section...")}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -204,7 +227,10 @@ export default function AddContentBlocks() {
                 <DropdownMenuItem disabled>{errorSections}</DropdownMenuItem>
               ) : sections.length > 0 ? (
                 sections.map((section) => (
-                  <DropdownMenuItem key={section.id} onClick={() => handleSectionSelect(section)}>
+                  <DropdownMenuItem
+                    key={section.id}
+                    onClick={() => handleSectionSelect(section)}
+                  >
                     {section.title}
                   </DropdownMenuItem>
                 ))
@@ -213,7 +239,9 @@ export default function AddContentBlocks() {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <FormDescription>Select the section for this content block.</FormDescription>
+          <FormDescription>
+            Select the section for this content block.
+          </FormDescription>
         </div>
         {/* Title Input */}
         <FormField
@@ -242,21 +270,32 @@ export default function AddContentBlocks() {
                   type="number"
                   placeholder="Order Index"
                   value={field.value ?? ""}
-                  onChange={e => field.onChange(e.target.value === "" ? undefined : parseInt(e.target.value))}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value === ""
+                        ? undefined
+                        : parseInt(e.target.value)
+                    )
+                  }
                 />
               </FormControl>
               <FormDescription>
-                {latestBlockOrder !== null 
+                {latestBlockOrder !== null
                   ? `Latest order: ${latestBlockOrder} | Next available: ${nextBlockOrder}`
-                  : "The order in which this content block appears."
-                }
+                  : "The order in which this content block appears."}
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
         {message && (
-          <div className={`text-sm ${message.startsWith("Error") ? "text-red-500" : "text-green-600"}`}>{message}</div>
+          <div
+            className={`text-sm ${
+              message.startsWith("Error") ? "text-red-500" : "text-green-600"
+            }`}
+          >
+            {message}
+          </div>
         )}
         <Button type="submit" disabled={submitting}>
           {submitting ? "Creating..." : "Submit"}

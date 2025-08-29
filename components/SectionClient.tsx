@@ -6,9 +6,17 @@ import { Loader2 } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import ContentBlockComponent from "./ContentBlock";
 import CourseIdNavbar from "./CourseIdNavbar";
-import { toast } from "sonner";
-import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, XCircle } from "lucide-react";
+
+interface QuizOption {
+  id: string;
+  text: string;
+}
+
+interface QuizData {
+  options: QuizOption[];
+}
 
 interface ContentItem {
   id: string;
@@ -20,10 +28,11 @@ interface ContentItem {
     | "animation"
     | "calculator"
     | "math"
-    | "chart";
+    | "chart"
+    | "drag-drop";
   content_text?: string;
   image_url?: string;
-  quiz_data?: any;
+  quiz_data?: QuizData;
   component_key?: string;
   order_index: number;
   created_at: string;
@@ -45,6 +54,12 @@ interface Props {
   blocks: Block[];
 }
 
+declare global {
+  interface Window {
+    checkDragDropAnswers?: () => boolean;
+  }
+}
+
 export default function SectionClient({
   section,
   coursePathId,
@@ -54,11 +69,10 @@ export default function SectionClient({
   const [unlockedIndex, setUnlockedIndex] = useState(0);
   const [finished, setFinished] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
-  const [quizAnswers, setQuizAnswers] = useState<Record<string, any>>({});
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [dragDropCompleted, setDragDropCompleted] = useState(false);
   const [dragDropReady, setDragDropReady] = useState(false);
-  const [allowContinue, setAllowContinue] = useState(false);
   const [feedback, setFeedback] = useState<{ open: boolean; correct: boolean }>(
     { open: false, correct: false }
   );
@@ -76,14 +90,14 @@ export default function SectionClient({
 
   const hasQuiz =
     blocks[unlockedIndex]?.content_items.some(
-      (item: any) => item.type === "quiz"
+      (item: ContentItem) => item.type === "quiz"
     ) || false;
   const hasDragDrop =
     blocks[unlockedIndex]?.content_items.some(
-      (item: any) => item.type === "drag-drop"
+      (item: ContentItem) => item.type === "drag-drop"
     ) || false;
 
-  const handleQuizAnswer = (answer: any) => {
+  const handleQuizAnswer = (answer: string) => {
     setQuizAnswers((prev) => ({ ...prev, [unlockedIndex]: answer }));
   };
 
@@ -106,7 +120,7 @@ export default function SectionClient({
     // Get the current block's quiz data
     const currentBlock = blocks[unlockedIndex];
     const quizItem = currentBlock?.content_items.find(
-      (item: any) => item.type === "quiz"
+      (item: ContentItem) => item.type === "quiz"
     );
 
     if (quizItem) {
@@ -114,18 +128,17 @@ export default function SectionClient({
         // Fetch quiz data to validate answer
         const response = await fetch(`/api/quiz/${quizItem.id}`);
         if (response.ok) {
-          const quizData = await response.json();
+          const quizData: QuizData = await response.json();
           const selectedAnswer = quizAnswers[unlockedIndex];
 
           // Check if answer is correct (first option is always correct)
           const correctOption = quizData.options[0];
           const selectedOption = quizData.options.find(
-            (opt: any) => opt.id === selectedAnswer
+            (opt: QuizOption) => opt.id === selectedAnswer
           );
           const isAnswerCorrect = selectedOption?.text === correctOption.text;
 
           setQuizCompleted(isAnswerCorrect);
-          setAllowContinue(isAnswerCorrect);
           setFeedback({ open: true, correct: isAnswerCorrect });
         }
       } catch (error) {
@@ -139,11 +152,12 @@ export default function SectionClient({
   const handleContinue = async (idx: number) => {
     const currentBlock = blocks[idx];
     const hasQuizInBlock =
-      currentBlock?.content_items.some((item: any) => item.type === "quiz") ||
-      false;
+      currentBlock?.content_items.some(
+        (item: ContentItem) => item.type === "quiz"
+      ) || false;
     const hasDragDropInBlock =
       currentBlock?.content_items.some(
-        (item: any) => item.type === "drag-drop"
+        (item: ContentItem) => item.type === "drag-drop"
       ) || false;
 
     // If there's a quiz and no answer selected, don't proceed
@@ -154,11 +168,8 @@ export default function SectionClient({
     // If there's a drag-drop and not completed, check the answers first
     if (hasDragDropInBlock && !dragDropCompleted) {
       // Call the global function to check drag-drop answers
-      if (
-        typeof window !== "undefined" &&
-        (window as any).checkDragDropAnswers
-      ) {
-        const isCorrect = (window as any).checkDragDropAnswers();
+      if (typeof window !== "undefined" && window.checkDragDropAnswers) {
+        const isCorrect = window.checkDragDropAnswers();
         if (isCorrect) {
           // If correct, allow progression
           setDragDropCompleted(true);
@@ -200,7 +211,6 @@ export default function SectionClient({
       setQuizCompleted(false);
       setDragDropCompleted(false);
       setDragDropReady(false);
-      setAllowContinue(false);
       setTimeout(() => {
         const nextBlockElement = blockRefs.current[idx + 1];
         if (nextBlockElement) {

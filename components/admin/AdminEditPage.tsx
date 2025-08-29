@@ -1,16 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Save, X, Trash2, Plus, Eye, EyeOff, FileText, Image, Brain, Calculator, Table, Move, Type } from 'lucide-react';
+import {
+  Edit,
+  Save,
+  X,
+  Trash2,
+  Plus,
+  Eye,
+  FileText,
+  Image,
+  Brain,
+  Calculator,
+  Table,
+  Move,
+  Type,
+} from "lucide-react";
 
 interface Course {
   id: string;
@@ -69,16 +89,21 @@ interface ContentItem {
   created_at: string;
 }
 
+// Type for edit form data
+interface EditFormData {
+  [key: string]: string | number | boolean;
+}
+
 const CONTENT_TYPES = [
-  { value: 'text', label: 'Text Content', icon: FileText },
-  { value: 'image', label: 'Image', icon: Image },
-  { value: 'quiz', label: 'Quiz', icon: Brain },
-  { value: 'chart', label: 'Chart', icon: Calculator },
-  { value: 'animation', label: 'Animation', icon: Eye },
-  { value: 'calculator', label: 'Calculator', icon: Calculator },
-  { value: 'math', label: 'Math Formula', icon: Type },
-  { value: 'table', label: 'Table', icon: Table },
-  { value: 'drag-drop', label: 'Drag & Drop', icon: Move },
+  { value: "text", label: "Text Content", icon: FileText },
+  { value: "image", label: "Image", icon: Image },
+  { value: "quiz", label: "Quiz", icon: Brain },
+  { value: "chart", label: "Chart", icon: Calculator },
+  { value: "animation", label: "Animation", icon: Eye },
+  { value: "calculator", label: "Calculator", icon: Calculator },
+  { value: "math", label: "Math Formula", icon: Type },
+  { value: "table", label: "Table", icon: Table },
+  { value: "drag-drop", label: "Drag & Drop", icon: Move },
 ];
 
 export default function AdminEditPage() {
@@ -91,24 +116,24 @@ export default function AdminEditPage() {
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<EditFormData>({});
   const [message, setMessage] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const fetchCourses = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/courses');
+      const response = await fetch("/api/courses");
       if (response.ok) {
         const data = await response.json();
         setCourses(data);
       } else {
-        setMessage('Error fetching courses');
+        setMessage("Error fetching courses");
       }
     } catch (error) {
-      console.error('Error fetching courses:', error);
-      setMessage('Error fetching courses');
+      console.error("Error fetching courses:", error);
+      setMessage("Error fetching courses");
     } finally {
       setLoading(false);
     }
@@ -121,41 +146,45 @@ export default function AdminEditPage() {
         const data = await response.json();
         setSections(data);
       } else {
-        setMessage('Error fetching sections');
+        setMessage("Error fetching sections");
       }
     } catch (error) {
-      console.error('Error fetching sections:', error);
-      setMessage('Error fetching sections');
+      console.error("Error fetching sections:", error);
+      setMessage("Error fetching sections");
     }
   }, []);
 
   const fetchContentBlocks = useCallback(async (sectionId: string) => {
     try {
-      const response = await fetch(`/api/admin/content-blocks?section_id=${sectionId}`);
+      const response = await fetch(
+        `/api/admin/content-blocks?section_id=${sectionId}`
+      );
       if (response.ok) {
         const data = await response.json();
         setContentBlocks(data);
       } else {
-        setMessage('Error fetching content blocks');
+        setMessage("Error fetching content blocks");
       }
     } catch (error) {
-      console.error('Error fetching content blocks:', error);
-      setMessage('Error fetching content blocks');
+      console.error("Error fetching content blocks:", error);
+      setMessage("Error fetching content blocks");
     }
   }, []);
 
   const fetchContentItems = useCallback(async (blockId: string) => {
     try {
-      const response = await fetch(`/api/admin/content-items?blockId=${blockId}`);
+      const response = await fetch(
+        `/api/admin/content-items?blockId=${blockId}`
+      );
       if (response.ok) {
         const data = await response.json();
         setContentItems(data);
       } else {
-        setMessage('Error fetching content items');
+        setMessage("Error fetching content items");
       }
     } catch (error) {
-      console.error('Error fetching content items:', error);
-      setMessage('Error fetching content items');
+      console.error("Error fetching content items:", error);
+      setMessage("Error fetching content items");
     }
   }, []);
 
@@ -191,7 +220,10 @@ export default function AdminEditPage() {
     }
   }, [selectedBlock, fetchContentItems]);
 
-  const startEditing = (item: any, type: string) => {
+  const startEditing = (
+    item: Course | Section | ContentBlock | ContentItem,
+    _editType: string
+  ) => {
     setEditingId(item.id);
     setEditForm({ ...item });
   };
@@ -201,37 +233,40 @@ export default function AdminEditPage() {
     setEditForm({});
   };
 
-  const handleInputChange = (field: string, value: any) => {
-    setEditForm((prev: any) => ({ ...prev, [field]: value }));
+  const handleInputChange = (
+    field: string,
+    value: string | number | boolean
+  ) => {
+    setEditForm((prev: EditFormData) => ({ ...prev, [field]: value }));
   };
 
   const saveChanges = async (type: string) => {
     try {
-      let endpoint = '';
-      let method = 'PUT';
+      let endpoint = "";
+      const method = "PUT";
 
       switch (type) {
-        case 'course':
+        case "course":
           endpoint = `/api/admin/courses/${editingId}`;
           break;
-        case 'section':
+        case "section":
           endpoint = `/api/admin/sections/${editingId}`;
           break;
-        case 'block':
+        case "block":
           endpoint = `/api/admin/blocks/${editingId}`;
           break;
-        case 'item':
+        case "item":
           endpoint = `/api/admin/content-items/${editingId}`;
           break;
         default:
-          throw new Error('Invalid type');
+          throw new Error("Invalid type");
       }
 
       console.log(`Saving ${type} changes:`, { endpoint, editForm, editingId });
 
       const response = await fetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
 
@@ -244,23 +279,23 @@ export default function AdminEditPage() {
         setEditingId(null);
         setEditForm({});
         // Refresh data based on what was updated
-        if (type === 'course') {
+        if (type === "course") {
           fetchCourses();
-        } else if (type === 'section' && selectedCourse) {
+        } else if (type === "section" && selectedCourse) {
           fetchSections(selectedCourse.id);
-        } else if (type === 'block' && selectedSection) {
+        } else if (type === "block" && selectedSection) {
           fetchContentBlocks(selectedSection.id);
-        } else if (type === 'item' && selectedBlock) {
+        } else if (type === "item" && selectedBlock) {
           fetchContentItems(selectedBlock.id);
         }
       } else {
         const errorData = await response.json();
         console.error(`Error response:`, errorData);
-        setMessage(`Error: ${errorData.error || 'Failed to update'}`);
+        setMessage(`Error: ${errorData.error || "Failed to update"}`);
       }
     } catch (error) {
-      console.error('Error saving changes:', error);
-      setMessage('Error saving changes');
+      console.error("Error saving changes:", error);
+      setMessage("Error saving changes");
     }
   };
 
@@ -268,71 +303,71 @@ export default function AdminEditPage() {
     if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
 
     try {
-      let endpoint = '';
+      let endpoint = "";
       switch (type) {
-        case 'course':
+        case "course":
           endpoint = `/api/admin/delete-course`;
           break;
-        case 'section':
+        case "section":
           endpoint = `/api/admin/delete-section`;
           break;
-        case 'block':
+        case "block":
           endpoint = `/api/admin/delete-content-block`;
           break;
-        case 'item':
+        case "item":
           endpoint = `/api/admin/delete-content-item`;
           break;
         default:
-          throw new Error('Invalid type');
+          throw new Error("Invalid type");
       }
 
       const response = await fetch(endpoint, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
 
       if (response.ok) {
         setMessage(`${type} deleted successfully!`);
         // Refresh data based on what was deleted
-        if (type === 'course') {
+        if (type === "course") {
           setSelectedCourse(null);
           setSelectedSection(null);
           setSelectedBlock(null);
           fetchCourses();
-        } else if (type === 'section') {
+        } else if (type === "section") {
           setSelectedSection(null);
           setSelectedBlock(null);
           if (selectedCourse) {
             fetchSections(selectedCourse.id);
           }
-        } else if (type === 'block') {
+        } else if (type === "block") {
           setSelectedBlock(null);
           if (selectedSection) {
             fetchContentBlocks(selectedSection.id);
           }
-        } else if (type === 'item') {
+        } else if (type === "item") {
           if (selectedBlock) {
             fetchContentItems(selectedBlock.id);
           }
         }
       } else {
         const errorData = await response.json();
-        setMessage(`Error: ${errorData.error || 'Failed to delete'}`);
+        setMessage(`Error: ${errorData.error || "Failed to delete"}`);
       }
     } catch (error) {
-      console.error('Error deleting item:', error);
-      setMessage('Error deleting item');
+      console.error("Error deleting item:", error);
+      setMessage("Error deleting item");
     }
   };
 
   const getContentTypeIcon = (type: string) => {
-    const contentType = CONTENT_TYPES.find(t => t.value === type);
+    const contentType = CONTENT_TYPES.find((t) => t.value === type);
     return contentType ? contentType.icon : FileText;
   };
 
   const getContentTypeLabel = (type: string) => {
-    const contentType = CONTENT_TYPES.find(t => t.value === type);
+    const contentType = CONTENT_TYPES.find((t) => t.value === type);
     return contentType ? contentType.label : type;
   };
 
@@ -347,8 +382,8 @@ export default function AdminEditPage() {
           <div>
             <Label>Content Type</Label>
             <Select
-              value={form.type || ''}
-              onValueChange={(value) => handleInputChange('type', value)}
+              value={(form.type as string) || ""}
+              onValueChange={(value) => handleInputChange("type", value)}
               disabled={!isEditing}
             >
               <SelectTrigger>
@@ -373,8 +408,10 @@ export default function AdminEditPage() {
             <Label>Order Index</Label>
             <Input
               type="number"
-              value={form.order_index || 0}
-              onChange={(e) => handleInputChange('order_index', parseInt(e.target.value))}
+              value={(form.order_index as number) || 0}
+              onChange={(e) =>
+                handleInputChange("order_index", parseInt(e.target.value))
+              }
               disabled={!isEditing}
             />
           </div>
@@ -384,8 +421,8 @@ export default function AdminEditPage() {
         <div>
           <Label>Content Text</Label>
           <Textarea
-            value={form.content_text || ''}
-            onChange={(e) => handleInputChange('content_text', e.target.value)}
+            value={(form.content_text as string) || ""}
+            onChange={(e) => handleInputChange("content_text", e.target.value)}
             rows={6}
             disabled={!isEditing}
             placeholder="Enter your content here..."
@@ -393,33 +430,35 @@ export default function AdminEditPage() {
         </div>
 
         {/* Type-specific fields */}
-        {form.type === 'image' && (
+        {form.type === "image" && (
           <div>
             <Label>Image URL</Label>
             <Input
-              value={form.image_url || ''}
-              onChange={(e) => handleInputChange('image_url', e.target.value)}
+              value={(form.image_url as string) || ""}
+              onChange={(e) => handleInputChange("image_url", e.target.value)}
               disabled={!isEditing}
               placeholder="https://example.com/image.jpg"
             />
           </div>
         )}
 
-        {form.type === 'quiz' && (
+        {form.type === "quiz" && (
           <div className="space-y-4">
             <div>
               <Label>Quiz Question</Label>
               <Input
-                value={form.quiz_question || ''}
-                onChange={(e) => handleInputChange('quiz_question', e.target.value)}
+                value={(form.quiz_question as string) || ""}
+                onChange={(e) =>
+                  handleInputChange("quiz_question", e.target.value)
+                }
                 disabled={!isEditing}
               />
             </div>
             <div>
               <Label>Quiz Data (JSON)</Label>
               <Textarea
-                value={form.quiz_data || ''}
-                onChange={(e) => handleInputChange('quiz_data', e.target.value)}
+                value={(form.quiz_data as string) || ""}
+                onChange={(e) => handleInputChange("quiz_data", e.target.value)}
                 rows={4}
                 disabled={!isEditing}
                 placeholder='{"question": "...", "options": [...], "correct": 0}'
@@ -428,33 +467,39 @@ export default function AdminEditPage() {
           </div>
         )}
 
-        {form.type === 'math' && (
+        {form.type === "math" && (
           <div>
             <Label>Math Formula</Label>
             <Input
-              value={form.math_formula || ''}
-              onChange={(e) => handleInputChange('math_formula', e.target.value)}
+              value={(form.math_formula as string) || ""}
+              onChange={(e) =>
+                handleInputChange("math_formula", e.target.value)
+              }
               disabled={!isEditing}
               placeholder="E = mc²"
             />
           </div>
         )}
 
-        {form.type === 'drag-drop' && (
+        {form.type === "drag-drop" && (
           <div className="space-y-4">
             <div>
-              <Label>Drag & Drop Title</Label>
+              <Label>Drag &amp; Drop Title</Label>
               <Input
-                value={form.drag_drop_title || ''}
-                onChange={(e) => handleInputChange('drag_drop_title', e.target.value)}
+                value={(form.drag_drop_title as string) || ""}
+                onChange={(e) =>
+                  handleInputChange("drag_drop_title", e.target.value)
+                }
                 disabled={!isEditing}
               />
             </div>
             <div>
               <Label>Instructions</Label>
               <Textarea
-                value={form.drag_drop_instructions || ''}
-                onChange={(e) => handleInputChange('drag_drop_instructions', e.target.value)}
+                value={(form.drag_drop_instructions as string) || ""}
+                onChange={(e) =>
+                  handleInputChange("drag_drop_instructions", e.target.value)
+                }
                 rows={2}
                 disabled={!isEditing}
               />
@@ -462,8 +507,10 @@ export default function AdminEditPage() {
             <div>
               <Label>Items (JSON)</Label>
               <Textarea
-                value={form.drag_drop_items || ''}
-                onChange={(e) => handleInputChange('drag_drop_items', e.target.value)}
+                value={(form.drag_drop_items as string) || ""}
+                onChange={(e) =>
+                  handleInputChange("drag_drop_items", e.target.value)
+                }
                 rows={3}
                 disabled={!isEditing}
                 placeholder='[{"id": 1, "text": "Item 1"}, ...]'
@@ -472,8 +519,10 @@ export default function AdminEditPage() {
             <div>
               <Label>Categories (JSON)</Label>
               <Textarea
-                value={form.drag_drop_categories || ''}
-                onChange={(e) => handleInputChange('drag_drop_categories', e.target.value)}
+                value={(form.drag_drop_categories as string) || ""}
+                onChange={(e) =>
+                  handleInputChange("drag_drop_categories", e.target.value)
+                }
                 rows={3}
                 disabled={!isEditing}
                 placeholder='[{"id": 1, "name": "Category 1"}, ...]'
@@ -500,62 +549,78 @@ export default function AdminEditPage() {
               <div>
                 <Label>Component Key</Label>
                 <Input
-                  value={form.component_key || ''}
-                  onChange={(e) => handleInputChange('component_key', e.target.value)}
+                  value={(form.component_key as string) || ""}
+                  onChange={(e) =>
+                    handleInputChange("component_key", e.target.value)
+                  }
                 />
               </div>
               <div>
                 <Label>Content Type</Label>
                 <Input
-                  value={form.content_type || ''}
-                  onChange={(e) => handleInputChange('content_type', e.target.value)}
+                  value={(form.content_type as string) || ""}
+                  onChange={(e) =>
+                    handleInputChange("content_type", e.target.value)
+                  }
                 />
               </div>
               <div>
                 <Label>Styling Data (JSON)</Label>
                 <Textarea
-                  value={form.styling_data || ''}
-                  onChange={(e) => handleInputChange('styling_data', e.target.value)}
+                  value={(form.styling_data as string) || ""}
+                  onChange={(e) =>
+                    handleInputChange("styling_data", e.target.value)
+                  }
                   rows={2}
                 />
               </div>
               <div>
                 <Label>Interactive Data (JSON)</Label>
                 <Textarea
-                  value={form.interactive_data || ''}
-                  onChange={(e) => handleInputChange('interactive_data', e.target.value)}
+                  value={(form.interactive_data as string) || ""}
+                  onChange={(e) =>
+                    handleInputChange("interactive_data", e.target.value)
+                  }
                   rows={2}
                 />
               </div>
               <div>
                 <Label>Media Files (JSON)</Label>
                 <Textarea
-                  value={form.media_files || ''}
-                  onChange={(e) => handleInputChange('media_files', e.target.value)}
+                  value={(form.media_files as string) || ""}
+                  onChange={(e) =>
+                    handleInputChange("media_files", e.target.value)
+                  }
                   rows={2}
                 />
               </div>
               <div>
                 <Label>Font Settings (JSON)</Label>
                 <Textarea
-                  value={form.font_settings || ''}
-                  onChange={(e) => handleInputChange('font_settings', e.target.value)}
+                  value={(form.font_settings as string) || ""}
+                  onChange={(e) =>
+                    handleInputChange("font_settings", e.target.value)
+                  }
                   rows={2}
                 />
               </div>
               <div>
                 <Label>Layout Config (JSON)</Label>
                 <Textarea
-                  value={form.layout_config || ''}
-                  onChange={(e) => handleInputChange('layout_config', e.target.value)}
+                  value={(form.layout_config as string) || ""}
+                  onChange={(e) =>
+                    handleInputChange("layout_config", e.target.value)
+                  }
                   rows={2}
                 />
               </div>
               <div>
                 <Label>Animation Settings (JSON)</Label>
                 <Textarea
-                  value={form.animation_settings || ''}
-                  onChange={(e) => handleInputChange('animation_settings', e.target.value)}
+                  value={(form.animation_settings as string) || ""}
+                  onChange={(e) =>
+                    handleInputChange("animation_settings", e.target.value)
+                  }
                   rows={2}
                 />
               </div>
@@ -582,11 +647,15 @@ export default function AdminEditPage() {
           {contentItems.length} Content Items
         </Badge>
       </div>
-      
+
       {message && (
-        <div className={`p-4 mb-6 rounded-lg ${
-          message.includes('Error') ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-green-100 text-green-700 border border-green-200'
-        }`}>
+        <div
+          className={`p-4 mb-6 rounded-lg ${
+            message.includes("Error")
+              ? "bg-red-100 text-red-700 border border-red-200"
+              : "bg-green-100 text-green-700 border border-green-200"
+          }`}
+        >
           {message}
         </div>
       )}
@@ -596,13 +665,18 @@ export default function AdminEditPage() {
         {/* Course Selection */}
         <div className="bg-white p-4 rounded-lg border shadow-sm">
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">1</span>
+            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+              1
+            </span>
             Select Course
           </h2>
-          <Select onValueChange={(courseId) => {
-            const course = courses.find(c => c.id === courseId);
-            setSelectedCourse(course || null);
-          }} value={selectedCourse?.id || ''}>
+          <Select
+            onValueChange={(courseId) => {
+              const course = courses.find((c) => c.id === courseId);
+              setSelectedCourse(course || null);
+            }}
+            value={selectedCourse?.id || ""}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Choose a course to edit..." />
             </SelectTrigger>
@@ -611,8 +685,11 @@ export default function AdminEditPage() {
                 <SelectItem key={course.id} value={course.id}>
                   <div className="flex items-center justify-between w-full">
                     <span>{course.title}</span>
-                    <Badge variant={course.is_premium ? "default" : "secondary"} className="ml-2">
-                      {course.is_premium ? 'Premium' : 'Free'}
+                    <Badge
+                      variant={course.is_premium ? "default" : "secondary"}
+                      className="ml-2"
+                    >
+                      {course.is_premium ? "Premium" : "Free"}
                     </Badge>
                   </div>
                 </SelectItem>
@@ -625,13 +702,18 @@ export default function AdminEditPage() {
         {selectedCourse && (
           <div className="bg-white p-4 rounded-lg border shadow-sm">
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">2</span>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                2
+              </span>
               Select Section
             </h2>
-            <Select onValueChange={(sectionId) => {
-              const section = sections.find(s => s.id === sectionId);
-              setSelectedSection(section || null);
-            }} value={selectedSection?.id || ''}>
+            <Select
+              onValueChange={(sectionId) => {
+                const section = sections.find((s) => s.id === sectionId);
+                setSelectedSection(section || null);
+              }}
+              value={selectedSection?.id || ""}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose a section to edit..." />
               </SelectTrigger>
@@ -655,13 +737,18 @@ export default function AdminEditPage() {
         {selectedSection && (
           <div className="bg-white p-4 rounded-lg border shadow-sm">
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">3</span>
+              <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">
+                3
+              </span>
               Select Content Block
             </h2>
-            <Select onValueChange={(blockId) => {
-              const block = contentBlocks.find(b => b.id === blockId);
-              setSelectedBlock(block || null);
-            }} value={selectedBlock?.id || ''}>
+            <Select
+              onValueChange={(blockId) => {
+                const block = contentBlocks.find((b) => b.id === blockId);
+                setSelectedBlock(block || null);
+              }}
+              value={selectedBlock?.id || ""}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose a content block to edit..." />
               </SelectTrigger>
@@ -684,7 +771,11 @@ export default function AdminEditPage() {
 
       {/* Content Display and Editing */}
       {selectedCourse && (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="course">Course Details</TabsTrigger>
@@ -699,16 +790,31 @@ export default function AdminEditPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <span className="bg-blue-100 text-blue-800 p-2 rounded">📚</span>
+                    <span className="bg-blue-100 text-blue-800 p-2 rounded">
+                      📚
+                    </span>
                     Course Info
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <p><strong>Title:</strong> {selectedCourse.title}</p>
-                  <p><strong>Slug:</strong> {selectedCourse.slug}</p>
-                  <p><strong>Premium:</strong> {selectedCourse.is_premium ? 'Yes' : 'No'}</p>
-                  <p><strong>Level:</strong> {selectedCourse.course_level || 'Not set'}</p>
-                  <p><strong>Created:</strong> {new Date(selectedCourse.created_at).toLocaleDateString()}</p>
+                  <p>
+                    <strong>Title:</strong> {selectedCourse.title}
+                  </p>
+                  <p>
+                    <strong>Slug:</strong> {selectedCourse.slug}
+                  </p>
+                  <p>
+                    <strong>Premium:</strong>{" "}
+                    {selectedCourse.is_premium ? "Yes" : "No"}
+                  </p>
+                  <p>
+                    <strong>Level:</strong>{" "}
+                    {selectedCourse.course_level || "Not set"}
+                  </p>
+                  <p>
+                    <strong>Created:</strong>{" "}
+                    {new Date(selectedCourse.created_at).toLocaleDateString()}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -717,16 +823,31 @@ export default function AdminEditPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <span className="bg-green-100 text-green-800 p-2 rounded">📖</span>
+                      <span className="bg-green-100 text-green-800 p-2 rounded">
+                        📖
+                      </span>
                       Section Info
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <p><strong>Title:</strong> {selectedSection.title}</p>
-                    <p><strong>Slug:</strong> {selectedSection.slug}</p>
-                    <p><strong>Order:</strong> {selectedSection.order}</p>
-                    <p><strong>Lessons:</strong> {selectedSection.lessons}</p>
-                    <p><strong>Created:</strong> {new Date(selectedSection.created_at).toLocaleDateString()}</p>
+                    <p>
+                      <strong>Title:</strong> {selectedSection.title}
+                    </p>
+                    <p>
+                      <strong>Slug:</strong> {selectedSection.slug}
+                    </p>
+                    <p>
+                      <strong>Order:</strong> {selectedSection.order}
+                    </p>
+                    <p>
+                      <strong>Lessons:</strong> {selectedSection.lessons}
+                    </p>
+                    <p>
+                      <strong>Created:</strong>{" "}
+                      {new Date(
+                        selectedSection.created_at
+                      ).toLocaleDateString()}
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -736,15 +857,26 @@ export default function AdminEditPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <span className="bg-purple-100 text-purple-800 p-2 rounded">📝</span>
+                      <span className="bg-purple-100 text-purple-800 p-2 rounded">
+                        📝
+                      </span>
                       Block Info
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <p><strong>Title:</strong> {selectedBlock.title}</p>
-                    <p><strong>Order:</strong> {selectedBlock.order_index}</p>
-                    <p><strong>Items:</strong> {contentItems.length}</p>
-                    <p><strong>Created:</strong> {new Date(selectedBlock.created_at).toLocaleDateString()}</p>
+                    <p>
+                      <strong>Title:</strong> {selectedBlock.title}
+                    </p>
+                    <p>
+                      <strong>Order:</strong> {selectedBlock.order_index}
+                    </p>
+                    <p>
+                      <strong>Items:</strong> {contentItems.length}
+                    </p>
+                    <p>
+                      <strong>Created:</strong>{" "}
+                      {new Date(selectedBlock.created_at).toLocaleDateString()}
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -759,15 +891,22 @@ export default function AdminEditPage() {
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {CONTENT_TYPES.map((type) => {
-                      const count = contentItems.filter(item => item.type === type.value).length;
+                      const count = contentItems.filter(
+                        (item) => item.type === type.value
+                      ).length;
                       if (count === 0) return null;
                       const Icon = type.icon;
                       return (
-                        <div key={type.value} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                        <div
+                          key={type.value}
+                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
+                        >
                           <Icon className="w-5 h-5 text-gray-600" />
                           <div>
                             <p className="font-semibold">{count}</p>
-                            <p className="text-sm text-gray-600">{type.label}</p>
+                            <p className="text-sm text-gray-600">
+                              {type.label}
+                            </p>
                           </div>
                         </div>
                       );
@@ -786,17 +925,25 @@ export default function AdminEditPage() {
                   <div className="flex gap-2">
                     {editingId === selectedCourse.id ? (
                       <>
-                        <Button size="sm" onClick={() => saveChanges('course')}>
+                        <Button size="sm" onClick={() => saveChanges("course")}>
                           <Save className="w-4 h-4 mr-2" />
                           Save
                         </Button>
-                        <Button size="sm" variant="outline" onClick={cancelEditing}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={cancelEditing}
+                        >
                           <X className="w-4 h-4 mr-2" />
                           Cancel
                         </Button>
                       </>
                     ) : (
-                      <Button size="sm" variant="outline" onClick={() => startEditing(selectedCourse, 'course')}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startEditing(selectedCourse, "course")}
+                      >
                         <Edit className="w-4 h-4 mr-2" />
                         Edit Course
                       </Button>
@@ -810,15 +957,19 @@ export default function AdminEditPage() {
                     <div>
                       <Label>Title</Label>
                       <Input
-                        value={editForm.title || ''}
-                        onChange={(e) => handleInputChange('title', e.target.value)}
+                        value={(editForm.title as string) || ""}
+                        onChange={(e) =>
+                          handleInputChange("title", e.target.value)
+                        }
                       />
                     </div>
                     <div>
                       <Label>Description</Label>
                       <Textarea
-                        value={editForm.description || ''}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        value={(editForm.description as string) || ""}
+                        onChange={(e) =>
+                          handleInputChange("description", e.target.value)
+                        }
                         rows={4}
                       />
                     </div>
@@ -826,15 +977,19 @@ export default function AdminEditPage() {
                       <div>
                         <Label>Slug</Label>
                         <Input
-                          value={editForm.slug || ''}
-                          onChange={(e) => handleInputChange('slug', e.target.value)}
+                          value={(editForm.slug as string) || ""}
+                          onChange={(e) =>
+                            handleInputChange("slug", e.target.value)
+                          }
                         />
                       </div>
                       <div>
                         <Label>Thumbnail URL</Label>
                         <Input
-                          value={editForm.thumbnail_url || ''}
-                          onChange={(e) => handleInputChange('thumbnail_url', e.target.value)}
+                          value={(editForm.thumbnail_url as string) || ""}
+                          onChange={(e) =>
+                            handleInputChange("thumbnail_url", e.target.value)
+                          }
                         />
                       </div>
                     </div>
@@ -842,23 +997,29 @@ export default function AdminEditPage() {
                       <div>
                         <Label>Course Level</Label>
                         <Select
-                          value={editForm.course_level || ''}
-                          onValueChange={(value) => handleInputChange('course_level', value)}
+                          value={(editForm.course_level as string) || ""}
+                          onValueChange={(value) =>
+                            handleInputChange("course_level", value)
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select level" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="beginner">Beginner</SelectItem>
-                            <SelectItem value="intermediate">Intermediate</SelectItem>
+                            <SelectItem value="intermediate">
+                              Intermediate
+                            </SelectItem>
                             <SelectItem value="advanced">Advanced</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Switch
-                          checked={editForm.is_premium || false}
-                          onCheckedChange={(checked) => handleInputChange('is_premium', checked)}
+                          checked={(editForm.is_premium as boolean) || false}
+                          onCheckedChange={(checked) =>
+                            handleInputChange("is_premium", checked)
+                          }
                         />
                         <Label>Premium Course</Label>
                       </div>
@@ -868,7 +1029,9 @@ export default function AdminEditPage() {
                   <div className="space-y-4">
                     <div>
                       <Label>Description</Label>
-                      <p className="text-gray-700">{selectedCourse.description}</p>
+                      <p className="text-gray-700">
+                        {selectedCourse.description}
+                      </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -877,17 +1040,23 @@ export default function AdminEditPage() {
                       </div>
                       <div>
                         <Label>Thumbnail URL</Label>
-                        <p className="text-gray-700">{selectedCourse.thumbnail_url || 'Not set'}</p>
+                        <p className="text-gray-700">
+                          {selectedCourse.thumbnail_url || "Not set"}
+                        </p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Course Level</Label>
-                        <p className="text-gray-700">{selectedCourse.course_level || 'Not set'}</p>
+                        <p className="text-gray-700">
+                          {selectedCourse.course_level || "Not set"}
+                        </p>
                       </div>
                       <div>
                         <Label>Premium</Label>
-                        <p className="text-gray-700">{selectedCourse.is_premium ? 'Yes' : 'No'}</p>
+                        <p className="text-gray-700">
+                          {selectedCourse.is_premium ? "Yes" : "No"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -905,17 +1074,30 @@ export default function AdminEditPage() {
                     <div className="flex gap-2">
                       {editingId === selectedSection.id ? (
                         <>
-                          <Button size="sm" onClick={() => saveChanges('section')}>
+                          <Button
+                            size="sm"
+                            onClick={() => saveChanges("section")}
+                          >
                             <Save className="w-4 h-4 mr-2" />
                             Save
                           </Button>
-                          <Button size="sm" variant="outline" onClick={cancelEditing}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={cancelEditing}
+                          >
                             <X className="w-4 h-4 mr-2" />
                             Cancel
                           </Button>
                         </>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => startEditing(selectedSection, 'section')}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            startEditing(selectedSection, "section")
+                          }
+                        >
                           <Edit className="w-4 h-4 mr-2" />
                           Edit Section
                         </Button>
@@ -929,15 +1111,19 @@ export default function AdminEditPage() {
                       <div>
                         <Label>Title</Label>
                         <Input
-                          value={editForm.title || ''}
-                          onChange={(e) => handleInputChange('title', e.target.value)}
+                          value={(editForm.title as string) || ""}
+                          onChange={(e) =>
+                            handleInputChange("title", e.target.value)
+                          }
                         />
                       </div>
                       <div>
                         <Label>Description</Label>
                         <Textarea
-                          value={editForm.description || ''}
-                          onChange={(e) => handleInputChange('description', e.target.value)}
+                          value={(editForm.description as string) || ""}
+                          onChange={(e) =>
+                            handleInputChange("description", e.target.value)
+                          }
                           rows={4}
                         />
                       </div>
@@ -945,15 +1131,19 @@ export default function AdminEditPage() {
                         <div>
                           <Label>Slug</Label>
                           <Input
-                            value={editForm.slug || ''}
-                            onChange={(e) => handleInputChange('slug', e.target.value)}
+                            value={(editForm.slug as string) || ""}
+                            onChange={(e) =>
+                              handleInputChange("slug", e.target.value)
+                            }
                           />
                         </div>
                         <div>
                           <Label>Course Path</Label>
                           <Input
-                            value={editForm.course_path || ''}
-                            onChange={(e) => handleInputChange('course_path', e.target.value)}
+                            value={(editForm.course_path as string) || ""}
+                            onChange={(e) =>
+                              handleInputChange("course_path", e.target.value)
+                            }
                           />
                         </div>
                       </div>
@@ -962,16 +1152,26 @@ export default function AdminEditPage() {
                           <Label>Lessons</Label>
                           <Input
                             type="number"
-                            value={editForm.lessons || 0}
-                            onChange={(e) => handleInputChange('lessons', parseInt(e.target.value))}
+                            value={(editForm.lessons as number) || 0}
+                            onChange={(e) =>
+                              handleInputChange(
+                                "lessons",
+                                parseInt(e.target.value)
+                              )
+                            }
                           />
                         </div>
                         <div>
                           <Label>Order</Label>
                           <Input
                             type="number"
-                            value={editForm.order || 0}
-                            onChange={(e) => handleInputChange('order', parseInt(e.target.value))}
+                            value={(editForm.order as number) || 0}
+                            onChange={(e) =>
+                              handleInputChange(
+                                "order",
+                                parseInt(e.target.value)
+                              )
+                            }
                           />
                         </div>
                       </div>
@@ -980,26 +1180,36 @@ export default function AdminEditPage() {
                     <div className="space-y-4">
                       <div>
                         <Label>Description</Label>
-                        <p className="text-gray-700">{selectedSection.description}</p>
+                        <p className="text-gray-700">
+                          {selectedSection.description}
+                        </p>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label>Slug</Label>
-                          <p className="text-gray-700">{selectedSection.slug}</p>
+                          <p className="text-gray-700">
+                            {selectedSection.slug}
+                          </p>
                         </div>
                         <div>
                           <Label>Course Path</Label>
-                          <p className="text-gray-700">{selectedSection.course_path}</p>
+                          <p className="text-gray-700">
+                            {selectedSection.course_path}
+                          </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label>Lessons</Label>
-                          <p className="text-gray-700">{selectedSection.lessons}</p>
+                          <p className="text-gray-700">
+                            {selectedSection.lessons}
+                          </p>
                         </div>
                         <div>
                           <Label>Order</Label>
-                          <p className="text-gray-700">{selectedSection.order}</p>
+                          <p className="text-gray-700">
+                            {selectedSection.order}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1018,17 +1228,28 @@ export default function AdminEditPage() {
                     <div className="flex gap-2">
                       {editingId === selectedBlock.id ? (
                         <>
-                          <Button size="sm" onClick={() => saveChanges('block')}>
+                          <Button
+                            size="sm"
+                            onClick={() => saveChanges("block")}
+                          >
                             <Save className="w-4 h-4 mr-2" />
                             Save
                           </Button>
-                          <Button size="sm" variant="outline" onClick={cancelEditing}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={cancelEditing}
+                          >
                             <X className="w-4 h-4 mr-2" />
                             Cancel
                           </Button>
                         </>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => startEditing(selectedBlock, 'block')}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => startEditing(selectedBlock, "block")}
+                        >
                           <Edit className="w-4 h-4 mr-2" />
                           Edit Block
                         </Button>
@@ -1042,26 +1263,38 @@ export default function AdminEditPage() {
                       <div>
                         <Label>Title</Label>
                         <Input
-                          value={editForm.title || ''}
-                          onChange={(e) => handleInputChange('title', e.target.value)}
+                          value={(editForm.title as string) || ""}
+                          onChange={(e) =>
+                            handleInputChange("title", e.target.value)
+                          }
                         />
                       </div>
                       <div>
                         <Label>Order Index</Label>
                         <Input
                           type="number"
-                          value={editForm.order_index || 0}
-                          onChange={(e) => handleInputChange('order_index', parseInt(e.target.value))}
+                          value={(editForm.order_index as number) || 0}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "order_index",
+                              parseInt(e.target.value)
+                            )
+                          }
                         />
                       </div>
                       <div>
                         <Label>Section ID</Label>
                         <Input
-                          value={editForm.section_id || ''}
-                          onChange={(e) => handleInputChange('section_id', e.target.value)}
+                          value={(editForm.section_id as string) || ""}
+                          onChange={(e) =>
+                            handleInputChange("section_id", e.target.value)
+                          }
                           disabled
                         />
-                        <p className="text-xs text-gray-500 mt-1">This field cannot be changed as it's linked to the section</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          This field cannot be changed as it&apos;s linked to
+                          the section
+                        </p>
                       </div>
                     </div>
                   ) : (
@@ -1072,15 +1305,23 @@ export default function AdminEditPage() {
                       </div>
                       <div>
                         <Label>Order Index</Label>
-                        <p className="text-gray-700">{selectedBlock.order_index}</p>
+                        <p className="text-gray-700">
+                          {selectedBlock.order_index}
+                        </p>
                       </div>
                       <div>
                         <Label>Section ID</Label>
-                        <p className="text-gray-700">{selectedBlock.section_id}</p>
+                        <p className="text-gray-700">
+                          {selectedBlock.section_id}
+                        </p>
                       </div>
                       <div>
                         <Label>Created</Label>
-                        <p className="text-gray-700">{new Date(selectedBlock.created_at).toLocaleDateString()}</p>
+                        <p className="text-gray-700">
+                          {new Date(
+                            selectedBlock.created_at
+                          ).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -1093,7 +1334,9 @@ export default function AdminEditPage() {
             {selectedBlock && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Content Items in Block: {selectedBlock.title}</h3>
+                  <h3 className="text-lg font-semibold">
+                    Content Items in Block: {selectedBlock.title}
+                  </h3>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline">
                       <Plus className="w-4 h-4 mr-2" />
@@ -1101,7 +1344,7 @@ export default function AdminEditPage() {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="grid gap-4">
                   {contentItems.map((item) => {
                     const Icon = getContentTypeIcon(item.type);
@@ -1112,30 +1355,43 @@ export default function AdminEditPage() {
                             <div className="flex items-center gap-2">
                               <Icon className="w-5 h-5" />
                               <span>{getContentTypeLabel(item.type)}</span>
-                              <Badge variant="outline">Order: {item.order_index}</Badge>
+                              <Badge variant="outline">
+                                Order: {item.order_index}
+                              </Badge>
                             </div>
                             <div className="flex gap-2">
                               {editingId === item.id ? (
                                 <>
-                                  <Button size="sm" onClick={() => saveChanges('item')}>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => saveChanges("item")}
+                                  >
                                     <Save className="w-4 h-4 mr-2" />
                                     Save
                                   </Button>
-                                  <Button size="sm" variant="outline" onClick={cancelEditing}>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={cancelEditing}
+                                  >
                                     <X className="w-4 h-4 mr-2" />
                                     Cancel
                                   </Button>
                                 </>
                               ) : (
                                 <>
-                                  <Button size="sm" variant="outline" onClick={() => startEditing(item, 'item')}>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => startEditing(item, "item")}
+                                  >
                                     <Edit className="w-4 h-4 mr-2" />
                                     Edit
                                   </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline" 
-                                    onClick={() => deleteItem(item.id, 'item')}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => deleteItem(item.id, "item")}
                                     className="text-red-600 hover:text-red-700"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -1145,9 +1401,7 @@ export default function AdminEditPage() {
                             </div>
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          {renderContentItemForm(item)}
-                        </CardContent>
+                        <CardContent>{renderContentItemForm(item)}</CardContent>
                       </Card>
                     );
                   })}

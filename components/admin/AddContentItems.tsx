@@ -1,9 +1,9 @@
 "use client";
-import EnhancedContentEditor from './EnhancedContentEditor';
-import SimpleChartEditor from './SimpleChartEditor';
-import TableEditor from './TableEditor';
-import DragDropEditor from './DragDropEditor';
-import ImageUpload from './ImageUpload';
+import EnhancedContentEditor from "./EnhancedContentEditor";
+import SimpleChartEditor from "./SimpleChartEditor";
+import TableEditor from "./TableEditor";
+import DragDropEditor from "./DragDropEditor";
+import ImageUpload from "./ImageUpload";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,51 +16,89 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const formSchema = z.object({
-  course_id: z.string().min(1, "Course is required"),
-  section_id: z.string().min(1, "Section is required"),
-  block_id: z.string().min(1, "Content Block is required"),
-  order_index: z.number().int().min(0, "Order index must be a non-negative integer"),
-  type: z.string().min(1, "Content type is required"),
-  image_url: z.string().optional(),
-  quiz_data: z.string().optional(),
-  quiz_question: z.string().optional(),
-  content_text: z.string().optional(),
-  math_formula: z.string().optional(),
-  drag_drop_title: z.string().optional(),
-  drag_drop_instructions: z.string().optional(),
-  drag_drop_items: z.string().optional(),
-  drag_drop_categories: z.string().optional(),
-}).refine((data) => {
-  // For math type, math_formula is required
-  if (data.type === 'math') {
-    return data.math_formula && data.math_formula.trim().length > 0;
-  }
-  // For drag-drop type, only items and categories are required
-  if (data.type === 'drag-drop') {
-    return data.drag_drop_items && data.drag_drop_items.trim().length > 0 &&
-           data.drag_drop_categories && data.drag_drop_categories.trim().length > 0;
-  }
-  // For chart, animation, quiz, table, and image types, content_text is optional
-  if (data.type === 'chart' || data.type === 'animation' || data.type === 'quiz' || data.type === 'table' || data.type === 'image') {
-    return true;
-  }
-  // For other types, content_text is required
-  return data.content_text && data.content_text.trim().length > 0;
-}, {
-  message: "Content is required",
-  path: ["content_text"]
-});
+const formSchema = z
+  .object({
+    course_id: z.string().min(1, "Course is required"),
+    section_id: z.string().min(1, "Section is required"),
+    block_id: z.string().min(1, "Content Block is required"),
+    order_index: z
+      .number()
+      .int()
+      .min(0, "Order index must be a non-negative integer"),
+    type: z.string().min(1, "Content type is required"),
+    image_url: z.string().optional(),
+    quiz_data: z.string().optional(),
+    quiz_question: z.string().optional(),
+    content_text: z.string().optional(),
+    math_formula: z.string().optional(),
+    drag_drop_title: z.string().optional(),
+    drag_drop_instructions: z.string().optional(),
+    drag_drop_items: z.string().optional(),
+    drag_drop_categories: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // For math type, math_formula is required
+      if (data.type === "math") {
+        return data.math_formula && data.math_formula.trim().length > 0;
+      }
+      // For drag-drop type, only items and categories are required
+      if (data.type === "drag-drop") {
+        return (
+          data.drag_drop_items &&
+          data.drag_drop_items.trim().length > 0 &&
+          data.drag_drop_categories &&
+          data.drag_drop_categories.trim().length > 0
+        );
+      }
+      // For chart, animation, quiz, table, and image types, content_text is optional
+      if (
+        data.type === "chart" ||
+        data.type === "animation" ||
+        data.type === "quiz" ||
+        data.type === "table" ||
+        data.type === "image"
+      ) {
+        return true;
+      }
+      // For other types, content_text is required
+      return data.content_text && data.content_text.trim().length > 0;
+    },
+    {
+      message: "Content is required",
+      path: ["content_text"],
+    }
+  );
 
+interface Course {
+  id: string;
+  name: string;
+}
+
+interface Section {
+  id: string;
+  title: string;
+}
+
+interface Block {
+  id: string;
+  title: string;
+}
 type ContentItemFormValues = z.infer<typeof formSchema>;
 
 export default function AddContentItems() {
   const [message, setMessage] = useState<string | null>(null);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [sections, setSections] = useState<any[]>([]);
-  const [blocks, setBlocks] = useState<any[]>([]);
+  const [courses, setCourses] = useState<[Course]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingSections, setLoadingSections] = useState(false);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
@@ -74,7 +112,7 @@ export default function AddContentItems() {
     title: "",
     instructions: "",
     items: [] as Array<{ text: string; correctCategory: string }>,
-    categories: [] as string[]
+    categories: [] as string[],
   });
 
   const form = useForm<ContentItemFormValues>({
@@ -101,8 +139,8 @@ export default function AddContentItems() {
   useEffect(() => {
     setLoadingCourses(true);
     fetch("/api/admin/course-paths")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setCourses(data);
         setLoadingCourses(false);
       })
@@ -124,9 +162,9 @@ export default function AddContentItems() {
     }
     setLoadingSections(true);
     fetch(`/api/admin/sections?course_path_id=${courseId}`)
-      .then(res => res.json())
-      .then(data => {
-          setSections(data);
+      .then((res) => res.json())
+      .then((data) => {
+        setSections(data);
         setLoadingSections(false);
       })
       .catch(() => {
@@ -139,14 +177,14 @@ export default function AddContentItems() {
   useEffect(() => {
     const sectionId = form.watch("section_id");
     if (!sectionId) {
-    setBlocks([]);
-    form.setValue("block_id", "");
+      setBlocks([]);
+      form.setValue("block_id", "");
       return;
     }
     setLoadingBlocks(true);
     fetch(`/api/admin/blocks?section_id=${sectionId}`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setBlocks(data);
         setLoadingBlocks(false);
       })
@@ -159,10 +197,12 @@ export default function AddContentItems() {
   // Handle block selection and fetch latest item order
   const handleBlockSelect = async (blockId: string) => {
     form.setValue("block_id", blockId);
-    
+
     // Fetch latest order for this block
     try {
-      const response = await fetch(`/api/admin/latest-indexes?block_id=${blockId}`);
+      const response = await fetch(
+        `/api/admin/latest-indexes?block_id=${blockId}`
+      );
       if (response.ok) {
         const data = await response.json();
         setLatestItemOrder(data.latestItemOrder);
@@ -176,40 +216,53 @@ export default function AddContentItems() {
 
   async function onSubmit(values: ContentItemFormValues) {
     setMessage(null);
-    console.log('Submitting form with values:', values);
-    
+    console.log("Submitting form with values:", values);
+
     // Additional validation for drag-drop type
-    if (values.type === 'drag-drop') {
-      const items = values.drag_drop_items?.split('\n').filter(line => line.trim()) || [];
-      const categories = values.drag_drop_categories?.split('\n').filter(line => line.trim()) || [];
-      
+    if (values.type === "drag-drop") {
+      const items =
+        values.drag_drop_items?.split("\n").filter((line) => line.trim()) || [];
+      const categories =
+        values.drag_drop_categories
+          ?.split("\n")
+          .filter((line) => line.trim()) || [];
+
       // Check for items with undefined categories
-      const invalidItems = items.filter(item => {
-        const parts = item.split('→');
+      const invalidItems = items.filter((item) => {
+        const parts = item.split("→");
         if (parts.length !== 2) return true;
         const category = parts[1]?.trim();
-        return !category || category === 'undefined';
+        return !category || category === "undefined";
       });
-      
+
       if (invalidItems.length > 0) {
-        setMessage(`Error: ${invalidItems.length} item(s) have invalid categories. Please fix them before submitting.`);
-        console.error('Invalid items found:', invalidItems);
+        setMessage(
+          `Error: ${invalidItems.length} item(s) have invalid categories. Please fix them before submitting.`
+        );
+        console.error("Invalid items found:", invalidItems);
         return;
       }
-      
+
       if (items.length === 0) {
-        setMessage('Error: Please add at least one item to the drag and drop activity.');
+        setMessage(
+          "Error: Please add at least one item to the drag and drop activity."
+        );
         return;
       }
-      
+
       if (categories.length === 0) {
-        setMessage('Error: Please add at least one category to the drag and drop activity.');
+        setMessage(
+          "Error: Please add at least one category to the drag and drop activity."
+        );
         return;
       }
-      
-      console.log('Drag-drop validation passed:', { itemsCount: items.length, categoriesCount: categories.length });
+
+      console.log("Drag-drop validation passed:", {
+        itemsCount: items.length,
+        categoriesCount: categories.length,
+      });
     }
-    
+
     try {
       const response = await fetch("/api/admin/content-items", {
         method: "POST",
@@ -238,10 +291,12 @@ export default function AddContentItems() {
         });
       } else {
         const errorData = await response.json();
-        setMessage(`Error: ${errorData.error || "Failed to create content item"}`);
+        setMessage(
+          `Error: ${errorData.error || "Failed to create content item"}`
+        );
       }
     } catch (error) {
-      setMessage("An unexpected error occurred. Please try again.");
+      setMessage(`An unexpected error occurred. Please try again. ${error}`);
     }
   }
 
@@ -254,78 +309,132 @@ export default function AddContentItems() {
           <label className="block font-semibold mb-2">Course</label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" className="w-full justify-start" disabled={loadingCourses}>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                disabled={loadingCourses}
+              >
                 {loadingCourses
                   ? "Loading..."
-                  : courses.find(c => c.id === form.watch("course_id"))?.name || "Select a course"}
+                  : courses.find((c) => c.id === form.watch("course_id"))
+                      ?.name || "Select a course"}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-full min-w-[200px]">
               <DropdownMenuLabel>Pick a course</DropdownMenuLabel>
-              {errorCourses && <DropdownMenuItem disabled>{errorCourses}</DropdownMenuItem>}
-              {courses.map(course => (
-                <DropdownMenuItem key={course.id} onClick={() => form.setValue("course_id", course.id)}>
+              {errorCourses && (
+                <DropdownMenuItem disabled>{errorCourses}</DropdownMenuItem>
+              )}
+              {courses.map((course) => (
+                <DropdownMenuItem
+                  key={course.id}
+                  onClick={() => form.setValue("course_id", course.id)}
+                >
                   {course.name}
-                  </DropdownMenuItem>
+                </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          {form.formState.errors.course_id && <div className="text-red-500 text-sm mt-1">{form.formState.errors.course_id.message}</div>}
+          {form.formState.errors.course_id && (
+            <div className="text-red-500 text-sm mt-1">
+              {form.formState.errors.course_id.message}
+            </div>
+          )}
         </div>
         {/* Section Dropdown */}
         <div>
           <label className="block font-semibold mb-2">Section</label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" className="w-full justify-start" disabled={!form.watch("course_id") || loadingSections}>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                disabled={!form.watch("course_id") || loadingSections}
+              >
                 {loadingSections
                   ? "Loading..."
-                  : sections.find(s => s.id === form.watch("section_id"))?.title || (!form.watch("course_id") ? "Select a course first" : "Select a section")}
+                  : sections.find((s) => s.id === form.watch("section_id"))
+                      ?.title ||
+                    (!form.watch("course_id")
+                      ? "Select a course first"
+                      : "Select a section")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-full min-w-[200px]">
               <DropdownMenuLabel>Pick a section</DropdownMenuLabel>
-              {errorSections && <DropdownMenuItem disabled>{errorSections}</DropdownMenuItem>}
-              {sections.map(section => (
-                <DropdownMenuItem key={section.id} onClick={() => form.setValue("section_id", section.id)}>
-                    {section.title}
-                  </DropdownMenuItem>
+              {errorSections && (
+                <DropdownMenuItem disabled>{errorSections}</DropdownMenuItem>
+              )}
+              {sections.map((section) => (
+                <DropdownMenuItem
+                  key={section.id}
+                  onClick={() => form.setValue("section_id", section.id)}
+                >
+                  {section.title}
+                </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          {form.formState.errors.section_id && <div className="text-red-500 text-sm mt-1">{form.formState.errors.section_id.message}</div>}
+          {form.formState.errors.section_id && (
+            <div className="text-red-500 text-sm mt-1">
+              {form.formState.errors.section_id.message}
+            </div>
+          )}
         </div>
         {/* Block Dropdown */}
         <div>
           <label className="block font-semibold mb-2">Content Block</label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" className="w-full justify-start" disabled={!form.watch("section_id") || loadingBlocks}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                disabled={!form.watch("section_id") || loadingBlocks}
+              >
                 {loadingBlocks
                   ? "Loading..."
-                  : blocks.find(b => b.id === form.watch("block_id"))?.title || (!form.watch("section_id") ? "Select a section first" : "Select a content block")}
-                    </Button>
-                  </DropdownMenuTrigger>
+                  : blocks.find((b) => b.id === form.watch("block_id"))
+                      ?.title ||
+                    (!form.watch("section_id")
+                      ? "Select a section first"
+                      : "Select a content block")}
+              </Button>
+            </DropdownMenuTrigger>
             <DropdownMenuContent className="w-full min-w-[200px]">
               <DropdownMenuLabel>Pick a content block</DropdownMenuLabel>
-              {errorBlocks && <DropdownMenuItem disabled>{errorBlocks}</DropdownMenuItem>}
-              {blocks.map(block => (
-                <DropdownMenuItem key={block.id} onClick={() => handleBlockSelect(block.id)}>
+              {errorBlocks && (
+                <DropdownMenuItem disabled>{errorBlocks}</DropdownMenuItem>
+              )}
+              {blocks.map((block) => (
+                <DropdownMenuItem
+                  key={block.id}
+                  onClick={() => handleBlockSelect(block.id)}
+                >
                   {block.title}
-                        </DropdownMenuItem>
+                </DropdownMenuItem>
               ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-          {form.formState.errors.block_id && <div className="text-red-500 text-sm mt-1">{form.formState.errors.block_id.message}</div>}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {form.formState.errors.block_id && (
+            <div className="text-red-500 text-sm mt-1">
+              {form.formState.errors.block_id.message}
+            </div>
+          )}
         </div>
         {/* Content Type Dropdown */}
         <div className="mb-4">
           <label className="block font-semibold mb-2">Content Type</label>
-          <Select onValueChange={(value) => {
-            form.setValue("type", value);
-            // Reset chart saved state when type changes
-            setChartSaved(false);
-          }} value={form.watch("type")}>
+          <Select
+            onValueChange={(value) => {
+              form.setValue("type", value);
+              // Reset chart saved state when type changes
+              setChartSaved(false);
+            }}
+            value={form.watch("type")}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select content type" />
             </SelectTrigger>
@@ -350,16 +459,24 @@ export default function AddContentItems() {
             className="w-full border rounded p-2"
             placeholder="Order Index"
             value={form.watch("order_index") ?? ""}
-            onChange={e => form.setValue("order_index", e.target.value === "" ? 0 : parseInt(e.target.value))}
+            onChange={(e) =>
+              form.setValue(
+                "order_index",
+                e.target.value === "" ? 0 : parseInt(e.target.value)
+              )
+            }
             min={0}
           />
           <p className="text-xs text-gray-500 mt-1">
-            {latestItemOrder !== null 
+            {latestItemOrder !== null
               ? `Latest order: ${latestItemOrder} | Next available: ${nextItemOrder}`
-              : "Enter the order index for this content item."
-            }
+              : "Enter the order index for this content item."}
           </p>
-          {form.formState.errors.order_index && <div className="text-red-500 text-sm mt-1">{form.formState.errors.order_index.message}</div>}
+          {form.formState.errors.order_index && (
+            <div className="text-red-500 text-sm mt-1">
+              {form.formState.errors.order_index.message}
+            </div>
+          )}
         </div>
         {/* Image Upload */}
         <ImageUpload
@@ -375,7 +492,7 @@ export default function AddContentItems() {
             className="w-full border rounded p-2 font-mono"
             placeholder='{"question": "What is 2+2?", "options": ["3", "4", "5"], "answer": 1}'
             value={form.watch("quiz_data") ?? ""}
-            onChange={e => form.setValue("quiz_data", e.target.value)}
+            onChange={(e) => form.setValue("quiz_data", e.target.value)}
           />
         </div>
         {/* Quiz Question Input */}
@@ -386,26 +503,35 @@ export default function AddContentItems() {
             className="w-full border rounded p-2"
             placeholder="Quiz question (optional)"
             value={form.watch("quiz_question") ?? ""}
-            onChange={e => form.setValue("quiz_question", e.target.value)}
+            onChange={(e) => form.setValue("quiz_question", e.target.value)}
           />
         </div>
         {/* Enhanced Content Editor, Chart Editor, or Math Formula Input */}
         {form.watch("type") === "chart" ? (
           <div>
-            <label className="block font-semibold mb-2">Chart Configuration</label>
+            <label className="block font-semibold mb-2">
+              Chart Configuration
+            </label>
             <SimpleChartEditor
               value={form.watch("content_text") || ""}
               onChange={(value: string) => {
                 form.setValue("content_text", value);
                 // If we get a valid chart JSON, mark it as saved
-                if (value && value.trim() !== '' && value.startsWith('{') && value.includes('"type"')) {
+                if (
+                  value &&
+                  value.trim() !== "" &&
+                  value.startsWith("{") &&
+                  value.includes('"type"')
+                ) {
                   setChartSaved(true);
                 }
               }}
               placeholder="Configure your chart..."
             />
             {form.formState.errors.content_text && (
-              <div className="text-red-500 text-sm mt-1">{form.formState.errors.content_text.message}</div>
+              <div className="text-red-500 text-sm mt-1">
+                {form.formState.errors.content_text.message}
+              </div>
             )}
             <div className="mt-4 flex justify-center">
               <Button
@@ -414,10 +540,13 @@ export default function AddContentItems() {
                 size="lg"
                 onClick={() => {
                   // Trigger the save chart functionality
-                  const chartEditor = document.querySelector('[data-chart-editor]');
+                  const chartEditor = document.querySelector(
+                    "[data-chart-editor]"
+                  );
                   if (chartEditor) {
                     // Find and click the save chart button in the editor
-                    const saveButton = chartEditor.querySelector('[data-save-chart]');
+                    const saveButton =
+                      chartEditor.querySelector("[data-save-chart]");
                     if (saveButton) {
                       (saveButton as HTMLButtonElement).click();
                     }
@@ -426,7 +555,7 @@ export default function AddContentItems() {
                 className="px-8 py-3"
                 disabled={chartSaved}
               >
-                {chartSaved ? '✓ Chart Saved' : 'Save Chart'}
+                {chartSaved ? "✓ Chart Saved" : "Save Chart"}
               </Button>
             </div>
           </div>
@@ -439,12 +568,16 @@ export default function AddContentItems() {
               placeholder="Create your table here..."
             />
             {form.formState.errors.content_text && (
-              <div className="text-red-500 text-sm mt-1">{form.formState.errors.content_text.message}</div>
+              <div className="text-red-500 text-sm mt-1">
+                {form.formState.errors.content_text.message}
+              </div>
             )}
           </div>
         ) : form.watch("type") === "math" ? (
           <div>
-            <label className="block font-semibold mb-2">LaTeX Mathematical Formula</label>
+            <label className="block font-semibold mb-2">
+              LaTeX Mathematical Formula
+            </label>
             <textarea
               className="w-full border rounded p-2 font-mono text-sm"
               placeholder="Enter LaTeX formula (e.g., \text{Value} = \sum_{t=1}^{n} \frac{CF_t}{(1 + r)^t})"
@@ -453,63 +586,91 @@ export default function AddContentItems() {
               rows={4}
             />
             {form.formState.errors.math_formula && (
-              <div className="text-red-500 text-sm mt-1">{form.formState.errors.math_formula.message}</div>
+              <div className="text-red-500 text-sm mt-1">
+                {form.formState.errors.math_formula.message}
+              </div>
             )}
             <p className="text-xs text-gray-500 mt-1">
-              Enter your mathematical formula in LaTeX format. This will be rendered using KaTeX.
+              Enter your mathematical formula in LaTeX format. This will be
+              rendered using KaTeX.
             </p>
           </div>
         ) : form.watch("type") === "drag-drop" ? (
           <div>
-            <label className="block font-semibold mb-2">Drag & Drop Activity</label>
+            <label className="block font-semibold mb-2">
+              Drag & Drop Activity
+            </label>
             <DragDropEditor
               value={dragDropData}
               onChange={(newData) => {
                 setDragDropData(newData);
-                
+
                 // Validate the data before converting
-                const validItems = newData.items.filter(item => 
-                  item.text && item.text.trim() && 
-                  item.correctCategory && item.correctCategory.trim() && 
-                  item.correctCategory !== 'undefined'
+                const validItems = newData.items.filter(
+                  (item) =>
+                    item.text &&
+                    item.text.trim() &&
+                    item.correctCategory &&
+                    item.correctCategory.trim() &&
+                    item.correctCategory !== "undefined"
                 );
-                
+
                 if (validItems.length !== newData.items.length) {
-                  console.warn('Some items were filtered out due to invalid data:', {
-                    total: newData.items.length,
-                    valid: validItems.length,
-                    invalid: newData.items.filter(item => 
-                      !item.text || !item.text.trim() || 
-                      !item.correctCategory || !item.correctCategory.trim() || 
-                      item.correctCategory === 'undefined'
-                    )
-                  });
+                  console.warn(
+                    "Some items were filtered out due to invalid data:",
+                    {
+                      total: newData.items.length,
+                      valid: validItems.length,
+                      invalid: newData.items.filter(
+                        (item) =>
+                          !item.text ||
+                          !item.text.trim() ||
+                          !item.correctCategory ||
+                          !item.correctCategory.trim() ||
+                          item.correctCategory === "undefined"
+                      ),
+                    }
+                  );
                 }
-                
+
                 // Convert to the format expected by the form
-                const itemsText = validItems.map(item => `${item.text.trim()} → ${item.correctCategory.trim()}`).join('\n');
-                const categoriesText = newData.categories.filter(cat => cat && cat.trim()).join('\n');
-                
-                console.log('Setting form values:', {
+                const itemsText = validItems
+                  .map(
+                    (item) =>
+                      `${item.text.trim()} → ${item.correctCategory.trim()}`
+                  )
+                  .join("\n");
+                const categoriesText = newData.categories
+                  .filter((cat) => cat && cat.trim())
+                  .join("\n");
+
+                console.log("Setting form values:", {
                   title: newData.title,
                   instructions: newData.instructions,
                   items: itemsText,
                   categories: categoriesText,
-                  validItemsCount: validItems.length
+                  validItemsCount: validItems.length,
                 });
-                
-                form.setValue("drag_drop_title", newData.title || '');
-                form.setValue("drag_drop_instructions", newData.instructions || '');
+
+                form.setValue("drag_drop_title", newData.title || "");
+                form.setValue(
+                  "drag_drop_instructions",
+                  newData.instructions || ""
+                );
                 form.setValue("drag_drop_items", itemsText);
                 form.setValue("drag_drop_categories", categoriesText);
-                
+
                 // Debug: Log the actual form values after setting them
                 setTimeout(() => {
-                  console.log('Form values after setting:', {
+                  console.log("Form values after setting:", {
                     drag_drop_title: form.getValues("drag_drop_title"),
-                    drag_drop_instructions: form.getValues("drag_drop_instructions"),
+                    drag_drop_instructions: form.getValues(
+                      "drag_drop_instructions"
+                    ),
                     drag_drop_items: form.getValues("drag_drop_items"),
-                    drag_drop_categories: form.getValues("drag_drop_categories")
+                    drag_drop_categories: form.getValues(
+                      "drag_drop_categories"
+                    ),
                   });
                 }, 100);
               }}
@@ -524,18 +685,23 @@ export default function AddContentItems() {
               placeholder="Enter your content here..."
             />
             {form.formState.errors.content_text && (
-              <div className="text-red-500 text-sm mt-1">{form.formState.errors.content_text.message}</div>
+              <div className="text-red-500 text-sm mt-1">
+                {form.formState.errors.content_text.message}
+              </div>
             )}
           </div>
         )}
-        <Button 
-          type="submit" 
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" 
-          disabled={form.formState.isSubmitting || (form.watch("type") === "chart" && !chartSaved)}
+        <Button
+          type="submit"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          disabled={
+            form.formState.isSubmitting ||
+            (form.watch("type") === "chart" && !chartSaved)
+          }
         >
           {form.formState.isSubmitting ? "Saving..." : "Submit"}
         </Button>
-        
+
         {/* Chart Save Status */}
         {form.watch("type") === "chart" && !chartSaved && (
           <div className="text-center text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
@@ -546,4 +712,4 @@ export default function AddContentItems() {
       </form>
     </div>
   );
-} 
+}

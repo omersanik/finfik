@@ -165,7 +165,7 @@ export default function SimpleRichTextEditor({
         Use HTML tags: &lt;strong&gt;bold&lt;/strong&gt;,
         &lt;em&gt;italic&lt;/em&gt;, &lt;h1&gt;headers&lt;/h1&gt;,
         &lt;ul&gt;&lt;li&gt;lists&lt;/li&gt;&lt;/ul&gt;, &lt;a
-        href="url"&gt;links&lt;/a&gt;
+        href=&quot;url&quot;&gt;links&lt;/a&gt;
       </div>
     </div>
   );

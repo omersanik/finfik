@@ -1,21 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  Plus, 
-  Trash2
-} from 'lucide-react';
-import RichTextCellEditor from './RichTextCellEditor';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, Trash2 } from "lucide-react";
+import RichTextCellEditor from "./RichTextCellEditor";
 
 interface TableEditorProps {
   value: string;
@@ -33,15 +29,21 @@ interface TableData {
   headers: string[];
 }
 
-const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
+const TableEditor = ({ value, onChange }: TableEditorProps) => {
   const [tableData, setTableData] = useState<TableData>({
     rows: [],
-    headers: []
+    headers: [],
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
-  const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const [selectedCell, setSelectedCell] = useState<{
+    row: number;
+    col: number;
+  } | null>(null);
+  const [editingCell, setEditingCell] = useState<{
+    row: number;
+    col: number;
+  } | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   // Initialize table data from value prop
   useEffect(() => {
@@ -50,27 +52,35 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
       try {
         const parsed = JSON.parse(value);
         // Ensure we have valid data structure
-        if (parsed && Array.isArray(parsed.headers) && Array.isArray(parsed.rows)) {
+        if (
+          parsed &&
+          Array.isArray(parsed.headers) &&
+          Array.isArray(parsed.rows)
+        ) {
           setTableData(parsed);
         } else {
-          throw new Error('Invalid table data structure');
+          throw new Error("Invalid table data structure");
         }
       } catch {
         // If parsing fails, create default table
         setTableData({
-          rows: [['', '', ''], ['', '', ''], ['', '', '']].map(row => 
-            row.map(cell => ({ value: cell, isHeader: false }))
-          ),
-          headers: ['', '', '']
+          rows: [
+            ["", "", ""],
+            ["", "", ""],
+            ["", "", ""],
+          ].map((row) => row.map((cell) => ({ value: cell, isHeader: false }))),
+          headers: ["", "", ""],
         });
       }
     } else {
       // Default 3x3 table with empty headers
       setTableData({
-        rows: [['', '', ''], ['', '', ''], ['', '', '']].map(row => 
-          row.map(cell => ({ value: cell, isHeader: false }))
-        ),
-        headers: ['', '', '']
+        rows: [
+          ["", "", ""],
+          ["", "", ""],
+          ["", "", ""],
+        ].map((row) => row.map((cell) => ({ value: cell, isHeader: false }))),
+        headers: ["", "", ""],
       });
     }
     setIsLoading(false);
@@ -85,10 +95,13 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
   };
 
   const addRow = () => {
-    const newRow = tableData.headers.map(() => ({ value: '', isHeader: false }));
+    const newRow = tableData.headers.map(() => ({
+      value: "",
+      isHeader: false,
+    }));
     const newTableData = {
       ...tableData,
-      rows: [...tableData.rows, newRow]
+      rows: [...tableData.rows, newRow],
     };
     setTableData(newTableData);
     updateParent(newTableData);
@@ -98,7 +111,7 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
     if (tableData.rows.length > 1) {
       const newTableData = {
         ...tableData,
-        rows: tableData.rows.filter((_, index) => index !== rowIndex)
+        rows: tableData.rows.filter((_, index) => index !== rowIndex),
       };
       setTableData(newTableData);
       updateParent(newTableData);
@@ -107,8 +120,11 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
 
   const addColumn = () => {
     const newTableData = {
-      headers: [...tableData.headers, ''],
-      rows: tableData.rows.map(row => [...row, { value: '', isHeader: false }])
+      headers: [...tableData.headers, ""],
+      rows: tableData.rows.map((row) => [
+        ...row,
+        { value: "", isHeader: false },
+      ]),
     };
     setTableData(newTableData);
     updateParent(newTableData);
@@ -118,7 +134,9 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
     if (tableData.headers.length > 1) {
       const newTableData = {
         headers: tableData.headers.filter((_, index) => index !== colIndex),
-        rows: tableData.rows.map(row => row.filter((_, index) => index !== colIndex))
+        rows: tableData.rows.map((row) =>
+          row.filter((_, index) => index !== colIndex)
+        ),
       };
       setTableData(newTableData);
       updateParent(newTableData);
@@ -134,7 +152,7 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
               cIndex === colIndex ? { ...cell, value } : cell
             )
           : row
-      )
+      ),
     };
     setTableData(newTableData);
     updateParent(newTableData);
@@ -145,7 +163,7 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
       ...tableData,
       headers: tableData.headers.map((header, index) =>
         index === colIndex ? value : header
-      )
+      ),
     };
     setTableData(newTableData);
     updateParent(newTableData);
@@ -154,9 +172,10 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
   const handleCellClick = (rowIndex: number, colIndex: number) => {
     setSelectedCell({ row: rowIndex, col: colIndex });
     setEditingCell({ row: rowIndex, col: colIndex });
-    const cellValue = rowIndex === -1 
-      ? tableData.headers[colIndex] 
-      : tableData.rows[rowIndex][colIndex].value;
+    const cellValue =
+      rowIndex === -1
+        ? tableData.headers[colIndex]
+        : tableData.rows[rowIndex][colIndex].value;
     setEditValue(cellValue);
   };
 
@@ -168,9 +187,9 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
     if (!selectedCell) return;
 
     const { row, col } = selectedCell;
-    
+
     switch (e.key) {
-      case 'Enter':
+      case "Enter":
         e.preventDefault();
         if (editingCell) {
           // Save current edit
@@ -180,7 +199,7 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
             updateCell(editingCell.row, editingCell.col, editValue);
           }
           setEditingCell(null);
-          
+
           // Move to next row
           if (row < tableData.rows.length - 1) {
             setSelectedCell({ row: row + 1, col });
@@ -189,7 +208,7 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
           }
         }
         break;
-      case 'Tab':
+      case "Tab":
         e.preventDefault();
         if (editingCell) {
           // Save current edit
@@ -199,7 +218,7 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
             updateCell(editingCell.row, editingCell.col, editValue);
           }
           setEditingCell(null);
-          
+
           // Move to next column
           if (col < tableData.headers.length - 1) {
             const newRow = row === -1 ? 0 : row;
@@ -209,21 +228,21 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
           }
         }
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         e.preventDefault();
         if (row > 0) {
           setSelectedCell({ row: row - 1, col });
           setEditValue(tableData.rows[row - 1][col].value);
         }
         break;
-      case 'ArrowDown':
+      case "ArrowDown":
         e.preventDefault();
         if (row < tableData.rows.length - 1) {
           setSelectedCell({ row: row + 1, col });
           setEditValue(tableData.rows[row + 1][col].value);
         }
         break;
-      case 'ArrowLeft':
+      case "ArrowLeft":
         e.preventDefault();
         if (col > 0) {
           const newRow = row === -1 ? 0 : row;
@@ -231,7 +250,7 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
           setEditValue(tableData.rows[newRow][col - 1].value);
         }
         break;
-      case 'ArrowRight':
+      case "ArrowRight":
         e.preventDefault();
         if (col < tableData.headers.length - 1) {
           const newRow = row === -1 ? 0 : row;
@@ -297,8 +316,8 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
                   key={colIndex}
                   className={`relative min-w-[120px] ${
                     selectedCell?.row === -1 && selectedCell?.col === colIndex
-                      ? 'bg-blue-100 border-2 border-blue-500'
-                      : ''
+                      ? "bg-blue-100 border-2 border-blue-500"
+                      : ""
                   }`}
                   onClick={() => handleCellClick(-1, colIndex)}
                   onDoubleClick={() => handleCellDoubleClick(-1, colIndex)}
@@ -312,9 +331,9 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
                       autoFocus
                     />
                   ) : (
-                    <div 
+                    <div
                       className="min-h-[24px] flex items-center"
-                      dangerouslySetInnerHTML={{ __html: header || '' }}
+                      dangerouslySetInnerHTML={{ __html: header || "" }}
                     />
                   )}
                   <Button
@@ -340,27 +359,31 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
                   <TableCell
                     key={colIndex}
                     className={`relative min-w-[120px] ${
-                      selectedCell?.row === rowIndex && selectedCell?.col === colIndex
-                        ? 'bg-blue-100 border-2 border-blue-500'
-                        : ''
+                      selectedCell?.row === rowIndex &&
+                      selectedCell?.col === colIndex
+                        ? "bg-blue-100 border-2 border-blue-500"
+                        : ""
                     }`}
                     onClick={() => handleCellClick(rowIndex, colIndex)}
-                    onDoubleClick={() => handleCellDoubleClick(rowIndex, colIndex)}
+                    onDoubleClick={() =>
+                      handleCellDoubleClick(rowIndex, colIndex)
+                    }
                   >
-                                      {editingCell?.row === rowIndex && editingCell?.col === colIndex ? (
-                    <RichTextCellEditor
-                      value={editValue}
-                      onChange={setEditValue}
-                      onBlur={handleEditBlur}
-                      onKeyDown={handleKeyDown}
-                      autoFocus
-                    />
-                  ) : (
-                    <div 
-                      className="min-h-[24px] flex items-center"
-                      dangerouslySetInnerHTML={{ __html: cell.value || '' }}
-                    />
-                  )}
+                    {editingCell?.row === rowIndex &&
+                    editingCell?.col === colIndex ? (
+                      <RichTextCellEditor
+                        value={editValue}
+                        onChange={setEditValue}
+                        onBlur={handleEditBlur}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        className="min-h-[24px] flex items-center"
+                        dangerouslySetInnerHTML={{ __html: cell.value || "" }}
+                      />
+                    )}
                   </TableCell>
                 ))}
                 <TableCell className="p-1">
@@ -394,4 +417,4 @@ const TableEditor = ({ value, onChange, placeholder }: TableEditorProps) => {
   );
 };
 
-export default TableEditor; 
+export default TableEditor;
