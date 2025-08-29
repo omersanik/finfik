@@ -70,7 +70,7 @@ export default function SectionClient({
   const [unlockedIndex, setUnlockedIndex] = useState(0);
   const [finished, setFinished] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
-  const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
+  const [quizAnswers, setQuizAnswers] = useState<Record<string | number, string | number | undefined>>({});
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [dragDropCompleted, setDragDropCompleted] = useState(false);
   const [dragDropReady, setDragDropReady] = useState(false);
@@ -98,7 +98,7 @@ export default function SectionClient({
       (item: ContentItem) => item.type === "drag-drop"
     ) || false;
 
-  const handleQuizAnswer = (answer: string) => {
+  const handleQuizAnswer = (answer: string | number) => {
     setQuizAnswers((prev) => ({ ...prev, [unlockedIndex]: answer }));
   };
 
@@ -135,7 +135,7 @@ export default function SectionClient({
           // Check if answer is correct (first option is always correct)
           const correctOption = quizData.options[0];
           const selectedOption = quizData.options.find(
-            (opt: QuizOption) => opt.id === selectedAnswer
+            (opt: QuizOption) => opt.id === String(selectedAnswer)
           );
           const isAnswerCorrect = selectedOption?.text === correctOption.text;
 
