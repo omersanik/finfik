@@ -52,8 +52,7 @@ const formSchema = z.object({
       if (v === "" || v === undefined || v === null) return undefined;
       const num = Number(v);
       return isNaN(num) ? undefined : num;
-    }, z.number().optional())
-    .optional(),
+    }, z.number().optional()),
   quiz_question: z.string().optional(),
 });
 
@@ -78,14 +77,12 @@ type ContentItemFormValues = z.infer<typeof formSchema>;
 interface CustomRichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
   minHeight?: number;
 }
 
 function CustomRichTextEditor({
   value,
   onChange,
-  placeholder = "Start typing...",
   minHeight = 200,
 }: CustomRichTextEditorProps) {
   // Additional check to ensure we're on the client side
@@ -137,7 +134,7 @@ export default function AddContentItems() {
 
   const [submitting, setSubmitting] = useState(false);
 
-  const form = useForm<ContentItemFormValues>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       block_id: "",
@@ -247,7 +244,7 @@ export default function AddContentItems() {
     form.setValue("block_id", id);
   }
 
-  async function onSubmit(values: ContentItemFormValues) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setSubmitting(true);
     try {
       const res = await fetch("/api/admin/content-items", {
@@ -427,7 +424,6 @@ export default function AddContentItems() {
                 <CustomRichTextEditor
                   value={field.value || ""}
                   onChange={field.onChange}
-                  placeholder="Enter your content here..."
                   minHeight={250}
                 />
               </FormControl>
@@ -500,7 +496,7 @@ export default function AddContentItems() {
                 <Input
                   type="number"
                   placeholder="Order Index"
-                  value={field.value ?? ""}
+                  value={field.value === undefined ? "" : String(field.value)}
                   onChange={(e) =>
                     field.onChange(
                       e.target.value === ""
