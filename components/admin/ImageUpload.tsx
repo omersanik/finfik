@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Image from "next/image";
 
 // Create Supabase client outside component to avoid multiple instances
 const supabase = createClient(
@@ -106,39 +107,6 @@ export default function ImageUpload({
     e.preventDefault();
     setIsDragOver(false);
   }, []);
-
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragOver(false);
-      setError(null);
-
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length === 0) return;
-
-      const file = files[0];
-      if (!file.type.startsWith("image/")) {
-        setError("Please upload an image file");
-        return;
-      }
-
-      await uploadImage(file);
-    },
-    [selectedFolder]
-  ); // Add selectedFolder as dependency
-
-  const handleFileSelect = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-
-      const file = files[0];
-      setError(null);
-      await uploadImage(file);
-    },
-    [selectedFolder]
-  ); // Add selectedFolder as dependency
-
   const uploadImage = async (file: File) => {
     console.log("=== UPLOAD ATTEMPT ===");
     console.log("selectedFolder state:", selectedFolder);
@@ -187,6 +155,38 @@ export default function ImageUpload({
       setIsUploading(false);
     }
   };
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      setError(null);
+
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length === 0) return;
+
+      const file = files[0];
+      if (!file.type.startsWith("image/")) {
+        setError("Please upload an image file");
+        return;
+      }
+
+      await uploadImage(file);
+    },
+    [uploadImage] // include uploadImage here
+  );
+
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      const file = files[0];
+      setError(null);
+      await uploadImage(file);
+    },
+    [uploadImage]
+  ); // Add selectedFolder as dependency
 
   const removeImage = () => {
     onImageUploaded("");
@@ -296,7 +296,7 @@ export default function ImageUpload({
       {/* Current Image Display */}
       {currentImageUrl && (
         <div className="relative inline-block">
-          <img
+          <Image
             src={currentImageUrl}
             alt="Current image"
             className="w-32 h-32 object-cover rounded border"

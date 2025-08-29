@@ -151,8 +151,9 @@ export default function AddContentItems() {
   }, []);
 
   // Fetch sections when course changes
+  const courseId = form.watch("course_id");
+
   useEffect(() => {
-    const courseId = form.watch("course_id");
     if (!courseId) {
       setSections([]);
       setBlocks([]);
@@ -160,6 +161,7 @@ export default function AddContentItems() {
       form.setValue("block_id", "");
       return;
     }
+
     setLoadingSections(true);
     fetch(`/api/admin/sections?course_path_id=${courseId}`)
       .then((res) => res.json())
@@ -171,16 +173,17 @@ export default function AddContentItems() {
         setErrorSections("Failed to load sections");
         setLoadingSections(false);
       });
-  }, [form.watch("course_id")]);
+  }, [courseId, form]);
 
-  // Fetch blocks when section changes
+  const sectionId = form.watch("section_id");
+
   useEffect(() => {
-    const sectionId = form.watch("section_id");
     if (!sectionId) {
       setBlocks([]);
       form.setValue("block_id", "");
       return;
     }
+
     setLoadingBlocks(true);
     fetch(`/api/admin/blocks?section_id=${sectionId}`)
       .then((res) => res.json())
@@ -192,7 +195,7 @@ export default function AddContentItems() {
         setErrorBlocks("Failed to load blocks");
         setLoadingBlocks(false);
       });
-  }, [form.watch("section_id")]);
+  }, [sectionId, form]);
 
   // Handle block selection and fetch latest item order
   const handleBlockSelect = async (blockId: string) => {

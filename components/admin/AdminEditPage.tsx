@@ -222,10 +222,11 @@ export default function AdminEditPage() {
 
   const startEditing = (
     item: Course | Section | ContentBlock | ContentItem,
-    _editType: string
+    editType: "course" | "section" | "block" | "item"
   ) => {
     setEditingId(item.id);
     setEditForm({ ...item });
+    console.log("Editing type:", editType); // optional, can use it later
   };
 
   const cancelEditing = () => {

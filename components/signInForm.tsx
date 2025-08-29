@@ -44,7 +44,7 @@ export default function SignInForm() {
 
   useEffect(() => {
     setTheme("light");
-  }, []);
+  }, [setTheme]);
 
   useEffect(() => {
     if (isSignedIn) {

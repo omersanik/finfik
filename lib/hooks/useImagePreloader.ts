@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from "react";
 
 interface UseImagePreloaderOptions {
   threshold?: number;
@@ -16,36 +16,11 @@ export function useImagePreloader(
   const imgRef = useRef<HTMLDivElement>(null);
   const imgElement = useRef<HTMLImageElement | null>(null);
 
-  const { threshold = 0.1, rootMargin = '50px', priority = false } = options;
+  const { threshold = 0.1, rootMargin = "50px", priority = false } = options;
 
-  useEffect(() => {
-    if (!imgRef.current) return;
-
-    // Create intersection observer
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          
-          // If priority, start loading immediately
-          if (priority) {
-            startLoading();
-          }
-          
-          observer.disconnect();
-        }
-      },
-      { threshold, rootMargin }
-    );
-
-    observer.observe(imgRef.current);
-    return () => observer.disconnect();
-  }, [threshold, rootMargin, priority]);
-
-  const startLoading = () => {
+  const startLoading = useCallback(() => {
     if (!src || hasError) return;
 
-    // Create image element for preloading
     const img = new Image();
     imgElement.current = img;
 
@@ -59,18 +34,33 @@ export function useImagePreloader(
       setIsLoaded(false);
     };
 
-    // Start loading
     img.src = src;
-  };
+  }, [src, hasError]);
 
-  // Start loading when image comes into view
+  useEffect(() => {
+    if (!imgRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          if (priority) startLoading();
+          observer.disconnect();
+        }
+      },
+      { threshold, rootMargin }
+    );
+
+    observer.observe(imgRef.current);
+    return () => observer.disconnect();
+  }, [threshold, rootMargin, priority, startLoading]);
+
   useEffect(() => {
     if (isInView && !priority) {
       startLoading();
     }
-  }, [isInView, priority]);
+  }, [isInView, priority, startLoading]);
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (imgElement.current) {

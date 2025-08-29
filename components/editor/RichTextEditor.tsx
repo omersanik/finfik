@@ -130,7 +130,6 @@ export default function AddContentItems() {
   const [selectedSection, setSelectedSection] = useState<string>("");
   const [selectedSectionName, setSelectedSectionName] = useState<string>("");
 
-  const [selectedBlock, setSelectedBlock] = useState<string>("");
   const [selectedBlockName, setSelectedBlockName] = useState<string>("");
 
   const [loadingPaths, setLoadingPaths] = useState(true);
@@ -182,7 +181,6 @@ export default function AddContentItems() {
     setSelectedSection("");
     setSelectedSectionName("");
     setBlocks([]);
-    setSelectedBlock("");
     setSelectedBlockName("");
     form.setValue("block_id", "");
 
@@ -212,7 +210,6 @@ export default function AddContentItems() {
 
     setLoadingBlocks(true);
     setBlocks([]);
-    setSelectedBlock("");
     setSelectedBlockName("");
     form.setValue("block_id", "");
 
@@ -247,7 +244,6 @@ export default function AddContentItems() {
   }
 
   function handleBlockSelect(id: string, title: string) {
-    setSelectedBlock(id);
     setSelectedBlockName(title);
     form.setValue("block_id", id);
   }
@@ -264,7 +260,6 @@ export default function AddContentItems() {
       });
       if (res.ok) {
         form.reset();
-        setSelectedBlock("");
         setSelectedBlockName("");
         alert("Content item created successfully!");
       } else {

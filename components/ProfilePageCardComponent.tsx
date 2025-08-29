@@ -11,6 +11,7 @@ import React from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import MultiavatarPicker from "./MultiavatarPicker";
+import Image from "next/image";
 
 const ProfilePageCardComponent = async () => {
   const { userId, getToken } = await auth();
@@ -56,7 +57,7 @@ const ProfilePageCardComponent = async () => {
           <CardAction>
             {/* Single avatar display - from Clerk */}
             <div className="flex flex-col items-start">
-              <img
+              <Image
                 src={imageUrl}
                 alt="User Avatar"
                 className="w-20 h-20 rounded-full border mb-2"

@@ -1,8 +1,9 @@
 "use client";
 
-import React from 'react';
-import { useImagePreloader } from '@/lib/hooks/useImagePreloader';
-import { Skeleton } from '@/components/ui/skeleton';
+import React from "react";
+import { useImagePreloader } from "@/lib/hooks/useImagePreloader";
+import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
 
 interface UltraFastImageProps {
   src: string;
@@ -27,11 +28,11 @@ export default function UltraFastImage({
   sizes = "(max-width: 768px) 100vw, 350px",
   placeholder = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=",
   onLoad,
-  onError
+  onError,
 }: UltraFastImageProps) {
   const { isLoaded, isInView, hasError, imgRef } = useImagePreloader(src, {
     priority,
-    rootMargin: priority ? '200px' : '50px', // Larger margin for priority images
+    rootMargin: priority ? "200px" : "50px", // Larger margin for priority images
   });
 
   // Show skeleton while loading
@@ -39,10 +40,10 @@ export default function UltraFastImage({
     return (
       <div ref={imgRef} className={`relative ${className}`}>
         <Skeleton className="w-full h-full rounded-lg animate-pulse" />
-        
+
         {/* Show placeholder when in view but not loaded */}
         {isInView && !isLoaded && (
-          <img
+          <Image
             src={placeholder}
             alt={`${alt} (loading)`}
             width={width}
@@ -57,7 +58,9 @@ export default function UltraFastImage({
   // Show error state
   if (hasError) {
     return (
-      <div className={`${className} bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center`}>
+      <div
+        className={`${className} bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center`}
+      >
         <div className="text-center text-gray-500">
           <div className="text-2xl mb-2">🖼️</div>
           <div className="text-sm">Image failed to load</div>
@@ -68,7 +71,7 @@ export default function UltraFastImage({
 
   // Show optimized image with smooth transition
   return (
-    <img
+    <Image
       src={src}
       alt={alt}
       width={width}
@@ -79,9 +82,9 @@ export default function UltraFastImage({
       onLoad={onLoad}
       onError={onError}
       style={{
-        imageRendering: 'auto',
-        imageRendering: '-webkit-optimize-contrast',
-        imageRendering: 'crisp-edges',
+        imageRendering: "auto",
+        imageRendering: "-webkit-optimize-contrast",
+        imageRendering: "crisp-edges",
       }}
     />
   );
