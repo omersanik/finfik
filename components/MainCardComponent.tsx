@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
-import { useEnrollmentStatus, useCourseProgress, useStartCourse, useUpdateLastAccessed } from "@/lib/hooks/useApi";
+import { useStartCourse, useUpdateLastAccessed } from "@/lib/hooks/useApi";
 import {
   Card,
   CardContent,
@@ -28,7 +28,7 @@ interface MainCardComponentProps {
   courseId: string; // ✅ Make sure this is passed from the parent
   isPremium?: boolean;
   comingSoon?: boolean;
-  courseLevel?: 'Easy' | 'Medium' | 'Hard';
+  courseLevel?: "Easy" | "Medium" | "Hard";
 }
 
 const MainCardComponent = ({
@@ -48,31 +48,41 @@ const MainCardComponent = ({
   const { getToken } = useAuth();
 
   // Debug log to see render state
-  console.log("MainCardComponent rendered. enrolled:", enrolled, "courseId:", courseId, "slug:", slug);
+  console.log(
+    "MainCardComponent rendered. enrolled:",
+    enrolled,
+    "courseId:",
+    courseId,
+    "slug:",
+    slug
+  );
 
   const getLevelBadgeColor = (level: string) => {
     switch (level) {
-      case 'Easy':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'Medium':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Hard':
-        return 'bg-red-100 text-red-800 border-red-200';
+      case "Easy":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "Medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "Hard":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   // Temporarily use the old approach to test if React Query is the issue
   const [enrollmentLoading, setEnrollmentLoading] = useState(true);
-  
+
   // Check if user is enrolled and get progress
   useEffect(() => {
     const checkEnrollmentAndProgress = async () => {
       try {
         const token = await getToken();
-        console.log('MainCardComponent - Token for API call:', token ? 'Yes' : 'No');
-        
+        console.log(
+          "MainCardComponent - Token for API call:",
+          token ? "Yes" : "No"
+        );
+
         const res = await fetch(`/api/progress/check-enrollment?slug=${slug}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -80,20 +90,20 @@ const MainCardComponent = ({
           },
         });
         const isEnrolled = res.status === 200;
-        console.log('MainCardComponent - Enrollment check result:', isEnrolled);
+        console.log("MainCardComponent - Enrollment check result:", isEnrolled);
         setEnrolled(isEnrolled);
-        
+
         if (isEnrolled) {
           // Get progress for enrolled course
           const progressRes = await fetch("/api/progress/course-progress", {
             method: "POST",
-            headers: { 
+            headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ courseId }),
           });
-          
+
           if (progressRes.ok) {
             const progressData = await progressRes.json();
             setProgress(progressData.progress);
@@ -108,7 +118,7 @@ const MainCardComponent = ({
 
     checkEnrollmentAndProgress();
   }, [courseId, slug, getToken]);
-  
+
   // Progress loading is now handled by local state
   const progressLoading = enrollmentLoading;
 
@@ -119,7 +129,7 @@ const MainCardComponent = ({
   // If not enrolled, start the course
   const handleStart = async () => {
     setButtonLoading(true);
-    
+
     try {
       const token = await getToken();
       if (!token) {
@@ -127,16 +137,16 @@ const MainCardComponent = ({
         setButtonLoading(false);
         return;
       }
-      
+
       // Start course in background (fire and forget)
       startCourseMutation.mutate({ courseId, token });
-      
+
       // Small delay to show button loading state briefly
       setTimeout(() => {
         // Navigate to course page
         router.push(`/courses/${slug}`);
       }, 200);
-      
+
       // Don't set loading to false - let navigation handle it
     } catch (err) {
       console.error("Failed to start course", err);
@@ -148,10 +158,10 @@ const MainCardComponent = ({
   // If enrolled, update last_accessed and continue
   const handleContinue = async () => {
     setButtonLoading(true);
-    
+
     // Navigate IMMEDIATELY for instant response
     router.push(`/courses/${slug}`);
-    
+
     // Update last_accessed in background (fire and forget)
     try {
       const token = await getToken();
@@ -163,7 +173,7 @@ const MainCardComponent = ({
       // Silently fail in background - user is already navigating
       console.error("Background update failed:", err);
     }
-    
+
     // Don't set loading to false - let navigation handle it
   };
 
@@ -175,17 +185,20 @@ const MainCardComponent = ({
   return (
     <main className="flex">
       {/* Hidden preload link for instant course page loading */}
-      <Link 
-        href={`/courses/${slug}`} 
+      <Link
+        href={`/courses/${slug}`}
         prefetch={true}
         className="hidden"
         aria-hidden="true"
       />
-      
+
       <Card className="w-full max-w-lg shadow-2xl relative">
         {courseLevel && (
           <div className="absolute top-4 right-4 z-10">
-            <Badge variant="outline" className={`${getLevelBadgeColor(courseLevel)} font-medium`}>
+            <Badge
+              variant="outline"
+              className={`${getLevelBadgeColor(courseLevel)} font-medium`}
+            >
               {courseLevel}
             </Badge>
           </div>
@@ -196,20 +209,34 @@ const MainCardComponent = ({
             {isPremium && (
               <span className="ml-2">
                 <Badge variant="secondary">
-                  <span role="img" aria-label="throne">🪑</span> Premium
+                  <span role="img" aria-label="throne">
+                    🪑
+                  </span>{" "}
+                  Premium
                 </Badge>
               </span>
             )}
             {comingSoon && (
               <span className="ml-2">
-                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-400">Coming Soon</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-yellow-100 text-yellow-800 border-yellow-400"
+                >
+                  Coming Soon
+                </Badge>
               </span>
             )}
           </div>
         </CardHeader>
         <div className="flex justify-center">
           <Image
-            src={thumbnail && typeof thumbnail === "string" && thumbnail.trim() !== "" ? getThumbnailUrl(thumbnail) : "/fallback-image.png"}
+            src={
+              thumbnail &&
+              typeof thumbnail === "string" &&
+              thumbnail.trim() !== ""
+                ? getThumbnailUrl(thumbnail)
+                : "/fallback-image.png"
+            }
             alt={`${title} course thumbnail`}
             width={250}
             height={250}
@@ -231,7 +258,9 @@ const MainCardComponent = ({
             <div className="mb-4 px-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-medium text-muted-foreground">
-                  {progressLoading ? "Loading progress..." : `${progress}% Complete`}
+                  {progressLoading
+                    ? "Loading progress..."
+                    : `${progress}% Complete`}
                 </span>
                 {!progressLoading && progress > 0 && (
                   <span className="text-xs text-muted-foreground">
@@ -239,10 +268,7 @@ const MainCardComponent = ({
                   </span>
                 )}
               </div>
-              <Progress 
-                value={progress} 
-                className="h-2"
-              />
+              <Progress value={progress} className="h-2" />
             </div>
           )}
 
@@ -255,15 +281,15 @@ const MainCardComponent = ({
               Loading...
             </Button>
           ) : enrolled ? (
-            <Button 
-              className="w-full" 
-              onClick={handleContinue} 
+            <Button
+              className="w-full"
+              onClick={handleContinue}
               disabled={buttonLoading}
               onMouseEnter={() => {
                 // Preload course data on hover for instant loading
                 if (!buttonLoading) {
-                  fetch(`/api/courses/${slug}`, { method: 'HEAD' });
-                  fetch(`/api/courses/${slug}/path`, { method: 'HEAD' });
+                  fetch(`/api/courses/${slug}`, { method: "HEAD" });
+                  fetch(`/api/courses/${slug}/path`, { method: "HEAD" });
                 }
               }}
             >
@@ -277,7 +303,11 @@ const MainCardComponent = ({
               )}
             </Button>
           ) : (
-            <Button className="w-full" onClick={handleStart} disabled={buttonLoading}>
+            <Button
+              className="w-full"
+              onClick={handleStart}
+              disabled={buttonLoading}
+            >
               {buttonLoading ? (
                 <span className="flex items-center gap-2 justify-center">
                   <Loader2 className="animate-spin h-4 w-4" />

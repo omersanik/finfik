@@ -12,9 +12,9 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded } = useAuth();
   const [showNavbar, setShowNavbar] = useState(false);
-  
+
   const hideNavbar =
     pathname === "/sign-in" ||
     pathname === "/sign-up" ||

@@ -1,6 +1,7 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -112,14 +113,14 @@ export default function MultiavatarPicker() {
 
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-      const img = new Image();
+      const img = new HTMLImageElement();
 
       // Set canvas size
       canvas.width = 200;
       canvas.height = 200;
 
       // Load the image and convert to PNG
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         img.onload = () => {
           console.log("Image loaded successfully");
           // Fill white background first (in case SVG has transparency)
@@ -129,7 +130,7 @@ export default function MultiavatarPicker() {
             // Draw the avatar
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           }
-          resolve(null);
+          resolve();
         };
         img.onerror = (error) => {
           console.error("Image load error:", error);
@@ -186,19 +187,31 @@ export default function MultiavatarPicker() {
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("=== ERROR in avatar update ===");
       console.error("Error details:", err);
-      console.error("Error message:", err.message);
-      console.error("Error stack:", err.stack);
 
-      setError(`Failed to update avatar: ${err.message}`);
+      let errorMessage = "An unknown error occurred";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        console.error("Error message:", err.message);
+        console.error("Error stack:", err.stack);
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      }
+
+      setError(`Failed to update avatar: ${errorMessage}`);
 
       // Don't hide the picker on error so user can retry
     } finally {
       setUploading(false);
       console.log("=== Avatar update process finished ===");
     }
+  };
+
+  const handleImageError = () => {
+    console.error("Avatar failed to load:", previewUrl);
+    setError("Failed to load avatar preview");
   };
 
   if (!isLoaded) return null;
@@ -239,14 +252,14 @@ export default function MultiavatarPicker() {
             {previewUrl && (
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <img
+                  <Image
                     src={previewUrl}
                     alt="Avatar Preview"
-                    className="w-16 h-16 rounded-full border-2 border-border"
-                    onError={(e) => {
-                      console.error("Avatar failed to load:", previewUrl);
-                      setError("Failed to load avatar preview");
-                    }}
+                    width={64}
+                    height={64}
+                    className="rounded-full border-2 border-border"
+                    onError={handleImageError}
+                    unoptimized // Required for external SVG/dynamic URLs
                   />
                 </div>
                 <div className="flex-1">

@@ -3,7 +3,6 @@ import {
   CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -12,7 +11,6 @@ import React from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import MultiavatarPicker from "./MultiavatarPicker";
-import { useUser } from "@clerk/nextjs";
 
 const ProfilePageCardComponent = async () => {
   const { userId, getToken } = await auth();
