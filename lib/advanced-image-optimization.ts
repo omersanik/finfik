@@ -50,8 +50,6 @@ export const getUltraOptimizedImageProps = (
     sizes,
     className: "object-cover rounded-lg transition-all duration-300 ease-out",
     style: {
-      imageRendering: "auto",
-      imageRendering: "-webkit-optimize-contrast",
       imageRendering: "crisp-edges",
     },
   };
