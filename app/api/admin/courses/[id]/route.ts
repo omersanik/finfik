@@ -4,9 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context;
+  const { id } = await params;
   try {
     const { userId } = await auth();
 
@@ -57,7 +57,7 @@ export async function PUT(
         course_level: course_level || null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single();
 
