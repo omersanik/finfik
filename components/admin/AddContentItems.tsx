@@ -96,7 +96,7 @@ type ContentItemFormValues = z.infer<typeof formSchema>;
 
 export default function AddContentItems() {
   const [message, setMessage] = useState<string | null>(null);
-  const [courses, setCourses] = useState<[Course]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
