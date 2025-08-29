@@ -12,8 +12,10 @@ const Page = async () => {
 
   const token = await getToken();
 
-  // For server-side rendering, use environment variable or fallback to relative URLs
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
+  // For server-side rendering, prefer absolute base URL in production
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
 
   // Check if user has any enrolled courses
   let hasEnrolledCourses = false;
