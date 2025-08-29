@@ -107,10 +107,10 @@ function CustomRichTextEditor({
         ["bold", "italic", "underline", "strike", "code"],
         ["h1", "h2", "h3", "h4"],
         ["unorderedList", "orderedList"],
-        ["alignLeft", "alignCenter", "alignRight", "alignJustify"],
-        ["link", "unlink"],
+        ["alignLeft", "alignCenter", "alignRight"],
+        ["link"],
         ["image", "video"],
-        ["blockquote", "hr"],
+        ["blockquote"],
         ["sup", "sub"],
         ["clean"],
       ]}
