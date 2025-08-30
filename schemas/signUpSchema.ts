@@ -14,6 +14,12 @@ export const signUpSchema = z
       .string()
       .min(1, { message: "Please confirm your password" })
       .min(8, { message: "Password should be minumum 8 characters" }),
+    acceptTerms: z
+      .boolean()
+      .refine((val) => val === true, { message: "You must accept the Terms of Service" }),
+    acceptPrivacy: z
+      .boolean()
+      .refine((val) => val === true, { message: "You must accept the Privacy Policy" }),
   })
   .refine((data) => data.password === data.passwordConfirmation, {
     message: "Passwords do not match!",
