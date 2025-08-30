@@ -36,6 +36,23 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}
       >
+        <ClerkProvider>
+          <Providers>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <PageLoading />
+              <LayoutWrapper>{children}</LayoutWrapper>
+              <BetaWelcomeHandler />
+              <Toaster 
+                position="bottom-center"
+                richColors
+                closeButton
+                duration={3000}
+              />
+            </ThemeProvider>
+            <PerformanceMonitor />
+          </Providers>
+        </ClerkProvider>
+        
         {/* Server-rendered footer with privacy policy link for Google crawler - outside Clerk provider */}
         <footer className="py-4 px-8 border-t border-border bg-background">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
@@ -54,23 +71,6 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
-        
-        <ClerkProvider>
-          <Providers>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-              <PageLoading />
-              <LayoutWrapper>{children}</LayoutWrapper>
-              <BetaWelcomeHandler />
-              <Toaster 
-                position="bottom-center"
-                richColors
-                closeButton
-                duration={3000}
-              />
-            </ThemeProvider>
-            <PerformanceMonitor />
-          </Providers>
-        </ClerkProvider>
       </body>
     </html>
   );
