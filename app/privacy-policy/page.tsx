@@ -25,7 +25,7 @@ const PrivacyPolicyPage = () => {
           <section>
             <h2 className="text-2xl font-semibold mb-2">2. Information We Collect</h2>
             <p>
-              We collect information that identifies, relates to, describes, references, is capable of being associated with, or could reasonably be linked, directly or indirectly, with a particular consumer or device ("personal information").
+              We collect information that identifies, relates to, describes, references, is capable of being associated with, or could reasonably be linked, directly or indirectly, with a particular consumer or device (&ldquo;personal information&rdquo;).
             </p>
             <h3 className="text-xl font-medium mt-4 mb-2">2.1 Personal Information You Disclose to Us</h3>
             <ul className="list-disc pl-6 space-y-2">
@@ -106,7 +106,7 @@ const PrivacyPolicyPage = () => {
           <section>
             <h2 className="text-2xl font-semibold mb-2">8. Changes to This Privacy Policy</h2>
             <p>
-              We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Effective Date" at the top of this Privacy Policy. You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.
+              We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the &ldquo;Effective Date&rdquo; at the top of this Privacy Policy. You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.
             </p>
           </section>
 

@@ -18,7 +18,7 @@ const TermsOfServicePage = () => {
           <section>
             <h2 className="text-2xl font-semibold mb-2">1. Introduction</h2>
             <p>
-              Welcome to {companyName}! These Terms of Service ("Terms") govern your use of our website finfik.com, including any other media form, media channel, mobile website, or mobile application related or connected thereto (collectively, the “Site”). Please read these Terms carefully before using the Site. By accessing or using the Site, you agree to be bound by these Terms and our Privacy Policy. If you do not agree to these Terms, you may not access or use the Site.
+              Welcome to {companyName}! These Terms of Service (&ldquo;Terms&rdquo;) govern your use of our website finfik.com, including any other media form, media channel, mobile website, or mobile application related or connected thereto (collectively, the &ldquo;Site&rdquo;). Please read these Terms carefully before using the Site. By accessing or using the Site, you agree to be bound by these Terms and our Privacy Policy. If you do not agree to these Terms, you may not access or use the Site.
             </p>
           </section>
 
@@ -32,7 +32,7 @@ const TermsOfServicePage = () => {
           <section>
             <h2 className="text-2xl font-semibold mb-2">3. Changes to Terms</h2>
             <p>
-              We reserve the right, in our sole discretion, to make changes or modifications to these Terms at any time and for any reason. We will alert you about any changes by updating the "Effective Date" of these Terms. You waive any right to receive specific notice of each such change. It is your responsibility to periodically review these Terms to stay informed of updates. Your continued use of the Site after the date such revised Terms are posted will constitute your acceptance of such changes.
+              We reserve the right, in our sole discretion, to make changes or modifications to these Terms at any time and for any reason. We will alert you about any changes by updating the &ldquo;Effective Date&rdquo; of these Terms. You waive any right to receive specific notice of each such change. It is your responsibility to periodically review these Terms to stay informed of updates. Your continued use of the Site after the date such revised Terms are posted will constitute your acceptance of such changes.
             </p>
           </section>
 
