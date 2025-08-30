@@ -516,9 +516,15 @@ const BeautifulLandingPage = () => {
             <p className="text-muted-foreground text-sm mb-2">
               © {new Date().getFullYear()} Finfik. All rights reserved.
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mb-2">
               Beta Version - Early Access Program
             </p>
+            <Link 
+              href="/privacy-policy" 
+              className="text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              Privacy Policy
+            </Link>
           </div>
         </div>
       </motion.footer>

@@ -59,7 +59,7 @@ export default function MainPageWrapper({ initialData }: MainPageWrapperProps) {
   );
 
   return (
-    <main className="bg-background text-foreground min-h-screen">
+    <main className="bg-background text-foreground min-h-screen flex flex-col">
       <h1 className="text-3xl font-semibold my-10 mx-10 font-serif">
         Keep going where you left off
       </h1>
@@ -125,6 +125,25 @@ export default function MainPageWrapper({ initialData }: MainPageWrapperProps) {
           </Link>
         </p>
       </div>
+
+      {/* Footer */}
+      <footer className="mt-auto py-8 px-8 border-t border-border">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
+          <div className="text-center md:text-left mb-4 md:mb-0">
+            <p className="text-muted-foreground text-sm">
+              © {new Date().getFullYear()} Finfik. All rights reserved.
+            </p>
+          </div>
+          <div className="text-center md:text-right">
+            <Link 
+              href="/privacy-policy" 
+              className="text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              Privacy Policy
+            </Link>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
