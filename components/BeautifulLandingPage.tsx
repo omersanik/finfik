@@ -165,12 +165,6 @@ const BeautifulLandingPage = () => {
 
         {/* Navigation buttons */}
         <div className="flex items-center space-x-2 md:space-x-4">
-          <a
-            href="/privacy-policy"
-            className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300 text-xs md:text-sm px-3 py-2 rounded-md hover:bg-accent"
-          >
-            Privacy Policy
-          </a>
           <Button
             asChild
             variant="ghost"
@@ -525,12 +519,12 @@ const BeautifulLandingPage = () => {
             <p className="text-xs text-muted-foreground mb-2">
               Beta Version - Early Access Program
             </p>
-            <Link 
+            <a 
               href="/privacy-policy" 
               className="text-xs text-muted-foreground hover:text-primary transition-colors"
             >
               Privacy Policy
-            </Link>
+            </a>
           </div>
         </div>
       </motion.footer>

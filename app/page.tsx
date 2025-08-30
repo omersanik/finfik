@@ -7,21 +7,8 @@ const Page = async () => {
   const { userId, getToken } = await auth();
 
   if (!userId) {
-    // Render the new beautiful landing page component with server-side rendered privacy policy link
-    return (
-      <>
-        {/* Server-side rendered privacy policy link for Google crawler */}
-        <div className="bg-background border-b border-border py-2 px-8 text-center">
-          <a 
-            href="/privacy-policy" 
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            Privacy Policy
-          </a>
-        </div>
-        <BeautifulLandingPage />
-      </>
-    );
+    // Render the new beautiful landing page component
+    return <BeautifulLandingPage />;
   }
 
   const token = await getToken();
