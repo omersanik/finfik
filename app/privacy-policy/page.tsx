@@ -5,14 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const PrivacyPolicyPage = () => {
   const companyName = "Finfik";
   const contactEmail = "support@finfik.com";
-  // TODO: Update with actual date
+  const effectiveDate = "January 1, 2026";
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center mb-4">Privacy Policy</CardTitle>
-          
+          <p className="text-center text-muted-foreground mb-4">
+            Effective Date: {effectiveDate}
+          </p>
         </CardHeader>
         <CardContent className="space-y-6 text-lg leading-relaxed">
           <section>

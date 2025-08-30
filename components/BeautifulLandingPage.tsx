@@ -164,24 +164,24 @@ const BeautifulLandingPage = () => {
         </Link>
 
         {/* Navigation buttons */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4">
           <Button
             asChild
             variant="ghost"
-            className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+            className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300 text-xs md:text-sm"
           >
-            <Link href="/privacy-policy">Privacy Policy</Link>
+            <Link href="/privacy-policy">Privacy</Link>
           </Button>
           <Button
             asChild
             variant="ghost"
-            className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+            className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300 text-xs md:text-sm"
           >
             <Link href="/sign-in">Login</Link>
           </Button>
           <Button
             asChild
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-full font-semibold shadow-lg transition-all duration-300"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 md:px-6 py-2 rounded-full font-semibold shadow-lg transition-all duration-300 text-xs md:text-sm"
           >
             <Link href="/sign-up">Join Beta</Link>
           </Button>
