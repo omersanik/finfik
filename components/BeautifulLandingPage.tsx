@@ -170,6 +170,13 @@ const BeautifulLandingPage = () => {
             variant="ghost"
             className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
           >
+            <Link href="/privacy-policy">Privacy Policy</Link>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300"
+          >
             <Link href="/sign-in">Login</Link>
           </Button>
           <Button
