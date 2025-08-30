@@ -165,13 +165,12 @@ const BeautifulLandingPage = () => {
 
         {/* Navigation buttons */}
         <div className="flex items-center space-x-2 md:space-x-4">
-          <Button
-            asChild
-            variant="ghost"
-            className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300 text-xs md:text-sm"
+          <a
+            href="/privacy-policy"
+            className="text-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300 text-xs md:text-sm px-3 py-2 rounded-md hover:bg-accent"
           >
-            <Link href="/privacy-policy">Privacy</Link>
-          </Button>
+            Privacy Policy
+          </a>
           <Button
             asChild
             variant="ghost"
