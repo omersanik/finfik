@@ -50,6 +50,25 @@ export default function RootLayout({
               />
             </ThemeProvider>
             <PerformanceMonitor />
+            
+            {/* Server-rendered footer with privacy policy link for Google crawler */}
+            <footer className="py-4 px-8 border-t border-border bg-background">
+              <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
+                <div className="text-center md:text-left mb-2 md:mb-0">
+                  <p className="text-xs text-muted-foreground">
+                    © {new Date().getFullYear()} Finfik. All rights reserved.
+                  </p>
+                </div>
+                <div className="text-center md:text-right">
+                  <a 
+                    href="/privacy-policy" 
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Privacy Policy
+                  </a>
+                </div>
+              </div>
+            </footer>
           </Providers>
         </body>
       </html>

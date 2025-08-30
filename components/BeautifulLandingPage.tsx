@@ -490,44 +490,12 @@ const BeautifulLandingPage = () => {
         </div>
       </motion.section>
 
-      {/* Footer */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 py-16 px-8 border-t border-border"
-      >
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div className="flex items-center mb-6 md:mb-0">
-            <div className="w-24 h-8 overflow-hidden flex items-center justify-center">
-              <Image
-                src={finfiklogo}
-                alt="Finfik Logo"
-                width={96}
-                height={32}
-                priority={false}
-                loading="lazy"
-                className="object-contain"
-              />
-            </div>
-          </div>
-          <div className="text-center md:text-right">
-            <p className="text-muted-foreground text-sm mb-2">
-              © {new Date().getFullYear()} Finfik. All rights reserved.
-            </p>
-            <p className="text-xs text-muted-foreground mb-2">
-              Beta Version - Early Access Program
-            </p>
-            <a 
-              href="/privacy-policy" 
-              className="text-xs text-muted-foreground hover:text-primary transition-colors"
-            >
-              Privacy Policy
-            </a>
-          </div>
-        </div>
-      </motion.footer>
+      {/* Beta Version Info */}
+      <div className="relative z-10 py-8 px-8 text-center">
+        <p className="text-xs text-muted-foreground">
+          Beta Version - Early Access Program
+        </p>
+      </div>
 
       {/* Custom styles */}
       <style jsx global>{`
