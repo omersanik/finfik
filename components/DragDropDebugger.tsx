@@ -1,7 +1,8 @@
 import { useEffect } from "react";
+import { ContentItem } from "@/types/content";
 
 interface DragDropDebuggerProps {
-  item: any;
+  item: ContentItem;
   enabled?: boolean;
 }
 
