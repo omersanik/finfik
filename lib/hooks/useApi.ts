@@ -98,10 +98,10 @@ export const usePremiumStatus = (userId?: string, token?: string) => {
       return result;
     },
     enabled: !!userId && !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 0, // 🔥 DISABLE CACHE - Always fetch fresh data
+    gcTime: 0, // 🔥 DISABLE CACHE - Don't keep in memory
     retry: 1,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // 🔥 REFRESH on focus to get latest data
   });
 };
 

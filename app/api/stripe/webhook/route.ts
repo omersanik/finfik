@@ -67,21 +67,25 @@ export async function POST(req: NextRequest) {
       subscriptionPlan
     );
     if (userId) {
-      // First, try to update the user if they exist
+      console.log("🚨 STRIPE WEBHOOK: About to update user - PRESERVING ROLE!");
+
+      // First, try to update the user if they exist - PRESERVE EXISTING ROLE
       const { error: updateError } = await supabaseAdmin
         .from("users")
         .update({
           is_premium: true,
           subscription_id: subscriptionId || null,
           subscription_plan: subscriptionPlan,
+          // ✅ DO NOT update role - preserve existing value
         })
         .eq("clerk_id", userId);
 
       if (updateError) {
         console.error("Supabase update error:", updateError);
 
-        // If user doesn't exist, create them
+        // If user doesn't exist, create them with beta role (for new users)
         if (updateError.code === "PGRST116") {
+          console.log("🚨 STRIPE WEBHOOK: Creating new user with beta role");
           const { error: createError } = await supabaseAdmin
             .from("users")
             .insert([
@@ -90,6 +94,7 @@ export async function POST(req: NextRequest) {
                 is_premium: true,
                 subscription_id: subscriptionId || null,
                 subscription_plan: subscriptionPlan,
+                role: "beta", // ✅ Explicitly set beta role for new users
               },
             ]);
 

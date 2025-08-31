@@ -40,11 +40,49 @@ export async function GET() {
     );
   }
 
-  const { data: user, error } = await supabase
+  // Check for multiple records first
+  const { data: allUsers, error: checkError } = await supabase
     .from("users")
-    .select("is_premium, subscription_plan, role")
-    .eq("clerk_id", userId)
-    .single();
+    .select("is_premium, subscription_plan, role, id, created_at")
+    .eq("clerk_id", userId);
+
+  if (checkError) {
+    console.error("Error checking for duplicate users:", checkError);
+    return new Response(JSON.stringify({ error: checkError.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  let user = null;
+  const error = null;
+
+  if (allUsers && allUsers.length > 1) {
+    console.warn(
+      `🚨 FOUND ${allUsers.length} USER RECORDS FOR ${userId}:`,
+      allUsers
+    );
+    // For now, use the most recently created record with the highest role priority
+    const rolePriority: Record<string, number> = {
+      admin: 4,
+      premium: 3,
+      beta: 2,
+      user: 1,
+    };
+    user = allUsers.sort((a, b) => {
+      const priorityDiff =
+        (rolePriority[b.role] || 0) - (rolePriority[a.role] || 0);
+      if (priorityDiff !== 0) return priorityDiff;
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    })[0];
+    console.log(
+      `Selected user record with role '${user.role}' (highest priority)`
+    );
+  } else if (allUsers && allUsers.length === 1) {
+    user = allUsers[0];
+  }
 
   console.log("Database query result:", { user, error });
 
@@ -82,7 +120,11 @@ export async function GET() {
   }
 
   // Check if user has premium access (either is_premium=true OR role='beta')
-  const hasPremiumAccess = user.is_premium === true || user.role === "beta";
+  const hasPremiumAccess =
+    user.is_premium === true ||
+    user.role === "beta" ||
+    user.role === "premium" ||
+    user.role === "admin";
 
   console.log(
     `User premium access: ${hasPremiumAccess} (is_premium: ${user.is_premium}, role: ${user.role})`

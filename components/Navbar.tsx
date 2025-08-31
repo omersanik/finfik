@@ -36,7 +36,6 @@ import { useEffect, useState } from "react";
 import { useClerk, useUser, useAuth } from "@clerk/nextjs";
 import { Flame, MessageSquare } from "lucide-react";
 import { usePremiumStatus, useStreak } from "@/lib/hooks/useApi";
-import BetaBadge from "./BetaBadge";
 
 const Navbar = () => {
   const { signOut } = useClerk();
@@ -195,19 +194,25 @@ const Navbar = () => {
             )
           )}
 
-          {/* Premium/Beta Status */}
+          {/* Premium/fStatus */}
           {premiumLoading ? (
             <div className="hidden sm:flex">
               <Skeleton className="w-28 h-8 rounded-full" />
             </div>
           ) : isBetaUser ? (
             <div className="hidden sm:flex items-center gap-3">
-              <BetaBadge size="md" />
+              <Badge
+                variant="default"
+                className="flex items-center gap-1 px-4 py-2 text-sm font-medium bg-gradient-to-r bg-primary text-white border-0 shadow-sm"
+              >
+                <Crown className="size-4" />
+                Beta User
+              </Badge>
               <Link href="/beta/feedback">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+                  className="flex items-center gap-2 bg-secondary text-white border-0 shadow-sm"
                 >
                   <MessageSquare className="size-4" />
                   Feedback
