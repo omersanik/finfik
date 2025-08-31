@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 interface Lesson {
@@ -29,7 +28,10 @@ interface Position {
   y: number;
 }
 
-const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = ({ steps, comingSoon = false }) => {
+const LearningPathClient: React.FC<{
+  steps: Lesson[];
+  comingSoon?: boolean;
+}> = ({ steps, comingSoon = false }) => {
   const [selectedStep, setSelectedStep] = useState<Lesson | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -83,8 +85,12 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
     <div className="flex-1 relative">
       {comingSoon && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80">
-          <div className="bg-yellow-100 text-yellow-800 font-bold px-6 py-3 rounded-xl shadow text-2xl mb-2">Coming Soon</div>
-          <div className="text-gray-600 text-lg">This course is not yet available.</div>
+          <div className="bg-yellow-100 text-yellow-800 font-bold px-6 py-3 rounded-xl shadow text-2xl mb-2">
+            Coming Soon
+          </div>
+          <div className="text-gray-600 text-lg">
+            This course is not yet available.
+          </div>
         </div>
       )}
       <div ref={containerRef} className="relative w-96 h-[580px] mx-auto">
@@ -94,7 +100,11 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
             <div
               key={step.id}
               className={`absolute transform -translate-x-1/2 -translate-y-1/2 group ${
-                selectedStep?.id === step.id ? "z-50" : hoveredStep?.id === step.id ? "z-[9999]" : "z-20"
+                selectedStep?.id === step.id
+                  ? "z-50"
+                  : hoveredStep?.id === step.id
+                  ? "z-[9999]"
+                  : "z-20"
               }`}
               style={{ left: `${position.x}%`, top: `${position.y}%` }}
             >
@@ -133,7 +143,9 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
               {hoveredStep?.id === step.id && (
                 <div className="absolute top-20 left-1/2 transform -translate-x-1/2 opacity-100 transition-opacity duration-200 pointer-events-none z-[9999]">
                   <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-xs font-medium shadow-lg text-center min-w-32">
-                    <div className="break-words leading-relaxed">{step.title}</div>
+                    <div className="break-words leading-relaxed">
+                      {step.title}
+                    </div>
                     <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
                   </div>
                 </div>
@@ -161,44 +173,39 @@ const LearningPathClient: React.FC<{ steps: Lesson[], comingSoon?: boolean }> = 
                             <Lock className="w-4 h-4 text-gray-400" />
                           )}
                         </div>
-                        <CardTitle className="text-lg leading-tight break-words min-w-0 flex-1">{step.title}</CardTitle>
+                        <CardTitle className="text-lg leading-tight break-words min-w-0 flex-1">
+                          {step.title}
+                        </CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <CardDescription className="text-sm leading-relaxed">
                         {step.description}
                       </CardDescription>
-                      <div>
-                        <h5 className="font-semibold text-sm mb-2">
-                          Lesson Topics:
-                        </h5>
-                        <div className="flex flex-wrap gap-1">
-                          {step.lessons.map((lesson, i) => (
-                            <Badge
-                              key={i}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {lesson}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+
                       <Button
                         className="w-full"
                         variant={getButtonVariant(step)}
-                        disabled={!step.unlocked || loadingIndex === index || comingSoon}
+                        disabled={
+                          !step.unlocked || loadingIndex === index || comingSoon
+                        }
                         onClick={async () => {
                           if (step.unlocked && !comingSoon) {
                             setLoadingIndex(index);
                             // Keep loading until navigation starts
-                            router.push(`/courses/${step.courseSlug}/${step.sectionSlug.trim()}`);
+                            router.push(
+                              `/courses/${
+                                step.courseSlug
+                              }/${step.sectionSlug.trim()}`
+                            );
                             // Don't reset loadingIndex here - let it continue until page changes
                           }
                         }}
                       >
                         {comingSoon ? (
-                          <span className="text-yellow-700 font-semibold">Coming Soon</span>
+                          <span className="text-yellow-700 font-semibold">
+                            Coming Soon
+                          </span>
                         ) : loadingIndex === index ? (
                           <span className="flex items-center gap-2 justify-center">
                             <Loader2 className="animate-spin h-4 w-4" />
