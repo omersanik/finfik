@@ -35,8 +35,8 @@ interface DatabaseContentItem {
   animation_settings: unknown;
   drag_drop_title: string | null;
   drag_drop_instructions: string | null;
-  drag_drop_items: unknown;
-  drag_drop_categories: unknown;
+  drag_drop_items: string | null;
+  drag_drop_categories: string | null;
 }
 
 // Type guard function for quiz data
@@ -208,8 +208,9 @@ export default async function SectionPage({
     .eq("course_path_section_id", section.id)
     .single();
 
-    if(progressError) {
-      console.error("Error fetching progress:", progressError); }
+  if (progressError) {
+    console.error("Error fetching progress:", progressError);
+  }
   // If the section is not the first one (order > 0) and it's not unlocked, redirect
   if (section.order > 0 && (!progress || !progress.unlocked)) {
     return (
@@ -219,7 +220,8 @@ export default async function SectionPage({
         </CardHeader>
         <CardContent>
           <CardDescription>
-            Looks like you&apos;re trying to skip ahead! Follow the learning path, you&apos;ll get there!
+            Looks like you&apos;re trying to skip ahead! Follow the learning
+            path, you&apos;ll get there!
           </CardDescription>
           <p className="mt-2 text-muted-foreground">
             Return to your course to continue learning.
@@ -277,13 +279,19 @@ export default async function SectionPage({
             | "animation"
             | "calculator"
             | "math"
-            | "chart",
+            | "chart"
+            | "drag-drop",
           content_text: item.content_text || undefined,
           image_url: item.image_url || undefined,
           quiz_data: quizData, // Use the validated quiz data
           component_key: item.component_key || undefined,
           order_index: item.order_index,
           created_at: item.created_at,
+          // Add drag-drop fields
+          drag_drop_title: item.drag_drop_title || undefined,
+          drag_drop_instructions: item.drag_drop_instructions || undefined,
+          drag_drop_categories: item.drag_drop_categories || undefined,
+          drag_drop_items: item.drag_drop_items || undefined,
         };
       });
 

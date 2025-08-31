@@ -26,6 +26,18 @@ export interface ContentItem {
   component_key?: string;
   order_index: number;
   created_at: string;
+  content_type?: string;
+  styling_data?: Record<string, unknown>;
+  math_formula?: string;
+  interactive_data?: Record<string, unknown>;
+  media_files?: Record<string, unknown>;
+  font_settings?: Record<string, unknown>;
+  layout_config?: Record<string, unknown>;
+  animation_settings?: Record<string, unknown>;
+  drag_drop_title?: string;
+  drag_drop_instructions?: string;
+  drag_drop_categories?: string;
+  drag_drop_items?: string;
 }
 
 export interface Block {

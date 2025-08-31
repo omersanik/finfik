@@ -70,9 +70,9 @@ export async function GET(req: Request) {
   let itemsByBlock: Record<string, ContentItem[]> = {};
   if (blockIds.length > 0) {
     const { data: items, error: itemsError } = await supabase
-      .from("content-item") // fixed table name
+      .from("content_item")
       .select(
-        "id, block_id, type, content_text, image_url, quiz_data, component_key, order_index, created_at, content_type, styling_data, math_formula, interactive_data, media_files, font_settings, layout_config, animation_settings"
+        "id, block_id, type, content_text, image_url, quiz_data, component_key, order_index, created_at, content_type, styling_data, math_formula, interactive_data, media_files, font_settings, layout_config, animation_settings, drag_drop_title, drag_drop_instructions, drag_drop_categories, drag_drop_items"
       )
       .in("block_id", blockIds);
 
