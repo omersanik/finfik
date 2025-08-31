@@ -60,6 +60,8 @@ const ProfilePageCardComponent = async () => {
               <Image
                 src={imageUrl}
                 alt="User Avatar"
+                width={80}
+                height={80}
                 className="w-20 h-20 rounded-full border mb-2"
               />
               {/* Avatar picker button */}
