@@ -90,13 +90,10 @@ interface ContentBlock {
 interface ContentBlockProps {
   block: ContentBlock;
   isVisible: boolean;
-  onContinue: () => void;
-  isLastBlock: boolean;
-  locked?: boolean;
-  hideContinueButton?: boolean;
   onQuizAnswer?: (answer: string | number) => void;
   quizCompleted?: boolean;
   onDragDropComplete?: (isCompleted: boolean) => void;
+  onDragDropReady?: (ready: boolean) => void;
 }
 
 // Extend the Window interface for the global function
@@ -109,12 +106,8 @@ declare global {
 const ContentBlockComponent = ({
   block,
   isVisible,
-  onContinue,
-  isLastBlock,
-  locked = false,
-  hideContinueButton = false,
   onQuizAnswer,
-  quizCompleted = false,
+  onDragDropReady,
 }: ContentBlockProps) => {
   const formatMarkdown = (text: string): string => {
     return text
@@ -151,6 +144,7 @@ const ContentBlockComponent = ({
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [dragDropCompleted, setDragDropCompleted] = useState(false);
+  const [dragDropReady, setDragDropReady] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -244,7 +238,11 @@ const ContentBlockComponent = ({
     block.content_items.map((item) => ({ id: item.id, type: item.type }))
   );
   console.log("HAS QUIZ:", hasQuiz, "HAS DRAG DROP:", hasDragDrop);
-  console.log("DRAG DROP STATE:", { dragDropCompleted, hasDragDrop });
+  console.log("DRAG DROP STATE:", {
+    dragDropCompleted,
+    dragDropReady,
+    hasDragDrop,
+  });
 
   const handleQuizAnswer = (questionId: string, answer: string | number) => {
     setQuizAnswers((prev) => ({
@@ -256,137 +254,6 @@ const ContentBlockComponent = ({
     if (onQuizAnswer) {
       onQuizAnswer(answer);
     }
-  };
-
-  const handleCheckAnswer = () => {
-    const blockHasQuiz = block.content_items.some(
-      (item) => item.type === "quiz"
-    );
-
-    if (blockHasQuiz && !quizCompleted) {
-      // Check if user has answered
-      if (quizAnswers.quiz === undefined) {
-        alert("Please select an answer before checking.");
-        return;
-      }
-
-      // Check if answer is correct (first option is correct)
-      const selectedOption = shuffledOptions.quiz?.find(
-        (opt) => opt.id === quizAnswers.quiz
-      );
-      const correctOption = quizData?.options[0]; // First option is always correct
-      const isAnswerCorrect = selectedOption?.text === correctOption?.text;
-
-      setIsCorrect(isAnswerCorrect);
-      setShowFeedback(true);
-
-      if (isAnswerCorrect) {
-        // Hide feedback after 2 seconds
-        setTimeout(() => {
-          setShowFeedback(false);
-        }, 2000);
-      } else {
-        // Hide feedback after 2 seconds
-        setTimeout(() => {
-          setShowFeedback(false);
-        }, 2000);
-      }
-    }
-  };
-
-  const getButtonText = () => {
-    const blockHasQuiz = block.content_items.some(
-      (item) => item.type === "quiz"
-    );
-    const blockHasDragDrop = block.content_items.some(
-      (item) => item.type === "drag-drop"
-    );
-
-    console.log("BUTTON TEXT DEBUG:", {
-      blockHasQuiz,
-      blockHasDragDrop,
-      quizCompleted,
-      dragDropCompleted,
-      isLastBlock,
-      contentItems: block.content_items.map((item) => ({
-        id: item.id,
-        type: item.type,
-      })),
-    });
-
-    // Debug the button text logic
-    if (blockHasDragDrop) {
-      if (!dragDropCompleted) {
-        console.log("SHOULD SHOW: Check Answers");
-        return "Check Answers";
-      } else {
-        console.log("SHOULD SHOW:", isLastBlock ? "Finish" : "Continue");
-        return isLastBlock ? "Finish" : "Continue";
-      }
-    }
-
-    if (blockHasQuiz) {
-      if (!quizCompleted) {
-        return quizAnswers.quiz === undefined
-          ? "Select Answer"
-          : "Check Answer";
-      } else {
-        return isLastBlock ? "Finish" : "Continue";
-      }
-    }
-
-    if (blockHasDragDrop) {
-      if (!dragDropCompleted) {
-        return "Check Answers";
-      } else {
-        return isLastBlock ? "Finish" : "Continue";
-      }
-    }
-
-    return isLastBlock ? "Finish" : "Continue";
-  };
-
-  const handleContinue = () => {
-    const blockHasQuiz = block.content_items.some(
-      (item) => item.type === "quiz"
-    );
-    const blockHasDragDrop = block.content_items.some(
-      (item) => item.type === "drag-drop"
-    );
-
-    // If there's no quiz or drag-drop, just continue
-    if (!blockHasQuiz && !blockHasDragDrop) {
-      onContinue();
-      return;
-    }
-
-    // Handle quiz logic
-    if (blockHasQuiz) {
-      // If there's a quiz but no answer selected
-      if (quizAnswers.quiz === undefined) {
-        alert("Please select an answer first.");
-        return;
-      }
-
-      // If quiz is not completed yet, check the answer
-      if (!quizCompleted) {
-        handleCheckAnswer();
-        return;
-      }
-    }
-
-    // Handle drag-drop logic
-    if (blockHasDragDrop && !dragDropCompleted) {
-      // Check drag-drop answers using the exposed function
-      if (typeof window !== "undefined" && window.checkDragDropAnswers) {
-        const isCorrect = window.checkDragDropAnswers();
-        setDragDropCompleted(isCorrect);
-        return; // Don't continue yet, let user see the results
-      }
-    }
-
-    // Both quiz and drag-drop are completed, allow continuing
-    onContinue();
   };
 
   const renderContentItem = (item: ContentItem) => {
@@ -712,6 +579,11 @@ const ContentBlockComponent = ({
             onDragDropComplete={(isCorrect: boolean) => {
               setDragDropCompleted(isCorrect);
             }}
+            onReadyStateChange={(ready: boolean) => {
+              console.log("=== DRAG DROP READY STATE CHANGED ===", ready);
+              setDragDropReady(ready);
+              onDragDropReady?.(ready);
+            }}
           />
         );
 
@@ -722,14 +594,7 @@ const ContentBlockComponent = ({
 
   return (
     <div className="relative">
-      {locked && (
-        <div className="absolute inset-0 bg-white bg-opacity-70 dark:bg-neutral-800 dark:bg-opacity-80 z-10 flex items-center justify-center pointer-events-auto">
-          <span className="text-gray-400 dark:text-neutral-300 text-lg font-semibold">
-            Locked
-          </span>
-        </div>
-      )}
-      <div className={locked ? "pointer-events-none opacity-60" : ""}>
+      <div>
         <div className="max-w-2xl mx-auto mb-6 p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-neutral-200 font-lora">
             {block.title}
@@ -744,48 +609,6 @@ const ContentBlockComponent = ({
                 </div>
               ))}
           </div>
-
-          {!hideContinueButton && (
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={handleContinue}
-                disabled={
-                  locked ||
-                  (block.content_items.some((item) => item.type === "quiz") &&
-                    !quizCompleted) ||
-                  (block.content_items.some(
-                    (item) => item.type === "drag-drop"
-                  ) &&
-                    !dragDropCompleted)
-                }
-                className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                  !locked
-                    ? (block.content_items.some(
-                        (item) => item.type === "quiz"
-                      ) &&
-                        !quizCompleted) ||
-                      (block.content_items.some(
-                        (item) => item.type === "drag-drop"
-                      ) &&
-                        !dragDropCompleted)
-                      ? "bg-gray-400 text-white cursor-not-allowed"
-                      : (block.content_items.some(
-                          (item) => item.type === "quiz"
-                        ) &&
-                          quizCompleted) ||
-                        (block.content_items.some(
-                          (item) => item.type === "drag-drop"
-                        ) &&
-                          dragDropCompleted)
-                      ? "bg-green-500 text-white hover:bg-green-600"
-                      : "bg-primary text-white hover:bg-primary/90"
-                    : "bg-gray-300 text-gray-500 dark:bg-neutral-700 dark:text-neutral-400 cursor-not-allowed"
-                }`}
-              >
-                {getButtonText()}
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>

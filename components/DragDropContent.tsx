@@ -14,12 +14,14 @@ interface DragDropContentProps {
   };
   dragDropCompleted: boolean;
   onDragDropComplete?: (isCorrect: boolean) => void;
+  onReadyStateChange?: (ready: boolean) => void;
 }
 
 export default function DragDropContent({
   item,
   dragDropCompleted,
   onDragDropComplete,
+  onReadyStateChange,
 }: DragDropContentProps) {
   const { shouldLoad, triggerLoad } = useLazyLoadTrigger();
   const { heavyData, loading, error } = useHeavyContent(
@@ -206,6 +208,7 @@ export default function DragDropContent({
               onDragDropComplete(isCorrect);
             }
           }}
+          onReadyStateChange={onReadyStateChange}
         />
       </div>
     );

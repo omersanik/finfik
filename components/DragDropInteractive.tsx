@@ -47,6 +47,7 @@ interface DragDropInteractiveProps {
   data: DragDropData;
   onComplete?: (isCorrect: boolean) => void;
   completedFromParent?: boolean;
+  onReadyStateChange?: (ready: boolean) => void;
 }
 
 // Extended Window interface for type safety
@@ -182,6 +183,7 @@ export default function DragDropInteractive({
   data,
   onComplete,
   completedFromParent = false,
+  onReadyStateChange,
 }: DragDropInteractiveProps) {
   const [items, setItems] = useState<DragItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -437,11 +439,23 @@ export default function DragDropInteractive({
 
   // Auto-notify parent when all items are dropped (for easier integration)
   useEffect(() => {
-    if (
-      items.length > 0 &&
-      items.every((item) => item.currentCategory) &&
-      !isCompleted
-    ) {
+    console.log("=== DRAG DROP INTERACTIVE: useEffect triggered ===");
+    console.log("Items length:", items.length);
+    console.log("Items:", items);
+    console.log("isCompleted:", isCompleted);
+
+    const allItemsDropped =
+      items.length > 0 && items.every((item) => item.currentCategory);
+    const readyForCheck = allItemsDropped && !isCompleted;
+
+    console.log("allItemsDropped:", allItemsDropped);
+    console.log("readyForCheck:", readyForCheck);
+
+    // Notify parent component about ready state change
+    console.log("Calling onReadyStateChange with:", readyForCheck);
+    onReadyStateChange?.(readyForCheck);
+
+    if (readyForCheck) {
       console.log(
         "🎯 All items dropped! Parent can now enable check answer button"
       );
@@ -464,7 +478,7 @@ export default function DragDropInteractive({
       // This matches the quiz behavior where onComplete(false) means ready to check
       onComplete?.(false);
     }
-  }, [items, isCompleted, categories, onComplete]);
+  }, [items, isCompleted, categories, onComplete, onReadyStateChange]);
 
   const resetGame = () => {
     const shuffledItems = [...data.items]

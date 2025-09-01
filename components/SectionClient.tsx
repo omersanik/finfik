@@ -70,7 +70,9 @@ export default function SectionClient({
   const [unlockedIndex, setUnlockedIndex] = useState(0);
   const [finished, setFinished] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
-  const [quizAnswers, setQuizAnswers] = useState<Record<string | number, string | number | undefined>>({});
+  const [quizAnswers, setQuizAnswers] = useState<
+    Record<string | number, string | number | undefined>
+  >({});
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [dragDropCompleted, setDragDropCompleted] = useState(false);
   const [dragDropReady, setDragDropReady] = useState(false);
@@ -100,6 +102,11 @@ export default function SectionClient({
 
   const handleQuizAnswer = (answer: string | number) => {
     setQuizAnswers((prev) => ({ ...prev, [unlockedIndex]: answer }));
+  };
+
+  const handleDragDropReady = (ready: boolean) => {
+    console.log("=== SECTION CLIENT: Drag drop ready state changed ===", ready);
+    setDragDropReady(ready);
   };
 
   const handleDragDropComplete = (isCompleted: boolean) => {
@@ -279,13 +286,9 @@ export default function SectionClient({
             <ContentBlockComponent
               block={block}
               isVisible={true}
-              onContinue={() => handleContinue(idx)}
-              isLastBlock={idx === blocks.length - 1}
-              locked={false}
-              hideContinueButton={true}
               onQuizAnswer={handleQuizAnswer}
-              quizCompleted={quizCompleted}
               onDragDropComplete={handleDragDropComplete}
+              onDragDropReady={handleDragDropReady}
             />
           </div>
         ))}
