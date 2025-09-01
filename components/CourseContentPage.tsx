@@ -411,17 +411,7 @@ const CourseContentPage = ({ courseData }: CourseContentPageProps) => {
                   .slice(0, currentBlockIndex + 1)
                   .map((block, index) => (
                     <div key={block.id} data-block-index={index}>
-                      <ContentBlockComponent
-                        block={block}
-                        isVisible={true}
-                        onContinue={handleContinue}
-                        isLastBlock={
-                          index === currentBlockIndex &&
-                          isLastBlockOfCurrentSection(currentBlockIndex) &&
-                          currentSectionIndex ===
-                            courseData.path.sections.length - 1
-                        }
-                      />
+                      <ContentBlockComponent block={block} isVisible={true} />
                     </div>
                   ))}
               </div>
