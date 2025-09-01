@@ -2,7 +2,7 @@ import SectionClient from "@/components/SectionClient";
 import { CreateSupabaseClient } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { ContentItem, Block, QuizData } from "@/types/content";
+import { ContentItem, Block } from "@/types/content";
 import Link from "next/link";
 
 import {
@@ -13,62 +13,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-
-// Database types (what Supabase returns)
-interface DatabaseContentItem {
-  id: string;
-  block_id: string;
-  type: string;
-  content_text: string | null;
-  image_url: string | null;
-  quiz_data: unknown;
-  component_key: string | null;
-  order_index: number;
-  created_at: string;
-  content_type: string | null;
-  styling_data: unknown;
-  math_formula: string | null;
-  interactive_data: unknown;
-  media_files: unknown;
-  font_settings: unknown;
-  layout_config: unknown;
-  animation_settings: unknown;
-  drag_drop_title: string | null;
-  drag_drop_instructions: string | null;
-  drag_drop_items: string | null;
-  drag_drop_categories: string | null;
-}
-
-// Type guard function for quiz data
-// Type guard function for quiz data
-function isQuizData(data: unknown): data is QuizData {
-  if (typeof data !== "object" || data === null) {
-    return false;
-  }
-
-  const potentialQuizData = data as Record<string, unknown>;
-
-  if (!("options" in potentialQuizData)) {
-    return false;
-  }
-
-  if (!Array.isArray(potentialQuizData.options)) {
-    return false;
-  }
-
-  // Validate that each option has the correct structure
-  return potentialQuizData.options.every((option: unknown) => {
-    if (typeof option !== "object" || option === null) {
-      return false;
-    }
-
-    const potentialOption = option as Record<string, unknown>;
-    return (
-      typeof potentialOption.id === "string" &&
-      typeof potentialOption.text === "string"
-    );
-  });
-}
 
 export default async function SectionPage({
   params,

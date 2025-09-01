@@ -52,10 +52,9 @@ export default function RootLayout({
             </ThemeProvider>
             <PerformanceMonitor />
           </Providers>
+          {/* Dynamic footer with conditional privacy policy link */}
+          <DynamicFooter />
         </ClerkProvider>
-
-        {/* Dynamic footer with conditional privacy policy link */}
-        <DynamicFooter />
       </body>
     </html>
   );
