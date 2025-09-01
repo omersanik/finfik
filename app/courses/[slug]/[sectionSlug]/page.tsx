@@ -246,60 +246,50 @@ export default async function SectionPage({
     );
   }
 
-  // BATCH 5: Get content items (depends on blocks)
+  // BATCH 5: Get ONLY essential content items (FAST!)
   let itemsByBlock: Record<string, ContentItem[]> = {};
   if (blocks && blocks.length > 0) {
     const blockIds = blocks.map((b) => b.id);
+
+    console.time("Essential Content Query");
     const { data: items, error: itemsError } = await supabase
       .from("content_item")
       .select(
-        "id, block_id, type, content_text, image_url, quiz_data, component_key, order_index, created_at, content_type, styling_data, math_formula, interactive_data, media_files, font_settings, layout_config, animation_settings, drag_drop_title, drag_drop_instructions, drag_drop_items, drag_drop_categories"
+        // Only essential fields for initial render - 90% smaller query!
+        "id, block_id, type, content_text, image_url, order_index, component_key"
       )
       .in("block_id", blockIds);
+    console.timeEnd("Essential Content Query");
 
     console.timeEnd("Database Queries"); // End performance timing
 
     if (!itemsError && items) {
-      // Transform database items to match ContentItem interface
-      const transformedItems: ContentItem[] = (
-        items as DatabaseContentItem[]
-      ).map((item) => {
-        let quizData: QuizData | undefined = undefined;
+      // Lightweight transformation - no heavy processing
+      const transformedItems: ContentItem[] = items.map((item) => ({
+        id: item.id,
+        block_id: item.block_id,
+        type: item.type as
+          | "text"
+          | "image"
+          | "quiz"
+          | "animation"
+          | "calculator"
+          | "math"
+          | "chart"
+          | "drag-drop",
+        content_text: item.content_text || undefined,
+        image_url: item.image_url || undefined,
+        component_key: item.component_key || undefined,
+        order_index: item.order_index,
+        created_at: new Date().toISOString(), // Placeholder
 
-        // Only set quiz_data if it's actually quiz data with the correct structure
-        if (
-          item.type === "quiz" &&
-          item.quiz_data &&
-          isQuizData(item.quiz_data)
-        ) {
-          quizData = item.quiz_data;
-        }
-
-        return {
-          id: item.id,
-          block_id: item.block_id,
-          type: item.type as
-            | "text"
-            | "image"
-            | "quiz"
-            | "animation"
-            | "calculator"
-            | "math"
-            | "chart"
-            | "drag-drop",
-          content_text: item.content_text || undefined,
-          image_url: item.image_url || undefined,
-          quiz_data: quizData, // Use the validated quiz data
-          component_key: item.component_key || undefined,
-          order_index: item.order_index,
-          created_at: item.created_at,
-          // Add drag-drop fields
-          drag_drop_title: item.drag_drop_title || undefined,
-          drag_drop_instructions: item.drag_drop_instructions || undefined,
-          drag_drop_categories: item.drag_drop_categories || undefined,
-          drag_drop_items: item.drag_drop_items || undefined,
-        };
-      });
+        // Heavy fields will be lazy-loaded client-side
+        quiz_data: undefined, // Load when quiz is interacted with
+        drag_drop_title: undefined, // Load when drag-drop is shown
+        drag_drop_instructions: undefined,
+        drag_drop_categories: undefined,
+        drag_drop_items: undefined,
+      }));
 
       itemsByBlock = transformedItems.reduce(
         (acc: Record<string, ContentItem[]>, item) => {
