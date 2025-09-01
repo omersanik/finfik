@@ -10,7 +10,6 @@ import PageLoading from "@/components/PageLoading";
 import Providers from "./providers";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
 import BetaWelcomeHandler from "@/components/BetaWelcomeHandler";
-import DynamicFooter from "@/components/DynamicFooter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,8 +51,6 @@ export default function RootLayout({
             </ThemeProvider>
             <PerformanceMonitor />
           </Providers>
-          {/* Dynamic footer with conditional privacy policy link */}
-          <DynamicFooter />
         </ClerkProvider>
       </body>
     </html>

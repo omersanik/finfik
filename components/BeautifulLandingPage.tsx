@@ -497,6 +497,25 @@ const BeautifulLandingPage = () => {
         </p>
       </div>
 
+      {/* Footer with Privacy Policy */}
+      <footer className="relative z-10 py-4 px-8 border-t border-border bg-background/50 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
+          <div className="text-center md:text-left mb-2 md:mb-0">
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Finfik. All rights reserved.
+            </p>
+          </div>
+          <div className="text-center md:text-right">
+            <a 
+              href="/privacy-policy" 
+              className="text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              Privacy Policy
+            </a>
+          </div>
+        </div>
+      </footer>
+
       {/* Custom styles */}
       <style jsx global>{`
         .line-clamp-3 {
