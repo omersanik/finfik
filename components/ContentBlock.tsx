@@ -5,7 +5,7 @@ import LoadingAnimation from "./LoadingAnimation";
 import MathFormulaRenderer from "./MathFormulaRenderer";
 import ChartRenderer from "./ChartRenderer";
 import LottieAnimation from "./LottieAnimation";
-import DragDropInteractive from "./DragDropInteractive";
+import DragDropContent from "./DragDropContent";
 import { getThumbnailUrl } from "@/lib/thumbnail-utils";
 import {
   Table,
@@ -115,7 +115,6 @@ const ContentBlockComponent = ({
   hideContinueButton = false,
   onQuizAnswer,
   quizCompleted = false,
-  onDragDropComplete,
 }: ContentBlockProps) => {
   const formatMarkdown = (text: string): string => {
     return text
@@ -704,191 +703,17 @@ const ContentBlockComponent = ({
           );
         }
 
-      case "drag-drop": {
-        // Enhanced debug logging to track data flow
-        console.log("=== DRAG-DROP DEBUG START ===");
-        console.log("Raw item data:", item);
-        console.log("Item ID:", item.id);
-        console.log("Item type:", item.type);
-        console.log("drag_drop_categories RAW:", item.drag_drop_categories);
-        console.log("drag_drop_items RAW:", item.drag_drop_items);
-        console.log("interactive_data:", item.interactive_data);
-
-        // Check field existence and types
-        console.log(
-          "categories exists:",
-          item.drag_drop_categories !== undefined
+      case "drag-drop":
+        return (
+          <DragDropContent
+            key={item.id}
+            item={item}
+            dragDropCompleted={dragDropCompleted}
+            onDragDropComplete={(isCorrect: boolean) => {
+              setDragDropCompleted(isCorrect);
+            }}
+          />
         );
-        console.log("categories type:", typeof item.drag_drop_categories);
-        console.log("categories length:", item.drag_drop_categories?.length);
-        console.log("items exists:", item.drag_drop_items !== undefined);
-        console.log("items type:", typeof item.drag_drop_items);
-        console.log("items length:", item.drag_drop_items?.length);
-        console.log("=== DRAG-DROP DEBUG END ===");
-
-        const renderDragDropError = (message: string, itemId: string) => (
-          <div
-            key={itemId}
-            className="mb-4 p-4 bg-red-50 border border-red-200 rounded"
-          >
-            <p className="text-red-600 font-semibold">
-              Error loading drag and drop activity
-            </p>
-            <p className="text-red-500 text-sm mt-2">{message}</p>
-            <p className="text-gray-600 text-xs mt-1">
-              Expected format: &quot;Item text → Category name&quot; (one per
-              line)
-            </p>
-            <details className="mt-2">
-              <summary className="text-xs text-gray-500 cursor-pointer">
-                Debug Info (Updated Version ✅)
-              </summary>
-              <pre className="text-xs bg-gray-100 p-2 mt-1 rounded overflow-auto">
-                Item ID: {itemId}
-                {JSON.stringify(item, null, 2)}
-              </pre>
-            </details>
-          </div>
-        );
-
-        // Add null/undefined safety checks
-        if (!item) {
-          console.error("Item is null or undefined");
-          return renderDragDropError("Item data is missing", "unknown");
-        }
-
-        // Check if drag-drop data exists in various possible locations
-        const dragDropCategories =
-          item.drag_drop_categories ||
-          item.interactive_data?.categories ||
-          item.interactive_data?.drag_drop_categories;
-
-        const dragDropItems =
-          item.drag_drop_items ||
-          item.interactive_data?.items ||
-          item.interactive_data?.drag_drop_items;
-
-        // Additional check for empty strings or null values
-        const hasValidCategories =
-          dragDropCategories &&
-          String(dragDropCategories).trim().length > 0 &&
-          !String(dragDropCategories).includes("undefined") &&
-          String(dragDropCategories) !== "null";
-
-        const hasValidItems =
-          dragDropItems &&
-          String(dragDropItems).trim().length > 0 &&
-          !String(dragDropItems).includes("undefined") &&
-          String(dragDropItems) !== "null";
-
-        if (!hasValidCategories || !hasValidItems) {
-          console.error("Missing or invalid drag-drop data for item:", item.id);
-          console.error("Item type:", item.type);
-          console.error(
-            "Item drag_drop_categories:",
-            item.drag_drop_categories
-          );
-          console.error("Item drag_drop_items:", item.drag_drop_items);
-          console.error("Item interactive_data:", item.interactive_data);
-          console.error("Processed categories:", dragDropCategories);
-          console.error("Processed items:", dragDropItems);
-          console.error("Full item:", item);
-
-          return renderDragDropError(
-            `Required data is missing or contains invalid values for this activity. Categories valid: ${hasValidCategories}, Items valid: ${hasValidItems}. Please refresh the page or contact support if the issue persists.`,
-            item.id
-          );
-        }
-
-        try {
-          // First, validate and parse categories
-          const categories = String(dragDropCategories)
-            .replace(/\r\n/g, "\n")
-            .split("\n")
-            .map((cat: string) => cat.trim())
-            .filter((cat: string) => cat.length > 0);
-
-          if (categories.length === 0) {
-            return renderDragDropError("No valid categories found", item.id);
-          }
-
-          // Then validate and parse items
-          type DragDropItem = {
-            id: string;
-            text: string;
-            correctCategory: string;
-          };
-
-          const dragDropItemsArray: DragDropItem[] = String(dragDropItems)
-            .replace(/\r\n/g, "\n")
-            .split("\n")
-            .filter((line: string) => line.trim().length > 0)
-            .map((line: string, idx: number) => {
-              const parts = line.includes("→")
-                ? line.split("→")
-                : line.split("->");
-              if (parts.length !== 2) {
-                throw new Error(`Invalid format in line: ${line}`);
-              }
-
-              const [text, category] = parts.map((s: string) => s.trim());
-              if (!text || !category) {
-                throw new Error(`Empty text or category in line: ${line}`);
-              }
-
-              return {
-                id: `item-${idx}`,
-                text,
-                correctCategory: category.split("(")[0].trim(),
-              };
-            });
-
-          if (dragDropItemsArray.length === 0) {
-            return renderDragDropError("No valid items found", item.id);
-          }
-
-          // Validate that each item's category exists
-          const invalidItems = dragDropItemsArray.filter(
-            (dragItem) => !categories.includes(dragItem.correctCategory)
-          );
-
-          if (invalidItems.length > 0) {
-            return renderDragDropError(
-              `Some items reference non-existent categories: ${invalidItems
-                .map((dragItem) => dragItem.text)
-                .join(", ")}`,
-              item.id
-            );
-          }
-
-          // Return the drag-drop component with parsed data
-          return (
-            <div key={item.id} className="mb-4">
-              <DragDropInteractive
-                data={{
-                  title: item.drag_drop_title ?? "",
-                  instructions: item.drag_drop_instructions ?? "",
-                  categories,
-                  items: dragDropItemsArray,
-                }}
-                completedFromParent={dragDropCompleted}
-                onComplete={(isCorrect: boolean) => {
-                  setDragDropCompleted(isCorrect);
-                  if (onDragDropComplete) {
-                    onDragDropComplete(isCorrect);
-                  }
-                }}
-              />
-            </div>
-          );
-        } catch (error) {
-          console.error("Error parsing drag-drop data:", error);
-          return renderDragDropError(
-            error instanceof Error ? error.message : "Invalid data format",
-            item.id
-          );
-        }
-      }
 
       default:
         return null;

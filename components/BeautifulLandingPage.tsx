@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   Play,
-
   Users,
   TrendingUp,
   Shield,
@@ -34,8 +33,6 @@ type Course = {
   is_premium?: boolean;
   course_level?: string;
 };
-
-
 
 // Floating particles component - Client only to prevent hydration errors
 const FloatingParticles = () => {
@@ -147,8 +144,6 @@ const BeautifulLandingPage = () => {
         transition={{ duration: 0.8 }}
         className="relative z-50 w-full max-w-7xl mx-auto flex justify-between items-center pt-8 px-8"
       >
-
-
         {/* Logo */}
         <Link href="/" className="flex items-center group">
           <div className="w-32 h-12 overflow-hidden flex items-center justify-center">
@@ -234,7 +229,9 @@ const BeautifulLandingPage = () => {
             tailored to your goals.
             <span className="text-primary font-semibold">
               {" "}
-              Join our <span className="text-yellow-400">6-month beta program</span> and help shape the future of financial education.
+              Join our{" "}
+              <span className="text-yellow-400">6-month beta program</span> and
+              help shape the future of financial education.
             </span>
           </p>
 
@@ -245,10 +242,10 @@ const BeautifulLandingPage = () => {
               size="lg"
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-full font-bold text-lg shadow-lg transition-all duration-300 hover:scale-105"
             >
-                          <Link href="/sign-up" className="flex items-center gap-2">
-              Start Learning Free
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+              <Link href="/sign-up" className="flex items-center gap-2">
+                Start Learning Free
+                <ArrowRight className="w-5 h-5" />
+              </Link>
             </Button>
             <Button
               asChild
@@ -440,8 +437,6 @@ const BeautifulLandingPage = () => {
         </div>
       </motion.section>
 
-
-
       {/* Beta Call to Action */}
       <motion.section
         initial={{ opacity: 0, y: 100 }}
@@ -461,8 +456,11 @@ const BeautifulLandingPage = () => {
               Ready to Join the Beta?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              <span className="text-primary font-semibold">Start learning for FREE today</span> and be among the first to experience
-              the future of financial education.
+              <span className="text-primary font-semibold">
+                Start learning for FREE today
+              </span>{" "}
+              and be among the first to experience the future of financial
+              education.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button
@@ -506,8 +504,8 @@ const BeautifulLandingPage = () => {
             </p>
           </div>
           <div className="text-center md:text-right">
-            <a 
-              href="/privacy-policy" 
+            <a
+              href="/privacy-policy"
               className="text-xs text-muted-foreground hover:text-primary transition-colors"
             >
               Privacy Policy
