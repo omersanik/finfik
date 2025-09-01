@@ -114,12 +114,20 @@ export default async function SectionPage({
 
   const supabase = CreateSupabaseClient();
 
-  // Get course info (including is_premium_course)
-  const { data: course, error: courseError } = await supabase
-    .from("courses")
-    .select("id, is_premium_course")
-    .eq("slug", slug)
-    .single();
+  console.time("Database Queries"); // Performance timing
+
+  // BATCH 1: Run independent queries in parallel
+  const [
+    { data: course, error: courseError },
+    { data: user, error: userError },
+  ] = await Promise.all([
+    supabase
+      .from("courses")
+      .select("id, is_premium_course")
+      .eq("slug", slug)
+      .single(),
+    supabase.from("users").select("is_premium").eq("clerk_id", userId).single(),
+  ]);
 
   if (courseError || !course) {
     return (
@@ -136,21 +144,12 @@ export default async function SectionPage({
     );
   }
 
-  // If course is premium, check if user is premium
-  if (course.is_premium_course) {
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("is_premium")
-      .eq("clerk_id", userId)
-      .single();
-
-    if (userError || !user || !user.is_premium) {
-      // User is not premium, redirect to subscription page
-      redirect("/subscription");
-    }
+  // Check premium access early
+  if (course.is_premium_course && (userError || !user || !user.is_premium)) {
+    redirect("/subscription");
   }
 
-  // 2. Get the course_path by course_id
+  // BATCH 2: Get course path (depends on course.id)
   const { data: coursePath, error: coursePathError } = await supabase
     .from("course_path")
     .select("id")
@@ -173,7 +172,7 @@ export default async function SectionPage({
     );
   }
 
-  // 3. Find the section by slug and course_path_id
+  // BATCH 3: Get section (depends on coursePath.id)
   const { data: section, error: sectionError } = await supabase
     .from("course_path_sections")
     .select("id, title, order, course_path_id")
@@ -200,13 +199,23 @@ export default async function SectionPage({
     );
   }
 
-  // Check if section is unlocked for the user
-  const { data: progress, error: progressError } = await supabase
-    .from("course_path_section_progress")
-    .select("unlocked, completed")
-    .eq("clerk_id", userId)
-    .eq("course_path_section_id", section.id)
-    .single();
+  // BATCH 4: Run final queries in parallel (depend on section.id)
+  const [
+    { data: progress, error: progressError },
+    { data: blocks, error: blocksError },
+  ] = await Promise.all([
+    supabase
+      .from("course_path_section_progress")
+      .select("unlocked, completed")
+      .eq("clerk_id", userId)
+      .eq("course_path_section_id", section.id)
+      .single(),
+    supabase
+      .from("content_block")
+      .select("id, section_id, title, order_index, created_at")
+      .eq("section_id", section.id)
+      .order("order_index", { ascending: true }),
+  ]);
 
   if (progressError) {
     console.error("Error fetching progress:", progressError);
@@ -237,13 +246,7 @@ export default async function SectionPage({
     );
   }
 
-  // 4. Fetch content blocks and items directly from Supabase
-  const { data: blocks, error: blocksError } = await supabase
-    .from("content_block")
-    .select("id, section_id, title, order_index, created_at")
-    .eq("section_id", section.id)
-    .order("order_index", { ascending: true });
-
+  // BATCH 5: Get content items (depends on blocks)
   let itemsByBlock: Record<string, ContentItem[]> = {};
   if (blocks && blocks.length > 0) {
     const blockIds = blocks.map((b) => b.id);
@@ -253,6 +256,9 @@ export default async function SectionPage({
         "id, block_id, type, content_text, image_url, quiz_data, component_key, order_index, created_at, content_type, styling_data, math_formula, interactive_data, media_files, font_settings, layout_config, animation_settings, drag_drop_title, drag_drop_instructions, drag_drop_items, drag_drop_categories"
       )
       .in("block_id", blockIds);
+
+    console.timeEnd("Database Queries"); // End performance timing
+
     if (!itemsError && items) {
       // Transform database items to match ContentItem interface
       const transformedItems: ContentItem[] = (
@@ -304,6 +310,8 @@ export default async function SectionPage({
         {}
       );
     }
+  } else {
+    console.timeEnd("Database Queries"); // End timing even if no blocks
   }
 
   // Create blocks with the exact Block interface structure
