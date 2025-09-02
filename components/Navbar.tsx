@@ -15,6 +15,7 @@ import {
   User,
   Wallet,
   Crown,
+  Heart,
 } from "lucide-react";
 
 import finfiklogo from "@/logo/finfiklogo.svg";
@@ -36,6 +37,7 @@ import { useEffect, useState } from "react";
 import { useClerk, useUser, useAuth } from "@clerk/nextjs";
 import { Flame, MessageSquare } from "lucide-react";
 import { usePremiumStatus, useStreak } from "@/lib/hooks/useApi";
+import SupportButton from "./SupportButton";
 
 const Navbar = () => {
   const { signOut } = useClerk();
@@ -218,6 +220,7 @@ const Navbar = () => {
                   Feedback
                 </Button>
               </Link>
+              <SupportButton variant="outline" size="sm" />
             </div>
           ) : isPremiumUser ? (
             <div className="hidden sm:flex items-center gap-2">
@@ -228,12 +231,14 @@ const Navbar = () => {
                 <Crown className="size-4" />
                 Premium
               </Badge>
+              <SupportButton variant="outline" size="sm" />
             </div>
           ) : (
             <div className="hidden sm:flex items-center gap-2">
               <Button className="rounded-3xl px-6 text-base hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg">
                 <Link href="/subscription">Go Premium</Link>
               </Button>
+              <SupportButton variant="outline" size="sm" />
             </div>
           )}
 
@@ -278,24 +283,56 @@ const Navbar = () => {
                 </Link>
                 <DropdownMenuSeparator />
                 {isBetaUser ? (
-                  <Link href="/beta/feedback">
-                    <DropdownMenuItem className="flex items-start gap-2 text-purple-700 hover:bg-purple-50">
-                      <MessageSquare className="size-4" />
+                  <>
+                    <Link href="/beta/feedback">
+                      <DropdownMenuItem className="flex items-start gap-2 text-purple-700 hover:bg-purple-50">
+                        <MessageSquare className="size-4" />
+                        <div>
+                          <div className="font-medium">Beta Feedback</div>
+                          <div className="text-xs text-purple-500">
+                            Share your thoughts
+                          </div>
+                        </div>
+                      </DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuItem
+                      className="flex items-start gap-2 text-red-700 hover:bg-red-50 cursor-pointer"
+                      onClick={() =>
+                        window.open("https://buymeacoffee.com/finfik", "_blank")
+                      }
+                    >
+                      <Heart className="size-4 text-red-500" />
                       <div>
-                        <div className="font-medium">Beta Feedback</div>
-                        <div className="text-xs text-purple-500">
-                          Share your thoughts
+                        <div className="font-medium">Support Finfik</div>
+                        <div className="text-xs text-red-500">
+                          Help keep the lights on
                         </div>
                       </div>
                     </DropdownMenuItem>
-                  </Link>
+                  </>
                 ) : (
-                  <Link href="/subscription">
-                    <DropdownMenuItem className="flex items-start gap-1">
-                      <Wallet className="size-4" />
-                      Billing
+                  <>
+                    <Link href="/subscription">
+                      <DropdownMenuItem className="flex items-start gap-1">
+                        <Wallet className="size-4" />
+                        Billing
+                      </DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuItem
+                      className="flex items-start gap-2 text-red-700 hover:bg-red-50 cursor-pointer"
+                      onClick={() =>
+                        window.open("https://buymeacoffee.com/finfik", "_blank")
+                      }
+                    >
+                      <Heart className="size-4 text-red-500" />
+                      <div>
+                        <div className="font-medium">Support Finfik</div>
+                        <div className="text-xs text-red-500">
+                          Help keep the lights on
+                        </div>
+                      </div>
                     </DropdownMenuItem>
-                  </Link>
+                  </>
                 )}
                 <DropdownMenuItem
                   className="flex items-start gap-1 text-red-700"
