@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import BetaFeedbackForm from "@/components/BetaFeedbackForm";
-import { supabaseAdmin } from "@/supabase-client";
+import { createSupabaseServerClient } from "@/supabase-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, MessageSquare, Heart } from "lucide-react";
@@ -14,20 +14,19 @@ export default async function BetaFeedbackPage() {
   }
 
   try {
-    const supabase = supabaseAdmin;
+    const supabase = await createSupabaseServerClient();
 
-    // Check if user is a beta user
+    console.log("=== BETA FEEDBACK JWT TEST ===");
+    console.log("userId:", userId);
+
+    // Check if user is a beta user - this will test JWT + RLS
     const { data: user, error } = await supabase
       .from("users")
       .select("role, name")
       .eq("clerk_id", userId)
       .single();
 
-    console.log("Beta feedback page - User query result:", {
-      user,
-      error,
-      userId,
-    });
+    console.log("=== JWT USER QUERY RESULT ===", { user, error });
 
     if (error || !user || user.role !== "beta") {
       console.log("Beta feedback page - Redirecting to home:", {
