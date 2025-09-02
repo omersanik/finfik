@@ -110,6 +110,11 @@ export default function SectionClient({
   };
 
   const handleDragDropComplete = (isCompleted: boolean) => {
+    console.log("=== SECTION CLIENT: Drag drop complete ===", {
+      isCompleted,
+      dragDropCompleted,
+      dragDropReady,
+    });
     if (isCompleted) {
       setDragDropCompleted(true);
       setDragDropReady(true);
@@ -175,13 +180,19 @@ export default function SectionClient({
 
     // If there's a drag-drop and not completed, check the answers first
     if (hasDragDropInBlock && !dragDropCompleted) {
+      console.log("=== CHECKING DRAG DROP ANSWERS ===", {
+        hasDragDropInBlock,
+        dragDropCompleted,
+      });
       // Call the global function to check drag-drop answers
       if (typeof window !== "undefined" && window.checkDragDropAnswers) {
         const isCorrect = window.checkDragDropAnswers();
+        console.log("=== DRAG DROP CHECK RESULT ===", { isCorrect });
         if (isCorrect) {
           // If correct, allow progression
           setDragDropCompleted(true);
           setDragDropReady(true);
+          console.log("=== SETTING DRAG DROP COMPLETED TO TRUE ===");
         } else {
           // Show feedback popup for incorrect answers
           setFeedback({ open: true, correct: false });
@@ -305,21 +316,37 @@ export default function SectionClient({
                 (hasDragDrop && !dragDropReady)
               }
             >
-              {buttonLoading ? (
-                <span className="flex items-center gap-2 justify-center">
-                  <Loader2 className="animate-spin h-5 w-5" />
-                  Processing...
-                </span>
-              ) : (hasQuiz &&
-                  quizAnswers[unlockedIndex] !== undefined &&
-                  !quizCompleted) ||
-                (hasDragDrop && !dragDropCompleted) ? (
-                "Check Answer"
-              ) : unlockedIndex === blocks.length - 1 ? (
-                "Finish"
-              ) : (
-                "Continue"
-              )}
+              {(() => {
+                const buttonText = buttonLoading ? (
+                  <span className="flex items-center gap-2 justify-center">
+                    <Loader2 className="animate-spin h-5 w-5" />
+                    Processing...
+                  </span>
+                ) : (hasQuiz &&
+                    quizAnswers[unlockedIndex] !== undefined &&
+                    !quizCompleted) ||
+                  (hasDragDrop && !dragDropCompleted) ? (
+                  "Check Answer"
+                ) : unlockedIndex === blocks.length - 1 ? (
+                  "Finish"
+                ) : (
+                  "Continue"
+                );
+
+                console.log("=== BUTTON STATE ===", {
+                  buttonLoading,
+                  hasQuiz,
+                  hasDragDrop,
+                  dragDropCompleted,
+                  dragDropReady,
+                  quizCompleted,
+                  unlockedIndex,
+                  buttonText:
+                    typeof buttonText === "string" ? buttonText : "Processing",
+                });
+
+                return buttonText;
+              })()}
             </Button>
           </div>
         </div>
