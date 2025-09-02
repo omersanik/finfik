@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
-    
+
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -16,17 +16,18 @@ export async function POST(req: NextRequest) {
     // Validate required fields
     if (!category || !title || !description || !priority) {
       return NextResponse.json(
-        { error: "Missing required fields" }, 
-        { 
+        { error: "Missing required fields" },
+        {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
 
+    // Create JWT-authenticated Supabase client
     const supabase = await createSupabaseServerClient();
 
-    // Verify user is a beta user
+    // Verify user is a beta user using JWT + RLS
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("role")
@@ -34,15 +35,12 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "User not found" }, 
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (user.role !== 'beta') {
+    if (user.role !== "beta") {
       return NextResponse.json(
-        { error: "Only beta users can submit feedback" }, 
+        { error: "Only beta users can submit feedback" },
         { status: 403 }
       );
     }
@@ -58,8 +56,8 @@ export async function POST(req: NextRequest) {
           description,
           priority,
           contact_email: email || null,
-          status: 'pending'
-        }
+          status: "pending",
+        },
       ])
       .select()
       .single();
@@ -67,7 +65,7 @@ export async function POST(req: NextRequest) {
     if (feedbackError) {
       console.error("Feedback insertion error:", feedbackError);
       return NextResponse.json(
-        { error: "Failed to submit feedback" }, 
+        { error: "Failed to submit feedback" },
         { status: 500 }
       );
     }
@@ -76,18 +74,17 @@ export async function POST(req: NextRequest) {
       category,
       title,
       priority,
-      hasEmail: !!email
+      hasEmail: !!email,
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      feedback_id: feedback.id 
+    return NextResponse.json({
+      success: true,
+      feedback_id: feedback.id,
     });
-
   } catch (error) {
     console.error("Beta feedback API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" }, 
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -96,14 +93,15 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   try {
     const { userId } = await auth();
-    
+
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Create JWT-authenticated Supabase client
     const supabase = await createSupabaseServerClient();
 
-    // Verify user is a beta user
+    // Verify user is a beta user using JWT + RLS
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("role")
@@ -111,15 +109,12 @@ export async function GET() {
       .single();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "User not found" }, 
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (user.role !== 'beta') {
+    if (user.role !== "beta") {
       return NextResponse.json(
-        { error: "Only beta users can view feedback" }, 
+        { error: "Only beta users can view feedback" },
         { status: 403 }
       );
     }
@@ -134,17 +129,16 @@ export async function GET() {
     if (feedbackError) {
       console.error("Feedback retrieval error:", feedbackError);
       return NextResponse.json(
-        { error: "Failed to retrieve feedback" }, 
+        { error: "Failed to retrieve feedback" },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ feedback });
-
   } catch (error) {
     console.error("Beta feedback GET API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" }, 
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

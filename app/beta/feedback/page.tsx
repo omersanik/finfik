@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import BetaFeedbackForm from "@/components/BetaFeedbackForm";
-import { supabaseAdmin } from "@/supabase-client";
+import { createSupabaseServerClient } from "@/supabase-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, MessageSquare, Heart } from "lucide-react";
@@ -14,30 +14,25 @@ export default async function BetaFeedbackPage() {
   }
 
   try {
-    console.log("=== BETA FEEDBACK ACCESS CHECK ===");
+    console.log("=== BETA FEEDBACK JWT AUTHENTICATION ===");
     console.log("userId from auth():", userId);
 
-    // Use supabaseAdmin pattern that's working across the app
-    const { data: user, error } = await supabaseAdmin
+    // Create JWT-authenticated Supabase client
+    const supabase = await createSupabaseServerClient();
+
+    // Check if user is a beta user using JWT + RLS
+    const { data: user, error } = await supabase
       .from("users")
-      .select("role, name, clerk_id")
-      .eq("clerk_id", userId)
+      .select("role, name")
       .single();
 
-    console.log("User query result:", {
-      user,
-      error: error?.message,
-      userId,
-    });
+    console.log("JWT user query result:", { user, error, userId });
 
     if (error || !user || user.role !== "beta") {
       console.log("Beta feedback page - Access denied:", {
         error: error?.message,
         userRole: user?.role,
-        userName: user?.name,
         userId,
-        hasUser: !!user,
-        userClerkId: user?.clerk_id,
       });
       redirect("/");
     }
