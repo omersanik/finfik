@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import BetaFeedbackForm from "@/components/BetaFeedbackForm";
-import { createSupabaseServerClient } from "@/supabase-client";
+import { supabaseAdmin } from "@/supabase-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, MessageSquare, Heart } from "lucide-react";
@@ -14,7 +14,7 @@ export default async function BetaFeedbackPage() {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = supabaseAdmin;
 
     // Check if user is a beta user
     const { data: user, error } = await supabase
