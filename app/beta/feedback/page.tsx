@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import BetaFeedbackForm from "@/components/BetaFeedbackForm";
-import { createSupabaseServerClient } from "@/supabase-client";
+import { createSupabaseServerClient, supabaseAdmin } from "@/supabase-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, MessageSquare, Heart } from "lucide-react";
@@ -14,10 +14,29 @@ export default async function BetaFeedbackPage() {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
-
     console.log("=== BETA FEEDBACK JWT TEST ===");
     console.log("userId:", userId);
+
+    // Let's try to get the token directly first
+    const { getToken } = await auth();
+    const token = await getToken({ template: "supabase" });
+    console.log("=== JWT TOKEN DEBUG ===");
+    console.log("token exists:", !!token);
+    console.log("token length:", token?.length);
+    console.log("token preview:", token?.substring(0, 50) + "...");
+
+    const supabase = await createSupabaseServerClient();
+
+    console.log("=== JWT CLIENT CREATED ===");
+
+    // Also check with supabaseAdmin to compare
+    console.log("=== TESTING WITH SUPABASE ADMIN ===");
+    const { data: adminUser, error: adminError } = await supabaseAdmin
+      .from("users")
+      .select("role, name, clerk_id")
+      .eq("clerk_id", userId)
+      .single();
+    console.log("=== ADMIN USER QUERY ===", { adminUser, adminError });
 
     // Check if user is a beta user - this will test JWT + RLS
     const { data: user, error } = await supabase
@@ -26,7 +45,7 @@ export default async function BetaFeedbackPage() {
       .eq("clerk_id", userId)
       .single();
 
-    console.log("=== JWT USER QUERY RESULT ===", { user, error });
+    console.log("=== JWT USER QUERY RESULT ===", { user, error, userId });
 
     if (error || !user || user.role !== "beta") {
       console.log("Beta feedback page - Redirecting to home:", {
