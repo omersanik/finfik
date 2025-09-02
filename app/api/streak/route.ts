@@ -1,6 +1,10 @@
 import { createSupabaseServerClient } from "@/supabase-client";
 import { NextResponse } from "next/server";
 
+type CompletionRecord = {
+  completed_at: string;
+};
+
 function getLast7Days(): Date[] {
   const today = new Date();
   return Array.from({ length: 7 }, (_, i) => {
@@ -57,7 +61,7 @@ export async function GET() {
     const week = getLast7Days().map((date) => {
       const dateStr = date.toISOString().split("T")[0];
       const hasActivity = completions?.some(
-        (c: any) =>
+        (c: CompletionRecord) =>
           c.completed_at &&
           new Date(c.completed_at).toISOString().split("T")[0] === dateStr
       );
@@ -82,7 +86,8 @@ export async function GET() {
       const completionDates = [
         ...new Set(
           allCompletions.map(
-            (c: any) => new Date(c.completed_at).toISOString().split("T")[0]
+            (c: CompletionRecord) =>
+              new Date(c.completed_at).toISOString().split("T")[0]
           )
         ),
       ].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
