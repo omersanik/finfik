@@ -107,6 +107,7 @@ const ContentBlockComponent = ({
   block,
   isVisible,
   onQuizAnswer,
+  onDragDropComplete,
   onDragDropReady,
 }: ContentBlockProps) => {
   const formatMarkdown = (text: string): string => {
@@ -578,6 +579,8 @@ const ContentBlockComponent = ({
             dragDropCompleted={dragDropCompleted}
             onDragDropComplete={(isCorrect: boolean) => {
               setDragDropCompleted(isCorrect);
+              // Also notify the parent (SectionClient) about completion
+              onDragDropComplete?.(isCorrect);
             }}
             onReadyStateChange={(ready: boolean) => {
               console.log("=== DRAG DROP READY STATE CHANGED ===", ready);
