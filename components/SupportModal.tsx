@@ -39,8 +39,8 @@ export default function SupportModal({ isOpen, onClose }: SupportModalProps) {
           </DialogTitle>
 
           <DialogDescription className="text-lg text-muted-foreground">
-            Hey! I&apos;m Ömer, building Finfik to make finance education
-            interactive and fun.
+            Hey! I&apos;m building Finfik to make finance education interactive
+            and fun.
           </DialogDescription>
         </DialogHeader>
 
@@ -49,8 +49,8 @@ export default function SupportModal({ isOpen, onClose }: SupportModalProps) {
           <div className="text-center">
             <p className="text-muted-foreground">
               Running Finfik costs money - servers, tools, and legal
-              requirements in Poland. Your support helps keep the lights on and
-              lets me focus on building great content.
+              requirements. Your support helps keep the lights on and lets me
+              focus on building great content.
             </p>
           </div>
 
@@ -111,7 +111,7 @@ export default function SupportModal({ isOpen, onClose }: SupportModalProps) {
 
           <div className="text-center">
             <p className="text-xs text-muted-foreground">
-              Thank you for being part of the journey! — Ömer 💙
+              Thank you for being part of the journey!
             </p>
           </div>
         </div>
