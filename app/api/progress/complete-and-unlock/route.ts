@@ -1,7 +1,7 @@
 // app/api/course/complete-section/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { CreateSupabaseClient } from "@/supabase-client";
+import { supabaseAdmin } from "@/supabase-client";
 
 export async function POST(request: NextRequest) {
   console.log("=== COMPLETE SECTION API DEBUG ===");
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = CreateSupabaseClient();
+    const supabase = supabaseAdmin;
 
     // Start transaction-like operations
     try {

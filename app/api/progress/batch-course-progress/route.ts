@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { CreateSupabaseClient } from "@/supabase-client";
+import { supabaseAdmin } from "@/supabase-client";
 
 // --- Table Types --- //
 interface CoursePath {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = CreateSupabaseClient();
+    const supabase = supabaseAdmin;
     const results: Record<
       string,
       { progress: number; totalSections: number; completedSections: number }
