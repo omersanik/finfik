@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import BetaFeedbackForm from "@/components/BetaFeedbackForm";
-import { createSupabaseServerClient, supabaseAdmin } from "@/supabase-client";
+import { supabaseAdmin } from "@/supabase-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, MessageSquare, Heart } from "lucide-react";
@@ -14,46 +14,35 @@ export default async function BetaFeedbackPage() {
   }
 
   try {
-    console.log("=== BETA FEEDBACK JWT TEST ===");
-    console.log("userId:", userId);
+    console.log("=== BETA FEEDBACK ACCESS CHECK ===");
+    console.log("userId from auth():", userId);
 
-    // Let's try to get the token directly first
-    const { getToken } = await auth();
-    const token = await getToken({ template: "supabase" });
-    console.log("=== JWT TOKEN DEBUG ===");
-    console.log("token exists:", !!token);
-    console.log("token length:", token?.length);
-    console.log("token preview:", token?.substring(0, 50) + "...");
-
-    const supabase = await createSupabaseServerClient();
-
-    console.log("=== JWT CLIENT CREATED ===");
-
-    // Also check with supabaseAdmin to compare
-    console.log("=== TESTING WITH SUPABASE ADMIN ===");
-    const { data: adminUser, error: adminError } = await supabaseAdmin
+    // Use supabaseAdmin pattern that's working across the app
+    const { data: user, error } = await supabaseAdmin
       .from("users")
       .select("role, name, clerk_id")
       .eq("clerk_id", userId)
       .single();
-    console.log("=== ADMIN USER QUERY ===", { adminUser, adminError });
 
-    // Check if user is a beta user - this will test JWT + RLS
-    const { data: user, error } = await supabase
-      .from("users")
-      .select("role, name")
-      .eq("clerk_id", userId)
-      .single();
-
-    console.log("=== JWT USER QUERY RESULT ===", { user, error, userId });
+    console.log("User query result:", {
+      user,
+      error: error?.message,
+      userId,
+    });
 
     if (error || !user || user.role !== "beta") {
-      console.log("Beta feedback page - Redirecting to home:", {
+      console.log("Beta feedback page - Access denied:", {
         error: error?.message,
         userRole: user?.role,
+        userName: user?.name,
+        userId,
+        hasUser: !!user,
+        userClerkId: user?.clerk_id,
       });
       redirect("/");
     }
+
+    console.log("Beta feedback access granted for user:", user.name);
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 pt-24 pb-12">
