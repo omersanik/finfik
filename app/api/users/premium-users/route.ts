@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/supabase-client";
+import { supabaseAdmin } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 
 export async function GET() {
@@ -13,7 +13,8 @@ export async function GET() {
     });
   }
 
-  const supabase = await createSupabaseServerClient();
+  // Use supabaseAdmin instead of createSupabaseServerClient to avoid JWT issues
+  const supabase = supabaseAdmin;
 
   // First, let's see what columns exist in the users table
   console.log("Querying users table for clerk_id:", userId);
@@ -120,13 +121,8 @@ export async function GET() {
   }
 
   // Check if user has premium access (either is_premium=true OR role='beta')
-  const hasPremiumAccess =
-    user.is_premium === true ||
-    user.role === "beta" ||
-    user.role === "premium" ||
-    user.role === "admin";
-
-  console.log(
+  const hasPremiumAccess = user.is_premium === true || user.role === "beta";
+  console.log(  
     `User premium access: ${hasPremiumAccess} (is_premium: ${user.is_premium}, role: ${user.role})`
   );
 
@@ -157,7 +153,7 @@ export async function PATCH(req: Request) {
     });
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin;
   const body = await req.json();
   const { is_premium } = body;
 

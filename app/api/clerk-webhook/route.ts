@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/supabase-client";
 import { NextRequest, NextResponse } from "next/server";
+import { clerkClient } from "@clerk/nextjs/server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
         is_premium: true,
       };
 
-      // Insert new user with beta role
+      // Insert new user with beta role in Supabase
       const { error: insertError } = await supabaseAdmin
         .from("users")
         .insert([userData]);
@@ -53,6 +54,21 @@ export async function POST(req: NextRequest) {
           { error: "Supabase insert failed" },
           { status: 500 }
         );
+      }
+
+      // Also update Clerk's public metadata so JWT template can access the role
+      try {
+        const clerk = await clerkClient();
+        await clerk.users.updateUser(clerk_id, {
+          publicMetadata: {
+            role: "beta",
+            is_premium: true,
+          },
+        });
+        console.log(`Updated Clerk public metadata for user ${clerk_id}`);
+      } catch (clerkError) {
+        console.error("Failed to update Clerk metadata:", clerkError);
+        // Don't fail the entire webhook if metadata update fails
       }
 
       console.log(
@@ -78,6 +94,20 @@ export async function POST(req: NextRequest) {
       }
 
       // For EXISTING users, only update email and name - PRESERVE existing role and premium status
+      const { data: existingUser, error: fetchError } = await supabaseAdmin
+        .from("users")
+        .select("role, is_premium")
+        .eq("clerk_id", clerk_id)
+        .single();
+
+      if (fetchError) {
+        console.error("🔥 ERROR FETCHING EXISTING USER:", fetchError);
+        return NextResponse.json(
+          { error: "Failed to fetch existing user" },
+          { status: 500 }
+        );
+      }
+
       const { error: updateError } = await supabaseAdmin
         .from("users")
         .update({
@@ -93,6 +123,25 @@ export async function POST(req: NextRequest) {
           { error: "Supabase update failed" },
           { status: 500 }
         );
+      }
+
+      // Also sync the role to Clerk's public metadata for JWT template
+      if (existingUser) {
+        try {
+          const clerk = await clerkClient();
+          await clerk.users.updateUser(clerk_id, {
+            publicMetadata: {
+              role: existingUser.role,
+              is_premium: existingUser.is_premium,
+            },
+          });
+          console.log(
+            `🔥 Updated Clerk public metadata for existing user ${clerk_id} with role: ${existingUser.role}`
+          );
+        } catch (clerkError) {
+          console.error("🔥 Failed to update Clerk metadata:", clerkError);
+          // Don't fail the entire webhook if metadata update fails
+        }
       }
 
       console.log(

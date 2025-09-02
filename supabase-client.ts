@@ -7,7 +7,7 @@ export const CreateSupabaseClient = () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       async accessToken() {
-        return (await auth()).getToken();
+        return (await auth()).getToken({ template: "supabase" });
       },
     }
   );
@@ -28,8 +28,8 @@ export const createSupabaseServerClient = async (): Promise<SupabaseClient> => {
     );
   }
 
-  // Remove the template parameter to avoid the problematic role claim
-  const token = await userAuth.getToken();
+  // Use the Supabase JWT template with custom claims
+  const token = await userAuth.getToken({ template: "supabase" });
 
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
