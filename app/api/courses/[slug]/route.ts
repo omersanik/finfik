@@ -18,6 +18,8 @@ export async function GET(
 
     const supabase = supabaseAdmin;
 
+    console.log("Fetching course with slug:", slug);
+
     // 2. Get course by slug
     const { data: course, error: courseError } = await supabase
       .from("courses")
@@ -25,7 +27,10 @@ export async function GET(
       .eq("slug", slug)
       .single();
 
+    console.log("Course query result:", { course, courseError });
+
     if (courseError || !course) {
+      console.error("Course not found:", { slug, courseError });
       return NextResponse.json(
         { error: `Course not found for slug: ${slug}` },
         { status: 404 }

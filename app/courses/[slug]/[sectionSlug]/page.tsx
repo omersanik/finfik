@@ -1,5 +1,5 @@
 import SectionClient from "@/components/SectionClient";
-import { CreateSupabaseClient } from "@/supabase-client";
+import { supabaseAdmin } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { ContentItem, Block } from "@/types/content";
@@ -56,7 +56,7 @@ export default async function SectionPage({
     redirect("/sign-in");
   }
 
-  const supabase = CreateSupabaseClient();
+  const supabase = supabaseAdmin;
 
   console.time("Database Queries"); // Performance timing
 
