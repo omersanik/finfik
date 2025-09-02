@@ -1,8 +1,7 @@
-import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/supabase-client";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     const { userId } = await auth();
 
