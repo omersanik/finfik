@@ -20,14 +20,19 @@ export async function GET() {
     const supabase = await createSupabaseServerClient();
 
     // --- Fetch or create streak record using JWT + RLS ---
-    const { data: initialStreakData, error: streakError } = await supabase
+    const { data: streakRecords, error: streakError } = await supabase
       .from("user_streaks")
-      .select("current_streak, longest_streak, last_completed_date")
-      .single();
+      .select("current_streak, longest_streak, last_completed_date, created_at")
+      .order("created_at", { ascending: false });
 
-    let streakData = initialStreakData;
+    let streakData = streakRecords?.[0] || null;
 
-    if (streakError && streakError.code === "PGRST116") {
+    // Handle multiple streak records
+    if (streakRecords && streakRecords.length > 1) {
+      console.warn(`Found ${streakRecords.length} streak records, using most recent one`);
+    }
+
+    if ((streakError && streakError.code === "PGRST116") || !streakData) {
       // No streak record exists, create one
       const { data: newStreak } = await supabase
         .from("user_streaks")
@@ -38,7 +43,7 @@ export async function GET() {
             last_completed_date: null,
           },
         ])
-        .select("current_streak, longest_streak, last_completed_date")
+        .select("current_streak, longest_streak, last_completed_date, created_at")
         .single();
 
       streakData = newStreak;

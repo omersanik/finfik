@@ -1,19 +1,27 @@
 import { createSupabaseServerClient } from "@/supabase-client";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
     console.log("Premium users API called - using JWT authentication");
 
+    // Get the current user ID from Clerk
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Create JWT-authenticated Supabase client
     const supabase = await createSupabaseServerClient();
 
-    // Get user data using JWT + RLS (user is automatically identified through JWT)
+    // Get user data with explicit clerk_id filter to ensure we get the right user
     const { data: user, error } = await supabase
       .from("users")
       .select("role, subscription_plan, is_premium")
+      .eq("clerk_id", userId)
       .single();
-
     console.log("JWT user query result:", { user, error });
 
     if (error) {
