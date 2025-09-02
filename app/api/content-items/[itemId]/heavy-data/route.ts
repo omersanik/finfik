@@ -1,4 +1,4 @@
-import { CreateSupabaseClient } from "@/supabase-client";
+import { supabaseAdmin } from "@/supabase-client";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 
@@ -52,7 +52,7 @@ export async function GET(
 
   console.time(`Heavy Content Load - ${itemId}`);
 
-  const supabase = CreateSupabaseClient();
+  const supabase = supabaseAdmin;
 
   // Load ONLY the heavy fields for this specific item
   const { data: item, error } = await supabase
