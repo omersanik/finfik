@@ -25,7 +25,30 @@ export async function GET() {
     }
 
     // Create JWT-authenticated Supabase client - user is identified through JWT
-    const supabase = await createSupabaseServerClient();
+    let supabase;
+    try {
+      supabase = await createSupabaseServerClient();
+    } catch (clerkError: unknown) {
+      console.error("Clerk JWT error:", clerkError);
+      // If this is a new user and JWT is not ready yet, return default streak data
+      const isClerkError =
+        clerkError &&
+        typeof clerkError === "object" &&
+        ("status" in clerkError || "clerkError" in clerkError);
+
+      if (isClerkError) {
+        console.log(
+          "JWT not ready for new user, returning default streak data"
+        );
+        return NextResponse.json({
+          current_streak: 0,
+          longest_streak: 0,
+          last_completed_date: null,
+          week: [false, false, false, false, false, false, false],
+        });
+      }
+      throw clerkError;
+    }
 
     // --- Fetch or create streak record using JWT + explicit user filtering ---
     const { data: initialStreakData, error: streakError } = await supabase

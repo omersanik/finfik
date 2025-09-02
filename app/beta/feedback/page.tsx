@@ -20,10 +20,11 @@ export default async function BetaFeedbackPage() {
     // Create JWT-authenticated Supabase client
     const supabase = await createSupabaseServerClient();
 
-    // Check if user is a beta user using JWT + RLS
+    // Check if user is a beta user using JWT + explicit user filtering
     const { data: user, error } = await supabase
       .from("users")
       .select("role, name")
+      .eq("clerk_id", userId)
       .single();
 
     console.log("JWT user query result:", { user, error, userId });
