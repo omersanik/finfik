@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/supabase-client";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 type CompletionRecord = {
@@ -16,34 +17,38 @@ function getLast7Days(): Date[] {
 
 export async function GET() {
   try {
+    // Get the current user ID from Clerk
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Create JWT-authenticated Supabase client - user is identified through JWT
     const supabase = await createSupabaseServerClient();
 
-    // --- Fetch or create streak record using JWT + RLS ---
-    const { data: streakRecords, error: streakError } = await supabase
+    // --- Fetch or create streak record using JWT + explicit user filtering ---
+    const { data: initialStreakData, error: streakError } = await supabase
       .from("user_streaks")
-      .select("current_streak, longest_streak, last_completed_date, created_at")
-      .order("created_at", { ascending: false });
+      .select("current_streak, longest_streak, last_completed_date")
+      .eq("clerk_id", userId)
+      .single();
 
-    let streakData = streakRecords?.[0] || null;
+    let streakData = initialStreakData;
 
-    // Handle multiple streak records
-    if (streakRecords && streakRecords.length > 1) {
-      console.warn(`Found ${streakRecords.length} streak records, using most recent one`);
-    }
-
-    if ((streakError && streakError.code === "PGRST116") || !streakData) {
+    if (streakError && streakError.code === "PGRST116") {
       // No streak record exists, create one
       const { data: newStreak } = await supabase
         .from("user_streaks")
         .insert([
           {
+            clerk_id: userId,
             current_streak: 0,
             longest_streak: 0,
             last_completed_date: null,
           },
         ])
-        .select("current_streak, longest_streak, last_completed_date, created_at")
+        .select("current_streak, longest_streak, last_completed_date")
         .single();
 
       streakData = newStreak;
@@ -55,10 +60,11 @@ export async function GET() {
       );
     }
 
-    // --- Fetch completion data for the last 7 days using JWT + RLS ---
+    // --- Fetch completion data for the last 7 days using explicit user filtering ---
     const { data: completions } = await supabase
       .from("course_path_section_progress")
       .select("completed_at")
+      .eq("clerk_id", userId)
       .not("completed_at", "is", null)
       .gte("completed_at", getLast7Days()[0].toISOString());
 
@@ -83,6 +89,7 @@ export async function GET() {
     const { data: allCompletions } = await supabase
       .from("course_path_section_progress")
       .select("completed_at")
+      .eq("clerk_id", userId)
       .not("completed_at", "is", null)
       .order("completed_at", { ascending: false });
 
@@ -136,6 +143,7 @@ export async function GET() {
     // --- Update streak data in database ---
     await supabase.from("user_streaks").upsert(
       {
+        clerk_id: userId,
         current_streak: currentStreak,
         longest_streak: longestStreak,
         last_completed_date: allCompletions?.[0]?.completed_at || null,
