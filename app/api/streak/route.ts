@@ -76,10 +76,7 @@ export async function GET() {
           c.completed_at &&
           new Date(c.completed_at).toISOString().split("T")[0] === dateStr
       );
-      return {
-        date: dateStr,
-        hasActivity: hasActivity || false,
-      };
+      return hasActivity || false;
     });
 
     // --- Calculate current and longest streaks ---
